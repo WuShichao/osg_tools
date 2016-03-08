@@ -200,24 +200,41 @@ if opts.copy_frames:
         else:
             frames_to_copy.append(frame_paths[unique_idx][0])
 
-    print frames_to_copy
 
     for frame in frames_to_copy:
         print >> sys.stdout, "Copying %s"%frame
         shutil.copy(frame, os.path.join(workdir, 'datafind'))
 
 
+    #
     # Now we need to make a new, local cache file
-    shutil.copy('{ifo}.cache'.format(ifo=ifo), '{ifo}.cache.bk'.format(ifo=ifo))
+    # - do this by manipulating the path string in the cache file to be relative 
+    for ifo in ifoList:
+        cache_file = os.path.join(workdir, 'datafind/{ifo}.cache'.format(ifo=ifo))
+        shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
+
+        cache_entries = np.loadtxt(cache_file, dtype=str)[unique_idx]
+
+        new_cache = open(cache_file, 'w')
+        for entry in cache_entries:
 
 
-sys.exit()
+            local_path=os.path.join('datafind',entry[4].split('/')[-1])
+
+            new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
+                ifo=ifo, type=entry[1], gps=entry[2], length=entry[3],
+                path=local_path))
+
+        new_cache.close()
+        
+
 
 #############################################
 
 # ----------------------------------
 # Write Job submission files and DAG
 # ----------------------------------
+
 
 # -----------------
 # BWB cmdline 
@@ -226,7 +243,7 @@ bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)  
 --ifo L1 --L1-flow $(macroflow) --L1-channel $(macrol1channel)  \
 --H1-cache ./datafind/H1.cache \
 --L1-cache ./datafind/L1.cache \
---trigtime $(macrotrigtime) --srate $(macrosrate) --seglen $(macroseglen)} \
+--trigtime $(macrotrigtime) --srate $(macrosrate) --seglen $(macroseglen) \
 --bayesLine --PSDstart $(macropsdstart) --PSDlength $(macropsdlen) \
 --outputDir $(macrooutdir)  \
 --L1-timeslide $(macrol1timeslide) 
@@ -239,9 +256,9 @@ submit_str = """
 executable=BayesWaveBurst
 universe=standard
 arguments={bwbcmdline}
-output=condorOut.out
-error=condorError.err
-log=condorLog.log
+output={outdir}/{outdir}.out
+error={outdir}/{outdir}.err
+log={outdir}/{outdir}.log
 notification=never
 should_transfer_files=YES
 when_to_transfer_output = ON_EXIT
@@ -294,3 +311,31 @@ dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outdir,
 dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outdir))
 
 dagfile.close()
+
+# -----------------
+# BWB shell script 
+# -----------------
+fullcmdline = """./BayesWaveBurst \
+--ifo H1 --H1-flow {flow} --H1-channel {h1_channel}   \
+--ifo L1 --L1-flow {flow} --L1-channel {l1_channel}  \
+--H1-cache ./datafind/H1.cache \
+--L1-cache ./datafind/L1.cache \
+--trigtime {gps} --srate {srate} --seglen {seglen} \
+--bayesLine --PSDstart {gps} --PSDlength {psdlen} \
+--outputDir {outdir}  \
+--L1-timeslide {lag}
+""".format(flow=flow, h1_channel=h1_channel, l1_channel=l1_channel, gps=gps,
+        srate=srate, seglen=seglen,
+        psdlen=psdlen, outdir=outdir, lag=lag )
+
+shellname = os.path.join(workdir, 'runBWB.sh')
+shellfile = open(shellname, 'w')
+shellfile.write(fullcmdline)
+shellfile.close()
+os.chmod(shellname,0755)
+
+
+
+
+
+ 
