@@ -83,11 +83,9 @@ if gps is None:
 # --- Params from config file
 #
 
-lag = configparser.getfloat('analysis', 'lag')
-
-ifoList = configparser.get('analysis', 'ifoList')
-channelList = configparser.get('analysis', 'channelList')
-frtypeList = configparser.get('analysis', 'frtypeList')
+ifoList = configparser.get('datafind', 'ifoList')
+channelList = configparser.get('datafind', 'channelList')
+frtypeList = configparser.get('datafind', 'frtypeList')
 
 # parse channels etc
 ifoList=ifoList.split(',')
@@ -121,7 +119,7 @@ name = workdir
 datafind = os.path.join(workdir, 'datafind')
 if not os.path.exists(datafind): os.makedirs(datafind)
 
-shutil.copy(bwb, workdir)
+shutil.copy(configparser.get('paths','bw_executable'), workdir)
 
 
 
@@ -242,6 +240,8 @@ if not opts.skip_datafind:
 # ----------------------------------
 # Directory Structure
 # ----------------------------------
+
+lag = configparser.get('bwb_args','L1-timeslide')
 
 # XXX: ultimately want 1 output dir per job!
 outdir  = 'job_' + str(int(gps)) + '_' + str(lag)
