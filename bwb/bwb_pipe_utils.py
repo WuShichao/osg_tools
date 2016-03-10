@@ -17,8 +17,66 @@
 
 # DAG Class definitions for BayesWaveBurst
 
-from glue import pipeline,segmentsUtils,segments
+from glue import pipeline
+import itertools
 
-class BayesWaveBurstJob():
+class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-class BayesWavePostJob():
+    def __init__(self, configparser, workdir, cacheFiles, dax=False):
+
+
+        universe=configparser.get('general','universe')
+
+        pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
+        pipeline.AnalysisJob.__init__(self,configparser,dax=dax)
+
+        self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).log')
+
+        self.add_condor_cmd('should_transfer_files', 'YES')
+        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
+        self.add_condor_cmd('transfer_input_files',
+                'BayesWaveBurst,datafind,$(macrooutdir),logs')
+
+        # --- Common options
+        ifoList = configparser.get('datafind', 'ifoList').split(',')
+        channelList = configparser.get('datafind', 'channelList').split(',')
+
+        self.add_ini_opts(configparser, 'bwb_args')
+        # XXX: hack to repeat option on purpose...
+        ifo_list_opt = ifoList[0]
+        for ifo in ifoList[1:]:
+            ifo_list_opt += ' --ifo {0}'.format(ifo)
+        self.add_opt('ifo', ifo_list_opt)
+ 
+        flow = configparser.get('general','flow')
+        for i,ifo in enumerate(ifoList):
+            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow)
+            self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
+            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
+
+        self.set_sub_file('{workdir}/BayesWaveBurst.sub'.format(workdir=workdir))
+
+
+class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+
+    new_id = itertools.count().next
+
+    def __init__(self, bwb_job):
+
+        pipeline.CondorDAGNode.__init__(self,bwb_job)
+        pipeline.AnalysisNode.__init__(self)
+
+    def set_trigtime(self, trigtime):
+        self.add_var_opt('trigtime', trigtime)
+        self.__trigtime = trigtime
+
+    def set_psdtime(self, psdtime):
+        self.add_var_opt('psdtime', psdtime)
+        self.__psdtime = psdtime
+
+  
+
+
+#class BayesWavePostJob():

@@ -27,6 +27,8 @@ from glue import pipeline
 from optparse import OptionParser
 import ConfigParser
 
+import bwb_pipe_utils as pipe_utils
+
 
 def parser():
     """
@@ -92,20 +94,6 @@ ifoList=ifoList.split(',')
 channelList=channelList.split(',')
 frtypeList=frtypeList.split(',')
 
-#   h1_channel=np.array(channelList)[np.array(ifoList)=='H1'][0]
-#   h1_type=np.array(frtypeList)[np.array(ifoList)=='H1'][0]
-#   l1_channel=np.array(channelList)[np.array(ifoList)=='L1'][0]
-#   l1_type=np.array(frtypeList)[np.array(ifoList)=='L1'][0]
-#
-#   # executable
-#   bwb = configparser.get('paths', 'bw_executable')
-#
-#   # Time-Freq config
-#   flow = configparser.getfloat('analysis', 'flow')
-#   seglen = configparser.getfloat('analysis', 'seglen')
-#   psdlen = configparser.getfloat('analysis', 'psdlen')
-#   srate = configparser.getint('analysis', 'sample-rate')
-
 
 
 #############################################
@@ -128,6 +116,7 @@ shutil.copy(configparser.get('paths','bw_executable'), workdir)
 # ------------------
 # Call LIGO Data find
 # -------------------
+cacheFiles = {}
 if not opts.skip_datafind:
 
     # We'll do this here so that we can, if desired, ship frames with jobs
@@ -158,6 +147,7 @@ if not opts.skip_datafind:
         except:
             print >> sys.stderr, "ERROR: datafind failed, continuing for testing"
 
+        cacheFiles[ifo]=os.path.join(datafind, '{0}.cache')
 
     #############################################
     # Get frame files from cache
@@ -231,7 +221,12 @@ if not opts.skip_datafind:
                     path=local_path))
 
             new_cache.close()
-        
+
+else:
+    # user-specified cache files
+    for i,ifo in enumerate(ifoList):
+        cacheFiles[ifo] = \
+                configparser.get('datafind','cacheFiles').split(',')[i]
 
 
 #############################################
@@ -241,37 +236,55 @@ if not opts.skip_datafind:
 # Directory Structure
 # ----------------------------------
 
-lag = configparser.get('bwb_args','L1-timeslide')
-
-# XXX: ultimately want 1 output dir per job!
-outdir  = 'job_' + str(int(gps)) + '_' + str(lag)
-
-trigdir = os.path.join(workdir, 'job_' + str(int(gps)) + '_' + str(lag))
 logdir = os.path.join(workdir, 'logs')
 
-if not os.path.exists(trigdir): os.makedirs(trigdir)
 if not os.path.exists(logdir): os.makedirs(logdir)
 
-# ----------------------------------
-# Create Job submission file XXX: make this a class in bwb_pipe_utils.py
-# ----------------------------------
+# -----------------------------------------------------------------------
+# DAG Writing
+# -----------------------------------------------------------------------
 
-bwb_job = pipeline.CondorJob(universe='standard',
-        executable='BayesWaveBurst', queue=1)
-bwb_job.set_stdout_file('{workdir}/logs/BayesWaveBurst_$(macrojobid).out'.format(workdir=workdir))
-bwb_job.set_stderr_file('{workdir}/logs/BayesWaveBurst_$(macrojobid).err'.format(workdir=workdir))
-bwb_job.set_log_file('{workdir}/logs/BayesWaveBurst_$(macrojobid).log'.format(workdir=workdir))
+#
+# Initialise DAG and Jobs
+#
 
-bwb_job.add_condor_cmd('should_transfer_files', 'YES')
-bwb_job.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
-bwb_job.add_condor_cmd('transfer_input_files', \
-        'BayesWaveBurst,datafind,$(macrooutdir),logs')
+# ---- Create a dag to which we can add jobs.
+dag = pipeline.CondorDAG(log=opts.user_tag)
 
-bwb_job.add_ini_opts(configparser, 'bwb_args')
+# ---- Set the name of the file that will contain the DAG.
+dag.set_dag_file( os.path.join(workdir,'BayesWave_{0}'.format(opts.user_tag)) )
+
+# ---- Make instance of BayesWaveBurstJob.
+bwb_job = pipe_utils.BayesWaveBurstJob(configparser, workdir, cacheFiles)
+
+#
+# Build Nodes
+#
+
+# XXX: ultimately want 1 output dir per job!
+outputdir  = 'job_' + str(int(gps))
+
+if not os.path.exists(os.path.join(workdir,outputdir)): os.makedirs(os.path.join(workdir,outputdir))
+
+bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
+
+# add options
+bwb_node.set_trigtime(opts.trigger_time)
+bwb_node.set_psdtime(opts.trigger_time)
 
 
-bwb_job.set_sub_file('{workdir}/BayesWaveBurst.sub'.format(workdir=workdir))
-bwb_job.write_sub_file()
+# Add Nodes to DAG
+dag.add_node(bwb_node)
+
+#
+# Finalise DAG
+#
+# ---- Write out the submit files needed by condor.
+dag.write_sub_files()
+
+# ---- Write out the DAG itself.
+dag.write_dag()
+dag.write_script()
 
 sys.exit()
 # -----------------
@@ -283,7 +296,7 @@ bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)  
 --L1-cache ./datafind/L1.cache \
 --trigtime $(macrotrigtime) --srate $(macrosrate) --seglen $(macroseglen) \
 --bayesLine --PSDstart $(macropsdstart) --PSDlength $(macropsdlen) \
---outputDir $(macrooutdir)  \
+--outputDir $(macrooutputdir)  \
 --L1-timeslide $(macrol1timeslide) 
 """
 
@@ -294,9 +307,9 @@ submit_str = """
 executable=BayesWaveBurst
 universe=standard
 arguments={bwbcmdline}
-output={outdir}/{outdir}.out
-error={outdir}/{outdir}.err
-log={outdir}/{outdir}.log
+output={outputdir}/{outputdir}.out
+error={outputdir}/{outputdir}.err
+log={outputdir}/{outputdir}.log
 notification=never
 should_transfer_files=YES
 when_to_transfer_output = ON_EXIT
@@ -304,8 +317,8 @@ stream_error=False
 stream_output=False
 WantRemoteIO=False
 accounting_group=ligo.prod.o1.burst.paramest.bayeswave
-transfer_input_files=BayesWaveBurst,datafind,{outdir},logs
-transfer_output_files={outdir},logs
+transfer_input_files=BayesWaveBurst,datafind,{outputdir},logs
+transfer_output_files={outputdir},logs
 queue 1
 """
 
@@ -317,13 +330,13 @@ dagfile = open(os.path.join(workdir, 'dagfile.dag'), 'w')
 
 submitname = os.path.join(workdir, 'submitBWB.sub')
 submitfile = open(submitname, 'w')
-submitfile.write(submit_str.format(bwbcmdline=bwbcmdline, outdir=outdir))
+submitfile.write(submit_str.format(bwbcmdline=bwbcmdline, outputdir=outputdir))
 submitfile.close()
 
 
 # ---- write the dag file
 
-dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outdir))
+dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outputdir))
 
 # -----------------
 # BWB arguments 
@@ -331,16 +344,16 @@ dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outdir))
 bwbargsfmt = """macroflow=\"{flow}\" macroh1channel=\"{h1_channel}\" \
 macrol1channel=\"{l1_channel}\" macrotrigtime=\"{gps}\" macrosrate=\"{srate}\" \
 macroseglen=\"{seglen}\" macropsdstart=\"{gps}\" macropsdlen=\"{psdlen}\" \
-macrooutdir=\"{outdir}\" macrol1timeslide=\"{lag}\" 
+macrooutputdir=\"{outputdir}\" macrol1timeslide=\"{lag}\" 
 """
 
 bwbvars = bwbargsfmt.format(flow=flow, h1_channel=h1_channel,
         l1_channel=l1_channel, gps=gps, srate=srate, seglen=seglen,
-        psdlen=psdlen, outdir=outdir, lag=lag )
+        psdlen=psdlen, outputdir=outputdir, lag=lag )
 
-dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outdir,
+dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outputdir,
     bwbvars=bwbvars))
-dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outdir))
+dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outputdir))
 
 dagfile.close()
 
@@ -354,11 +367,11 @@ fullcmdline = """./BayesWaveBurst \
 --L1-cache ./datafind/L1.cache \
 --trigtime {gps} --srate {srate} --seglen {seglen} \
 --bayesLine --PSDstart {gps} --PSDlength {psdlen} \
---outputDir {outdir}  \
+--outputDir {outputdir}  \
 --L1-timeslide {lag}
 """.format(flow=flow, h1_channel=h1_channel, l1_channel=l1_channel, gps=gps,
         srate=srate, seglen=seglen,
-        psdlen=psdlen, outdir=outdir, lag=lag )
+        psdlen=psdlen, outputdir=outputdir, lag=lag )
 
 shellname = os.path.join(workdir, 'runBWB.sh')
 shellfile = open(shellname, 'w')
