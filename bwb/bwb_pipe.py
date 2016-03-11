@@ -168,6 +168,8 @@ if not opts.skip_datafind:
             cache_entries = np.loadtxt('{workdir}/datafind/{ifo}.cache'.format(
                 workdir=workdir, ifo=ifo), dtype=str)
 
+            if cache_entries.ndim==1: cache_entries=[cache_entries]
+
             frame_paths=[]
             frame_files=[]
             for c,cache_entry in enumerate(cache_entries):
