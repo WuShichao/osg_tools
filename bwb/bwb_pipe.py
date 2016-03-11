@@ -20,6 +20,7 @@ import time
 import sys
 import os, shutil
 import subprocess
+import uuid
 
 #import bwb_pipe_utils as pipe_utils
 from glue import pipeline
@@ -101,8 +102,6 @@ frtypeList=frtypeList.split(',')
 # ----------------------------------------
 # Setup analysis directory for deployment
 # ----------------------------------------
-
-name = workdir
 
 datafind = os.path.join(workdir, 'datafind')
 if not os.path.exists(datafind): os.makedirs(datafind)
@@ -262,15 +261,17 @@ bwb_job = pipe_utils.BayesWaveBurstJob(configparser, workdir, cacheFiles)
 #
 
 # XXX: ultimately want 1 output dir per job!
-outputdir  = 'job_' + str(int(gps))
 
-if not os.path.exists(os.path.join(workdir,outputdir)): os.makedirs(os.path.join(workdir,outputdir))
+outputDir  = 'BayesWaveBurst_' + str(int(gps)) + '_' + str(uuid.uuid1())
+
+if not os.path.exists(os.path.join(workdir,outputDir)): os.makedirs(os.path.join(workdir,outputDir))
 
 bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
 
 # add options
 bwb_node.set_trigtime(opts.trigger_time)
 bwb_node.set_psdtime(opts.trigger_time)
+bwb_node.set_outputDir(outputDir)
 
 
 # Add Nodes to DAG
@@ -296,7 +297,7 @@ bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)  
 --L1-cache ./datafind/L1.cache \
 --trigtime $(macrotrigtime) --srate $(macrosrate) --seglen $(macroseglen) \
 --bayesLine --PSDstart $(macropsdstart) --PSDlength $(macropsdlen) \
---outputDir $(macrooutputdir)  \
+--outputDir $(macrooutputDir)  \
 --L1-timeslide $(macrol1timeslide) 
 """
 
@@ -307,9 +308,9 @@ submit_str = """
 executable=BayesWaveBurst
 universe=standard
 arguments={bwbcmdline}
-output={outputdir}/{outputdir}.out
-error={outputdir}/{outputdir}.err
-log={outputdir}/{outputdir}.log
+output={outputDir}/{outputDir}.out
+error={outputDir}/{outputDir}.err
+log={outputDir}/{outputDir}.log
 notification=never
 should_transfer_files=YES
 when_to_transfer_output = ON_EXIT
@@ -317,8 +318,8 @@ stream_error=False
 stream_output=False
 WantRemoteIO=False
 accounting_group=ligo.prod.o1.burst.paramest.bayeswave
-transfer_input_files=BayesWaveBurst,datafind,{outputdir},logs
-transfer_output_files={outputdir},logs
+transfer_input_files=BayesWaveBurst,datafind,{outputDir},logs
+transfer_output_files={outputDir},logs
 queue 1
 """
 
@@ -330,13 +331,13 @@ dagfile = open(os.path.join(workdir, 'dagfile.dag'), 'w')
 
 submitname = os.path.join(workdir, 'submitBWB.sub')
 submitfile = open(submitname, 'w')
-submitfile.write(submit_str.format(bwbcmdline=bwbcmdline, outputdir=outputdir))
+submitfile.write(submit_str.format(bwbcmdline=bwbcmdline, outputDir=outputDir))
 submitfile.close()
 
 
 # ---- write the dag file
 
-dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outputdir))
+dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outputDir))
 
 # -----------------
 # BWB arguments 
@@ -344,16 +345,16 @@ dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outputdir))
 bwbargsfmt = """macroflow=\"{flow}\" macroh1channel=\"{h1_channel}\" \
 macrol1channel=\"{l1_channel}\" macrotrigtime=\"{gps}\" macrosrate=\"{srate}\" \
 macroseglen=\"{seglen}\" macropsdstart=\"{gps}\" macropsdlen=\"{psdlen}\" \
-macrooutputdir=\"{outputdir}\" macrol1timeslide=\"{lag}\" 
+macrooutputDir=\"{outputDir}\" macrol1timeslide=\"{lag}\" 
 """
 
 bwbvars = bwbargsfmt.format(flow=flow, h1_channel=h1_channel,
         l1_channel=l1_channel, gps=gps, srate=srate, seglen=seglen,
-        psdlen=psdlen, outputdir=outputdir, lag=lag )
+        psdlen=psdlen, outputDir=outputDir, lag=lag )
 
-dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outputdir,
+dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outputDir,
     bwbvars=bwbvars))
-dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outputdir))
+dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outputDir))
 
 dagfile.close()
 
@@ -367,11 +368,11 @@ fullcmdline = """./BayesWaveBurst \
 --L1-cache ./datafind/L1.cache \
 --trigtime {gps} --srate {srate} --seglen {seglen} \
 --bayesLine --PSDstart {gps} --PSDlength {psdlen} \
---outputDir {outputdir}  \
+--outputDir {outputDir}  \
 --L1-timeslide {lag}
 """.format(flow=flow, h1_channel=h1_channel, l1_channel=l1_channel, gps=gps,
         srate=srate, seglen=seglen,
-        psdlen=psdlen, outputdir=outputdir, lag=lag )
+        psdlen=psdlen, outputDir=outputDir, lag=lag )
 
 shellname = os.path.join(workdir, 'runBWB.sh')
 shellfile = open(shellname, 'w')

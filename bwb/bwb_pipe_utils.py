@@ -76,6 +76,9 @@ class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('psdtime', psdtime)
         self.__psdtime = psdtime
 
+    def set_outputDir(self, outputDir):
+        self.add_var_opt('outputDir', outputDir)
+        self.__outputDir = outputDir
   
 
 
