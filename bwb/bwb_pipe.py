@@ -199,7 +199,7 @@ if not opts.skip_datafind:
 
         for frame in frames_to_copy:
             print >> sys.stdout, "Copying %s"%frame
-            #shutil.copy(frame, os.path.join(workdir, 'datafind'))
+            shutil.copy(frame, os.path.join(workdir, 'datafind'))
 
 
         #
