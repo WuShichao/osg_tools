@@ -75,6 +75,11 @@ opts, args, cp = parser()
 
 workdir = opts.workdir 
 
+if not os.path.exists(workdir): os.makedirs(workdir)
+
+topdir=os.getcwd()
+os.chdir(workdir)
+
 # Get trigger time(s)
 
 gps = opts.trigger_time
@@ -103,10 +108,10 @@ frtypeList=frtypeList.split(',')
 # Setup analysis directory for deployment
 # ----------------------------------------
 
-datafind = os.path.join(workdir, 'datafind')
+datafind = 'datafind'
 if not os.path.exists(datafind): os.makedirs(datafind)
 
-shutil.copy(cp.get('paths','bw_executable'), workdir)
+shutil.copy(cp.get('paths','bw_executable'), '.')
 
 
 
@@ -165,8 +170,8 @@ if not opts.skip_datafind:
 
         frames_to_copy=[]
         for ifo in ifoList:
-            cache_entries = np.loadtxt('{workdir}/datafind/{ifo}.cache'.format(
-                workdir=workdir, ifo=ifo), dtype=str)
+            cache_entries = np.loadtxt('datafind/{ifo}.cache'.format(ifo=ifo),
+                    dtype=str)
 
             if cache_entries.ndim==1: cache_entries=[cache_entries]
 
@@ -199,14 +204,14 @@ if not opts.skip_datafind:
 
         for frame in frames_to_copy:
             print >> sys.stdout, "Copying %s"%frame
-            shutil.copy(frame, os.path.join(workdir, 'datafind'))
+            shutil.copy(frame, 'datafind')
 
 
         #
         # Now we need to make a new, local cache file
         # - do this by manipulating the path string in the cache file to be relative 
         for ifo in ifoList:
-            cache_file = os.path.join(workdir, 'datafind/{ifo}.cache'.format(ifo=ifo))
+            cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
             shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
             cache_entries = np.loadtxt(cache_file, dtype=str)
@@ -241,7 +246,7 @@ else:
 # Directory Structure
 # ----------------------------------
 
-logdir = os.path.join(workdir, 'logs')
+logdir = 'logs'
 
 if not os.path.exists(logdir): os.makedirs(logdir)
 
@@ -257,10 +262,10 @@ if not os.path.exists(logdir): os.makedirs(logdir)
 dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
-dag.set_dag_file( os.path.join(workdir,'BayesWave_{0}'.format(opts.user_tag)) )
+dag.set_dag_file( 'BayesWave_{0}'.format(opts.user_tag) )
 
 # ---- Make instance of BayesWaveBurstJob.
-bwb_job = pipe_utils.BayesWaveBurstJob(cp, workdir, cacheFiles)
+bwb_job = pipe_utils.BayesWaveBurstJob(cp, cacheFiles)
 
 #
 # Build Nodes
@@ -270,7 +275,7 @@ bwb_job = pipe_utils.BayesWaveBurstJob(cp, workdir, cacheFiles)
 
 outputDir  = 'BayesWaveBurst_' + str(int(gps)) + '_' + str(uuid.uuid1())
 
-if not os.path.exists(os.path.join(workdir,outputDir)): os.makedirs(os.path.join(workdir,outputDir))
+if not os.path.exists(outputDir): os.makedirs(outputDir)
 
 bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
 
@@ -292,6 +297,35 @@ dag.write_sub_files()
 # ---- Write out the DAG itself.
 dag.write_dag()
 dag.write_script()
+
+# move back
+os.chdir(topdir)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 sys.exit()
 # -----------------

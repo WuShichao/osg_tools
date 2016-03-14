@@ -22,13 +22,15 @@ import itertools
 
 class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, workdir, cacheFiles, dax=False):
+    def __init__(self, cp, cacheFiles, dax=False):
 
 
         universe=cp.get('condor','universe')
 
         pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
         self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).err')
@@ -63,7 +65,7 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
 
-        self.set_sub_file('{workdir}/BayesWaveBurst.sub'.format(workdir=workdir))
+        self.set_sub_file('BayesWaveBurst.sub')
 
 
 class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
