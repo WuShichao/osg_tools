@@ -22,13 +22,13 @@ import itertools
 
 class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, configparser, workdir, cacheFiles, dax=False):
+    def __init__(self, cp, workdir, cacheFiles, dax=False):
 
 
-        universe=configparser.get('general','universe')
+        universe=cp.get('condor','universe')
 
         pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
-        pipeline.AnalysisJob.__init__(self,configparser,dax=dax)
+        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).err')
@@ -37,20 +37,27 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
         self.add_condor_cmd('transfer_input_files',
-                'BayesWaveBurst,datafind,$(macrooutdir),logs')
+                'BayesWaveBurst,datafind,$(macrooutputDir),logs')
+        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
 
         # --- Common options
-        ifoList = configparser.get('datafind', 'ifoList').split(',')
-        channelList = configparser.get('datafind', 'channelList').split(',')
+        ifoList = cp.get('datafind', 'ifoList').split(',')
+        channelList = cp.get('datafind', 'channelList').split(',')
 
-        self.add_ini_opts(configparser, 'bwb_args')
         # XXX: hack to repeat option on purpose...
         ifo_list_opt = ifoList[0]
         for ifo in ifoList[1:]:
             ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
+
+        self.add_opt('srate', cp.get('bwb_args', 'srate'))
+        self.add_opt('seglen', cp.get('bwb_args', 'seglen'))
+        self.add_opt('PSDlength', cp.get('bwb_args', 'PSDlength'))
+
+        if cp.has_option('bwb_args', 'BayesLine'):
+            self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
  
-        flow = configparser.get('general','flow')
+        flow = cp.get('bwb_args','flow')
         for i,ifo in enumerate(ifoList):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), flow)
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
@@ -61,8 +68,6 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    new_id = itertools.count().next
-
     def __init__(self, bwb_job):
 
         pipeline.CondorDAGNode.__init__(self,bwb_job)
@@ -72,9 +77,9 @@ class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('trigtime', trigtime)
         self.__trigtime = trigtime
 
-    def set_psdtime(self, psdtime):
-        self.add_var_opt('psdtime', psdtime)
-        self.__psdtime = psdtime
+    def set_PSDstart(self, PSDstart):
+        self.add_var_opt('PSDstart', PSDstart)
+        self.__PSDstart = PSDstart
 
     def set_outputDir(self, outputDir):
         self.add_var_opt('outputDir', outputDir)

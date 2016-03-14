@@ -58,11 +58,11 @@ def parser():
 
 
     # --- Read config file
-    configparser = ConfigParser.ConfigParser()
-    configparser.read(args[0])
+    cp = ConfigParser.ConfigParser()
+    cp.read(args[0])
 
 
-    return opts, args, configparser
+    return opts, args, cp
 
 
 
@@ -71,7 +71,7 @@ def parser():
 # ----------------
 
 # Read inputs
-opts, args, configparser = parser()
+opts, args, cp = parser()
 
 workdir = opts.workdir 
 
@@ -86,9 +86,9 @@ if gps is None:
 # --- Params from config file
 #
 
-ifoList = configparser.get('datafind', 'ifoList')
-channelList = configparser.get('datafind', 'channelList')
-frtypeList = configparser.get('datafind', 'frtypeList')
+ifoList = cp.get('datafind', 'ifoList')
+channelList = cp.get('datafind', 'channelList')
+frtypeList = cp.get('datafind', 'frtypeList')
 
 # parse channels etc
 ifoList=ifoList.split(',')
@@ -106,7 +106,7 @@ frtypeList=frtypeList.split(',')
 datafind = os.path.join(workdir, 'datafind')
 if not os.path.exists(datafind): os.makedirs(datafind)
 
-shutil.copy(configparser.get('paths','bw_executable'), workdir)
+shutil.copy(cp.get('paths','bw_executable'), workdir)
 
 
 
@@ -146,7 +146,7 @@ if not opts.skip_datafind:
         except:
             print >> sys.stderr, "ERROR: datafind failed, continuing for testing"
 
-        cacheFiles[ifo]=os.path.join(datafind, '{0}.cache')
+        cacheFiles[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
     #############################################
     # Get frame files from cache
@@ -199,7 +199,7 @@ if not opts.skip_datafind:
 
         for frame in frames_to_copy:
             print >> sys.stdout, "Copying %s"%frame
-            shutil.copy(frame, os.path.join(workdir, 'datafind'))
+            #shutil.copy(frame, os.path.join(workdir, 'datafind'))
 
 
         #
@@ -209,11 +209,15 @@ if not opts.skip_datafind:
             cache_file = os.path.join(workdir, 'datafind/{ifo}.cache'.format(ifo=ifo))
             shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
-            cache_entries = np.loadtxt(cache_file, dtype=str)[unique_idx]
+            cache_entries = np.loadtxt(cache_file, dtype=str)
+            if cache_entries.ndim>1:
+                cache_entries = cache_entries[unique_idx]
+
+            if cache_entries.ndim==1:
+                cache_entries = [cache_entries]
 
             new_cache = open(cache_file, 'w')
             for entry in cache_entries:
-
 
                 local_path=os.path.join('datafind',entry[4].split('/')[-1])
 
@@ -227,7 +231,7 @@ else:
     # user-specified cache files
     for i,ifo in enumerate(ifoList):
         cacheFiles[ifo] = \
-                configparser.get('datafind','cacheFiles').split(',')[i]
+                cp.get('datafind','cacheFiles').split(',')[i]
 
 
 #############################################
@@ -250,13 +254,13 @@ if not os.path.exists(logdir): os.makedirs(logdir)
 #
 
 # ---- Create a dag to which we can add jobs.
-dag = pipeline.CondorDAG(log=opts.user_tag)
+dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
 dag.set_dag_file( os.path.join(workdir,'BayesWave_{0}'.format(opts.user_tag)) )
 
 # ---- Make instance of BayesWaveBurstJob.
-bwb_job = pipe_utils.BayesWaveBurstJob(configparser, workdir, cacheFiles)
+bwb_job = pipe_utils.BayesWaveBurstJob(cp, workdir, cacheFiles)
 
 #
 # Build Nodes
@@ -272,7 +276,7 @@ bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
 
 # add options
 bwb_node.set_trigtime(opts.trigger_time)
-bwb_node.set_psdtime(opts.trigger_time)
+bwb_node.set_PSDstart(opts.trigger_time)
 bwb_node.set_outputDir(outputDir)
 
 
