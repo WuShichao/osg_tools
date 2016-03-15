@@ -30,7 +30,8 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
-        self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+        if cp.has_option('bwb_args', 'accounting_group'):
+            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
         self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).err')
@@ -42,11 +43,11 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
                 'BayesWaveBurst,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
 
-        # --- Common options
+        # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
         channelList = cp.get('datafind', 'channelList').split(',')
 
-        # XXX: hack to repeat option on purpose...
+        # XXX: hack to repeat option
         ifo_list_opt = ifoList[0]
         for ifo in ifoList[1:]:
             ifo_list_opt += ' --ifo {0}'.format(ifo)
@@ -55,15 +56,25 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('srate', cp.get('bwb_args', 'srate'))
         self.add_opt('seglen', cp.get('bwb_args', 'seglen'))
         self.add_opt('PSDlength', cp.get('bwb_args', 'PSDlength'))
-
-        if cp.has_option('bwb_args', 'BayesLine'):
-            self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
  
         flow = cp.get('bwb_args','flow')
         for i,ifo in enumerate(ifoList):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), flow)
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
+
+        # --- Optional options
+        # bayesLine
+        if cp.has_option('bwb_args', 'BayesLine'):
+            self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
+
+        # noClean
+        if cp.has_option('bwb_args', 'noClean'):
+            self.add_opt('noClean', cp.get('bwb_args', 'noClean'))
+
+        # fixD
+        if cp.has_option('bwb_args', 'fixD'):
+            self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
         self.set_sub_file('BayesWaveBurst.sub')
 
