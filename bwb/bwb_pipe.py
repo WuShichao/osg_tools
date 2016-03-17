@@ -111,8 +111,8 @@ frtypeList=frtypeList.split(',')
 datafind = 'datafind'
 if not os.path.exists(datafind): os.makedirs(datafind)
 
-shutil.copy(cp.get('paths','bw_executable'), '.')
-
+shutil.copy(cp.get('paths','bwb_executable'), '.')
+shutil.copy(cp.get('paths','bwp_executable'), '.')
 
 
 #############################################
@@ -266,6 +266,7 @@ dag.set_dag_file( 'BayesWave_{0}'.format(opts.user_tag) )
 
 # ---- Make instance of BayesWaveBurstJob.
 bwb_job = pipe_utils.BayesWaveBurstJob(cp, cacheFiles)
+bwp_job = pipe_utils.BayesWavePostJob(cp, cacheFiles)
 
 #
 # Build Nodes
@@ -278,15 +279,21 @@ outputDir  = 'BayesWaveBurst_' + str(int(gps)) + '_' + str(uuid.uuid1())
 if not os.path.exists(outputDir): os.makedirs(outputDir)
 
 bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
+bwp_node = pipe_utils.BayesWavePostNode(bwp_job)
 
 # add options
 bwb_node.set_trigtime(opts.trigger_time)
 bwb_node.set_PSDstart(opts.trigger_time)
 bwb_node.set_outputDir(outputDir)
 
+bwp_node.set_trigtime(opts.trigger_time)
+bwp_node.set_PSDstart(opts.trigger_time)
+bwp_node.set_outputDir(outputDir)
+bwp_node.add_parent(bwb_node)
 
 # Add Nodes to DAG
 dag.add_node(bwb_node)
+dag.add_node(bwp_node)
 
 #
 # Finalise DAG
