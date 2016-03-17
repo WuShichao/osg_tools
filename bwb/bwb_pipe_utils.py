@@ -34,7 +34,7 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
-        if cp.has_option('bwb_args', 'accounting_group'):
+        if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
         self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
@@ -117,7 +117,7 @@ class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         pipeline.CondorDAGJob.__init__(self,universe,'BayesWavePost')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
-        if cp.has_option('bwb_args', 'accounting_group'):
+        if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
         self.set_stdout_file('logs/BayesWavePost_$(cluster)-$(process)-$(node).out')
