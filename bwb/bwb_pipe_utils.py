@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,     
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.    
 
-# DAG Class definitions for BayesWaveBurst
+# DAG Class definitions for BayesWave
 
 from glue import pipeline
 import itertools
@@ -24,27 +24,27 @@ import itertools
 # Main analysis
 #
 
-class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+class BayesWaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, cacheFiles, dax=False):
 
 
         universe=cp.get('condor','universe')
 
-        pipeline.CondorDAGJob.__init__(self,universe,'BayesWaveBurst')
+        pipeline.CondorDAGJob.__init__(self,universe,'bayeswave')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.set_stdout_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('logs/BayesWaveBurst_$(cluster)-$(process)-$(node).log')
+        self.set_stdout_file('logs/BayesWave_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('logs/BayesWave_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('logs/BayesWave_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
         self.add_condor_cmd('transfer_input_files',
-                'BayesWaveBurst,datafind,$(macrooutputDir),logs')
+                'BayesWave,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
 
         # --- Required options
@@ -104,10 +104,10 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'fixD'):
             self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
-        self.set_sub_file('BayesWaveBurst.sub')
+        self.set_sub_file('BayesWave.sub')
 
 
-class BayesWaveBurstNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+class BayesWaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def __init__(self, bwb_job):
 
@@ -138,7 +138,7 @@ class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        pipeline.CondorDAGJob.__init__(self,universe,'BayesWavePost')
+        pipeline.CondorDAGJob.__init__(self,universe,'bayeswave_post')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):

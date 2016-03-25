@@ -264,8 +264,8 @@ dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 # ---- Set the name of the file that will contain the DAG.
 dag.set_dag_file( 'BayesWave_{0}'.format(opts.user_tag) )
 
-# ---- Make instance of BayesWaveBurstJob.
-bwb_job = pipe_utils.BayesWaveBurstJob(cp, cacheFiles)
+# ---- Make instance of BayesWaveJob.
+bwb_job = pipe_utils.BayesWaveJob(cp, cacheFiles)
 bwp_job = pipe_utils.BayesWavePostJob(cp, cacheFiles)
 
 #
@@ -274,11 +274,11 @@ bwp_job = pipe_utils.BayesWavePostJob(cp, cacheFiles)
 
 # XXX: ultimately want 1 output dir per job!
 
-outputDir  = 'BayesWaveBurst_' + str(int(gps)) + '_' + str(uuid.uuid1())
+outputDir  = 'BayesWave_' + str(int(gps)) + '_' + str(uuid.uuid1())
 
 if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-bwb_node = pipe_utils.BayesWaveBurstNode(bwb_job)
+bwb_node = pipe_utils.BayesWaveNode(bwb_job)
 bwp_node = pipe_utils.BayesWavePostNode(bwp_job)
 
 # add options
@@ -352,7 +352,7 @@ bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)  
 # Template for bwb submit file
 # ----------
 submit_str = """
-executable=BayesWaveBurst
+executable=BayesWave
 universe=standard
 arguments={bwbcmdline}
 output={outputDir}/{outputDir}.out
@@ -365,7 +365,7 @@ stream_error=False
 stream_output=False
 WantRemoteIO=False
 accounting_group=ligo.prod.o1.burst.paramest.bayeswave
-transfer_input_files=BayesWaveBurst,datafind,{outputDir},logs
+transfer_input_files=BayesWave,datafind,{outputDir},logs
 transfer_output_files={outputDir},logs
 queue 1
 """
@@ -408,7 +408,7 @@ dagfile.close()
 # -----------------
 # BWB shell script 
 # -----------------
-fullcmdline = """./BayesWaveBurst \
+fullcmdline = """./BayesWave \
 --ifo H1 --H1-flow {flow} --H1-channel {h1_channel}   \
 --ifo L1 --L1-flow {flow} --L1-channel {l1_channel}  \
 --H1-cache ./datafind/H1.cache \
