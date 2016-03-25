@@ -68,6 +68,30 @@ class BayesWaveBurstJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
 
         # --- Optional options
+        # dataseed
+        if cp.has_option('bwb_args', 'dataseed'):
+            self.add_opt('dataseed', cp.get('bwb_args', 'dataseed'))
+
+        # Niter
+        if cp.has_option('bwb_args', 'Niter'):
+            self.add_opt('Niter', cp.get('bwb_args', 'Niter'))
+
+        # Nchain
+        if cp.has_option('bwb_args', 'Nchain'):
+            self.add_opt('Nchain', cp.get('bwb_args', 'Nchain'))
+            
+        # Ncycle
+        if cp.has_option('bwb_args', 'Ncycle'):
+            self.add_opt('Ncycle', cp.get('bwb_args', 'Ncycle'))
+
+        # Nburnin
+        if cp.has_option('bwb_args', 'Nburnin'):
+            self.add_opt('Nburnin', cp.get('bwb_args', 'Nburnin'))
+
+        # chainseed
+        if cp.has_option('bwb_args', 'chainseed'):
+            self.add_opt('chainseed', cp.get('bwb_args', 'chainseed'))
+
         # bayesLine
         if cp.has_option('bwb_args', 'BayesLine'):
             self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
