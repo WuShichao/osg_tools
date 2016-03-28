@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,     
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.    
 
-# DAG Class definitions for BayesWave
+# DAG Class definitions for bayeswave
 
 from glue import pipeline
 import itertools
@@ -24,7 +24,7 @@ import itertools
 # Main analysis
 #
 
-class BayesWaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, cacheFiles, dax=False):
 
@@ -37,15 +37,16 @@ class BayesWaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.set_stdout_file('logs/BayesWave_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('logs/BayesWave_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('logs/BayesWave_$(cluster)-$(process)-$(node).log')
+        self.set_stdout_file('logs/bayeswave_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('logs/bayeswave_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('logs/bayeswave_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
         self.add_condor_cmd('transfer_input_files',
-                'BayesWave,datafind,$(macrooutputDir),logs')
+                'bayeswave,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
+        self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
@@ -68,6 +69,10 @@ class BayesWaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
 
         # --- Optional options
+        # self-checkpointing
+        if cp.has_option('condor', 'checkpoint'):
+            self.add_opt('checkpoint', cp.get('condor', 'checkpoint'))
+
         # dataseed
         if cp.has_option('bwb_args', 'dataseed'):
             self.add_opt('dataseed', cp.get('bwb_args', 'dataseed'))
@@ -104,10 +109,10 @@ class BayesWaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'fixD'):
             self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
-        self.set_sub_file('BayesWave.sub')
+        self.set_sub_file('bayeswave.sub')
 
 
-class BayesWaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def __init__(self, bwb_job):
 
@@ -131,7 +136,7 @@ class BayesWaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 # Post-processing
 #
 
-class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, cacheFiles, dax=False):
 
@@ -144,15 +149,16 @@ class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.set_stdout_file('logs/BayesWavePost_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('logs/BayesWavePost_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('logs/BayesWavePost_$(cluster)-$(process)-$(node).log')
+        self.set_stdout_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
         self.add_condor_cmd('transfer_input_files',
-                'BayesWavePost,datafind,$(macrooutputDir),logs')
+                'bayeswave_post,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
+        self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
@@ -176,7 +182,6 @@ class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 
         # --- Optional options
-
         # bayesLine
         if cp.has_option('bwb_args', 'BayesLine'):
             self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
@@ -185,10 +190,10 @@ class BayesWavePostJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwp_args', '0noise'):
             self.add_opt('0noise', cp.get('bwp_args', '0noise'))
 
-        self.set_sub_file('BayesWavePost.sub')
+        self.set_sub_file('bayeswave_post.sub')
 
 
-class BayesWavePostNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def __init__(self, bwp_job):
 

@@ -262,11 +262,11 @@ if not os.path.exists(logdir): os.makedirs(logdir)
 dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
-dag.set_dag_file( 'BayesWave_{0}'.format(opts.user_tag) )
+dag.set_dag_file( 'bayeswave_{0}'.format(opts.user_tag) )
 
-# ---- Make instance of BayesWaveJob.
-bwb_job = pipe_utils.BayesWaveJob(cp, cacheFiles)
-bwp_job = pipe_utils.BayesWavePostJob(cp, cacheFiles)
+# ---- Make instance of bayeswaveJob.
+bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles)
+bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles)
 
 #
 # Build Nodes
@@ -274,12 +274,12 @@ bwp_job = pipe_utils.BayesWavePostJob(cp, cacheFiles)
 
 # XXX: ultimately want 1 output dir per job!
 
-outputDir  = 'BayesWave_' + str(int(gps)) + '_' + str(uuid.uuid1())
+outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid1())
 
 if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-bwb_node = pipe_utils.BayesWaveNode(bwb_job)
-bwp_node = pipe_utils.BayesWavePostNode(bwp_job)
+bwb_node = pipe_utils.bayeswaveNode(bwb_job)
+bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
 # add options
 bwb_node.set_trigtime(opts.trigger_time)
@@ -352,7 +352,7 @@ bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)  
 # Template for bwb submit file
 # ----------
 submit_str = """
-executable=BayesWave
+executable=bayeswave
 universe=standard
 arguments={bwbcmdline}
 output={outputDir}/{outputDir}.out
@@ -365,7 +365,7 @@ stream_error=False
 stream_output=False
 WantRemoteIO=False
 accounting_group=ligo.prod.o1.burst.paramest.bayeswave
-transfer_input_files=BayesWave,datafind,{outputDir},logs
+transfer_input_files=bayeswave,datafind,{outputDir},logs
 transfer_output_files={outputDir},logs
 queue 1
 """
@@ -408,7 +408,7 @@ dagfile.close()
 # -----------------
 # BWB shell script 
 # -----------------
-fullcmdline = """./BayesWave \
+fullcmdline = """./bayeswave \
 --ifo H1 --H1-flow {flow} --H1-channel {h1_channel}   \
 --ifo L1 --L1-flow {flow} --L1-channel {l1_channel}  \
 --H1-cache ./datafind/H1.cache \
