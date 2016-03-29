@@ -77,6 +77,9 @@ workdir = opts.workdir
 
 if not os.path.exists(workdir): os.makedirs(workdir)
 
+# Copy ini file to workdir as a record
+shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
+
 topdir=os.getcwd()
 os.chdir(workdir)
 
