@@ -10,6 +10,7 @@ bayeswave \
     --H1-channel LALSimAdLIGO  \
     --inj GaTechIMBBH.xml --event 0 \
     --srate 512 --seglen 4 \
+    --trigtime 1126621184 \
     --PSDstart 1126621184 --PSDlength 1024 \
     --NCmin 2 --NCmax 2 --dataseed 1234 \
     --inj-numreldata GaTechCatalog.xml.gz
