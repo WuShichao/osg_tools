@@ -10,7 +10,7 @@ outfile_with_fref="GaTechIMBBH_with_fref.xml"
 
 lalapps_inspinj \
     --seed 1234 --f-lower 30 --gps-start-time ${gpsstart} \
-    --gps-end-time ${gpsend} --waveform NR_hdf5 \
+    --gps-end-time ${gpsend} --waveform NR_hdf5threePointFivePN \
     --ninja2-mass --nr-file ${catalogfile} \
     --time-step 1 --time-interval 0 --l-distr random \
     --dchirp-distr uniform --i-distr uniform \
