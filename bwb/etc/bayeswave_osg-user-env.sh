@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PATH=${PATH}:${HOME}/src/lscsoft/bayeswave/trunk/src
 export C_INCLUDE_PATH=${LIGO_LIBS}/lalsuite/master/include:/usr/include:/usr/include/gsl:$C_INCLUDE_PATH
 export LIBRARY_PATH=${LIGO_LIBS}/lalsuite/master/lib:/usr/lib64:/usr/lib:$LIBRARY_PATH
 export LIBRARY_PATH=${LIBRARY_PATH}:/cvmfs/oasis.opensciencegrid.org/ligo/framelib_v8r19p2_root-v5-34-08.patched/Linux-x86_64
