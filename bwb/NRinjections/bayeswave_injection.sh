@@ -13,4 +13,4 @@ bayeswave \
     --trigtime 1126621184 \
     --PSDstart 1126621184 --PSDlength 1024 \
     --NCmin 2 --NCmax 2 --dataseed 1234 \
-    --inj-numreldata GaTechCatalog.xml.gz
+    --inj-numreldata /data/lvc_nr/GaTech/GT0901.h5

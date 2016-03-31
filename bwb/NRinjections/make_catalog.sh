@@ -2,9 +2,9 @@
 
 source ~/.local/etc/pycbc-user-env.sh
 
-catalogdir=${HOME}/lvc_nr/GaTech
+catalogdir=/data/lvc_nr/GaTech
 
-h5files=`ls ${catalogdir}/*h5`
+h5files=`ls ${catalogdir}/GT0901.h5`
 echo ${h5files}
 
 pycbc_make_nr_hdf_catalog \

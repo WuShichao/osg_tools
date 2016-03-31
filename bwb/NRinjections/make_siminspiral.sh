@@ -20,7 +20,7 @@ lalapps_inspinj \
     --taper-injection start --output ${outfile}
 
 # add the fref
-pycbc_add_fref_to_sim_inspiral_table \
-    --catalog-file ${catalogfile} \
-    --input-file ${outfile} \
-    --output-file ${outfile_with_fref}
+#pycbc_add_fref_to_sim_inspiral_table \
+#    --catalog-file ${catalogfile} \
+#    --input-file ${outfile} \
+#    --output-file ${outfile_with_fref}
