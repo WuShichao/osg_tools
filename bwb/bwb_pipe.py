@@ -130,9 +130,9 @@ if opts.inj is not None:
         if ',' in events:
             injevents=[int(event) for event in events.split(',')]
             injevents=np.arange(min(injevents), max(injevents))
-
         else:
-            injevents=int(events)
+            # make them iterable
+            injevents=[int(events)]
         trigtimes=trigtimes[injevents]
 
 
@@ -305,14 +305,13 @@ dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 dag.set_dag_file( 'bayeswave_{0}'.format(opts.user_tag) )
 
 # ---- Make instance of bayeswaveJob.
-bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles)
-bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles)
+bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injFile=opts.inj)
+bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injFile=opts.inj)
 
 #
 # Build Nodes
 #
-
-for gps in trigtimes:
+for g,gps in enumerate(trigtimes):
 
     outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid4())
 
@@ -329,6 +328,17 @@ for gps in trigtimes:
     bwp_node.set_trigtime(gps)
     bwp_node.set_PSDstart(gps)
     bwp_node.set_outputDir(outputDir)
+
+    if opts.inj is not None:
+
+        # STILL TO SUPPORT:
+        # 1) xml, hdf5 file transfer
+        # 2) xml needs to point to hdf5 correctly after transfer
+
+        bwb_node.set_injevent(injevents[g])
+        bwp_node.set_injevent(injevents[g])
+
+
     bwp_node.add_parent(bwb_node)
 
     # Add Nodes to DAG

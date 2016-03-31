@@ -26,7 +26,7 @@ import itertools
 
 class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, dax=False):
+    def __init__(self, cp, cacheFiles, injFile=None, dax=False):
 
 
         universe=cp.get('condor','universe')
@@ -109,6 +109,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'fixD'):
             self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
+        # Injection file
+        if injFile is not None:
+            self.add_opt('inj', injFile)
+
         self.set_sub_file('bayeswave.sub')
 
 
@@ -130,6 +134,11 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_outputDir(self, outputDir):
         self.add_var_opt('outputDir', outputDir)
         self.__outputDir = outputDir
+
+    def set_injevent(self, event):
+        self.add_var_opt('event', event)
+        self.__event = event
+
   
 
 #
@@ -138,7 +147,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
 class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, dax=False):
+    def __init__(self, cp, cacheFiles, injFile=None, dax=False):
 
 
         universe=cp.get('condor','universe')
@@ -190,6 +199,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwp_args', '0noise'):
             self.add_opt('0noise', cp.get('bwp_args', '0noise'))
 
+        # Injection file
+        if injFile is not None:
+            self.add_opt('inj', injFile)
+
         self.set_sub_file('bayeswave_post.sub')
 
 
@@ -212,4 +225,7 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('outputDir', outputDir)
         self.__outputDir = outputDir
 
+    def set_injevent(self, event):
+        self.add_var_opt('event', event)
+        self.__event = event
 
