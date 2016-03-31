@@ -11,12 +11,13 @@ outfile_with_fref="GaTechIMBBH_with_fref.xml"
 lalapps_inspinj \
     --seed 1234 --f-lower 30 --gps-start-time ${gpsstart} \
     --gps-end-time ${gpsend} --waveform NR_hdf5threePointFivePN \
+    --amp-order 0 \
     --ninja2-mass --nr-file ${catalogfile} \
     --time-step 1 --time-interval 0 --l-distr random \
     --dchirp-distr uniform --i-distr uniform \
-    --min-distance 1000 --max-distance 500000 \
+    --min-distance 50000 --max-distance 50000 \
     --m-distr nrwaves --disable-spin \
-    --min-mtotal 100. --max-mtotal 500.\
+    --min-mtotal 100. --max-mtotal 100.\
     --taper-injection start --output ${outfile}
 
 # add the fref
