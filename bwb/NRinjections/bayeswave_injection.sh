@@ -19,4 +19,12 @@ bayeswave_post \
     --ifo H1 --H1-flow 16 --H1-cache LALSimAdLIGO \
     --H1-channel LALSimAdLIGO --trigtime 1126621184 \
     --srate 512 --seglen 4 --PSDstart 1126621184\
-    --PSDlength 1024 --dataseed 1234 --0noise
+    --PSDlength 1024 --dataseed 1234 --0noise \
+    --inj GaTechIMBBH.xml --event 0  \
+    --inj-numreldata /data/lvc_nr/GaTech/GT0901.h5
+
+# Make skymap
+python /home/jclark/src/lscsoft/bayeswave/trunk/postprocess/skymap/megasky.py
+
+# Make the output page
+python /home/jclark/src/lscsoft/bayeswave/trunk/postprocess/megaplot.py
