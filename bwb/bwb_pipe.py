@@ -22,8 +22,13 @@ import os, shutil
 import subprocess
 import uuid
 
-#import bwb_pipe_utils as pipe_utils
 from glue import pipeline
+
+from glue.ligolw import lsctables
+from glue.ligolw import table
+from glue.ligolw import utils
+from pylal.SimInspiralUtils import ExtractSimInspiralTableLIGOLWContentHandler
+lsctables.use_in(ExtractSimInspiralTableLIGOLWContentHandler)
 
 from optparse import OptionParser
 import ConfigParser
@@ -41,9 +46,11 @@ def parser():
     parser.add_option("-t", "--user-tag", default="TEST", type=str)
     parser.add_option("-o", "--workdir", type=str, default=None)
     parser.add_option("--trigger-time", type=float, default=None)
+    parser.add_option("--trigger-list", type=str, default=None)
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
+    parser.add_option("--inj", default=None)
 
     (opts,args) = parser.parse_args()
 
@@ -80,16 +87,6 @@ if not os.path.exists(workdir): os.makedirs(workdir)
 # Copy ini file to workdir as a record
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
 
-topdir=os.getcwd()
-os.chdir(workdir)
-
-# Get trigger time(s)
-
-gps = opts.trigger_time
-if gps is None:
-    print >> sys.stderr, "ERROR: must provide --trigger-time for the time being"
-    sys.exit()
-
 #
 # --- Params from config file
 #
@@ -104,12 +101,51 @@ channelList=channelList.split(',')
 frtypeList=frtypeList.split(',')
 
 
+#############################################
+#
+# Get trigger time(s)
+#
+if opts.trigger_time is not None:
+    trigtimes = [opts.trigger_time]
+
+if opts.trigger_list is not None:
+    trigtimes = np.loadtxt(opts.trigger_list)
+
+if opts.inj is not None:
+
+    #
+    # Read inspinj file
+    #
+    xmldoc=utils.load_filename(opts.inj, contenthandler=
+            ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
+    table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
+
+    # get gps list from sim_inspiral 
+    trigtimes=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
+            for sim in table])
+    
+    # reduce to specified values
+    events=cp.get('injections', 'events')
+    if events!='all':
+        if ',' in events:
+            injevents=[int(event) for event in events.split(',')]
+            injevents=np.arange(min(injevents), max(injevents))
+
+        else:
+            injevents=int(events)
+        trigtimes=trigtimes[injevents]
+
+
+
 
 #############################################
 
 # ----------------------------------------
 # Setup analysis directory for deployment
 # ----------------------------------------
+
+topdir=os.getcwd()
+os.chdir(workdir)
 
 datafind = 'datafind'
 if not os.path.exists(datafind): os.makedirs(datafind)
@@ -118,20 +154,16 @@ shutil.copy(cp.get('paths','bwb_executable'), '.')
 shutil.copy(cp.get('paths','bwp_executable'), '.')
 
 
-#############################################
-
-# ------------------
+# -------------------
 # Call LIGO Data find
 # -------------------
 cacheFiles = {}
-if not opts.skip_datafind:
-
-    # We'll do this here so that we can, if desired, ship frames with jobs
+if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
 
 
     # Set min/max gps times for LIGO data find:
-    min_gps = gps - 25.0 # XXX: why 25???
-    max_gps = gps + 25.0
+    min_gps = min(trigtimes) - 25.0 # XXX: why 25???
+    max_gps = max(trigtimes) + 25.0
 
     start = min_gps 
     end   = max_gps
@@ -161,7 +193,12 @@ if not opts.skip_datafind:
 
     if opts.copy_frames:
         
-        print >> sys.stdout, "Copying frame files for input"
+        print >> sys.stdout, "Copying frame files for input IS DUMB, EXITING"
+
+        # XXX THIS NEEDS TO BE OVERHAULED SO WE SHIP FRAMES WITH JOBS, NOT COPY
+        # FIRST!  DO this by adding the unique frames to a list whose elements
+        # are then associated to individual jobs
+        sys.exit()
 
         # XXX Having found these files, we now want to copy them to the working
         # directory and make fresh, local cache files
@@ -275,28 +312,28 @@ bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles)
 # Build Nodes
 #
 
-# XXX: ultimately want 1 output dir per job!
+for gps in trigtimes:
 
-outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid1())
+    outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid4())
 
-if not os.path.exists(outputDir): os.makedirs(outputDir)
+    if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-bwb_node = pipe_utils.bayeswaveNode(bwb_job)
-bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
+    bwb_node = pipe_utils.bayeswaveNode(bwb_job)
+    bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
-# add options
-bwb_node.set_trigtime(opts.trigger_time)
-bwb_node.set_PSDstart(opts.trigger_time)
-bwb_node.set_outputDir(outputDir)
+    # add options
+    bwb_node.set_trigtime(gps)
+    bwb_node.set_PSDstart(gps)
+    bwb_node.set_outputDir(outputDir)
 
-bwp_node.set_trigtime(opts.trigger_time)
-bwp_node.set_PSDstart(opts.trigger_time)
-bwp_node.set_outputDir(outputDir)
-bwp_node.add_parent(bwb_node)
+    bwp_node.set_trigtime(gps)
+    bwp_node.set_PSDstart(gps)
+    bwp_node.set_outputDir(outputDir)
+    bwp_node.add_parent(bwb_node)
 
-# Add Nodes to DAG
-dag.add_node(bwb_node)
-dag.add_node(bwp_node)
+    # Add Nodes to DAG
+    dag.add_node(bwb_node)
+    dag.add_node(bwp_node)
 
 #
 # Finalise DAG
