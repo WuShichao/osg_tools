@@ -21,6 +21,7 @@ import sys
 import os, shutil
 import subprocess
 import uuid
+import fileinput
 
 from glue import pipeline
 
@@ -35,6 +36,24 @@ import ConfigParser
 
 import bwb_pipe_utils as pipe_utils
 
+def localize_xml(xmlfile, old_path, new_path):
+    """
+    Modify absolute paths in xml files to relative paths
+    """
+
+    f = open(xmlfile,'r')
+    filedata = f.read()
+    f.close()
+
+    newdata = filedata.replace(old_path,new_path)
+
+    shutil.move(xmlfile, xmlfile+'.bak')
+
+    f = open(xmlfile,'w')
+    f.write(newdata)
+    f.close()
+
+    return 0
 
 def parser():
     """
@@ -53,7 +72,6 @@ def parser():
 
 # XXX: putting this in the config.ini for now
 #   parser.add_option("--inj", default=None)
-#   parser.add_option("--nrcatalog", default=None)
 #   parser.add_option("--nrhdf5", default=None)
 #   parser.add_option("--events", default="all")
  
@@ -105,6 +123,7 @@ if injfile is not None:
 # NR HDF5 data
 try:
     nrdata=cp.get('injections', 'nrdata')
+    nr_full_path=cp.get('injections', 'nrdata')
 except:
     nrdata=None
 if nrdata is not None:
@@ -116,15 +135,8 @@ if nrdata is not None:
     shutil.copy(nrdata, workdir)
     nrdata=os.path.basename(nrdata)
 
-
-# NR catalog
-try:
-    nrcatalog=cp.get('injections', 'nrcatalog')
-except:
-    nrcatalog=None
-if nrcatalog is not None:
-    shutil.copy(nrcatalog, workdir)
-    nrcatalog=os.path.basename(nrcatalog)
+    # Modify xml IN WORKDIR to point to local hdf5
+    localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
 
 #
 # --- Params from config file
@@ -343,9 +355,9 @@ dag.set_dag_file( 'bayeswave_{0}'.format(opts.user_tag) )
 
 # ---- Make instance of bayeswaveJob.
 bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injfile=injfile,
-        nrdata=nrdata, nrcatalog=nrcatalog)
+        nrdata=nrdata)
 bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
-        nrdata=nrdata, nrcatalog=nrcatalog)
+        nrdata=nrdata)
 
 #
 # Build Nodes
@@ -365,8 +377,8 @@ for g,gps in enumerate(trigtimes):
         os.symlink(os.path.join('..',injfile), os.path.join(outputDir, injfile))
     if nrdata is not None:
         os.symlink(os.path.join('..',nrdata), os.path.join(outputDir, nrdata))
-    if nrcatalog is not None:
-        os.symlink(os.path.join('..',nrcatalog), os.path.join(outputDir, nrcatalog))
+
+        print >> sys.stderr, "OSG DEPLOYMENT REQUIRES MODIFICATION TO XML PATHS"
 
     bwb_node = pipe_utils.bayeswaveNode(bwb_job)
     bwp_node = pipe_utils.bayeswave_postNode(bwp_job)

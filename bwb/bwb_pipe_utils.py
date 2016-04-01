@@ -26,8 +26,7 @@ import itertools
 
 class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None,
-            nrcatalog=None, dax=False):
+    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
 
 
         universe=cp.get('condor','universe')
@@ -51,7 +50,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         transferstring='bayeswave,datafind,$(macrooutputDir),logs'
         if injfile is not None: transferstring+=','+injfile
         if nrdata is not None: transferstring+=','+nrdata
-        if nrcatalog is not None: transferstring+=','+nrcatalog
         self.add_condor_cmd('transfer_input_files', transferstring)
 
         # --- Required options
@@ -159,8 +157,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
 class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None,
-            nrcatalog=None, dax=False):
+    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
 
         universe=cp.get('condor','universe')
 
@@ -183,7 +180,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         transferstring='bayeswave,datafind,$(macrooutputDir),logs'
         if injfile is not None: transferstring+=','+injfile
         if nrdata is not None: transferstring+=','+nrdata
-        if nrcatalog is not None: transferstring+=','+nrcatalog
         self.add_condor_cmd('transfer_input_files', transferstring)
 
         # --- Required options
