@@ -50,8 +50,13 @@ def parser():
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
-    parser.add_option("--inj", default=None)
 
+# XXX: putting this in the config.ini for now
+#   parser.add_option("--inj", default=None)
+#   parser.add_option("--nrcatalog", default=None)
+#   parser.add_option("--nrhdf5", default=None)
+#   parser.add_option("--events", default="all")
+ 
     (opts,args) = parser.parse_args()
 
     if opts.workdir is None:
@@ -77,23 +82,57 @@ def parser():
 # Set Parameters
 # ----------------
 
-# Read inputs
+# --- Parse options, arguments and ini file
 opts, args, cp = parser()
 
 workdir = opts.workdir 
-
 if not os.path.exists(workdir): os.makedirs(workdir)
 
-# Copy ini file to workdir as a record
+# --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
+
+# Injection file (e.g., sim-inspiral table)
+try:
+    injfile=cp.get('injections', 'injfile')
+except:
+    injfile=None
+
+if injfile is not None:
+    shutil.copy(injfile, workdir)
+    injfile=os.path.basename(injfile)
+
+
+# NR HDF5 data
+try:
+    nrdata=cp.get('injections', 'nrdata')
+except:
+    nrdata=None
+if nrdata is not None:
+    try: 
+        # Remove the hdf5 file before copying - it's protected
+        os.remove(os.path.join(workdir, os.path.basename(nrdata)))
+    except OSError:
+        pass
+    shutil.copy(nrdata, workdir)
+    nrdata=os.path.basename(nrdata)
+
+
+# NR catalog
+try:
+    nrcatalog=cp.get('injections', 'nrcatalog')
+except:
+    nrcatalog=None
+if nrcatalog is not None:
+    shutil.copy(nrcatalog, workdir)
+    nrcatalog=os.path.basename(nrcatalog)
 
 #
 # --- Params from config file
 #
 
-ifoList = cp.get('datafind', 'ifoList')
-channelList = cp.get('datafind', 'channelList')
-frtypeList = cp.get('datafind', 'frtypeList')
+ifoList=cp.get('datafind', 'ifoList')
+channelList=cp.get('datafind', 'channelList')
+frtypeList=cp.get('datafind', 'frtypeList')
 
 # parse channels etc
 ifoList=ifoList.split(',')
@@ -111,12 +150,12 @@ if opts.trigger_time is not None:
 if opts.trigger_list is not None:
     trigtimes = np.loadtxt(opts.trigger_list)
 
-if opts.inj is not None:
+if injfile is not None:
 
     #
     # Read inspinj file
     #
-    xmldoc=utils.load_filename(opts.inj, contenthandler=
+    xmldoc=utils.load_filename(injfile, contenthandler=
             ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
     table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
 
@@ -134,8 +173,6 @@ if opts.inj is not None:
             # make them iterable
             injevents=[int(events)]
         trigtimes=trigtimes[injevents]
-
-
 
 
 #############################################
@@ -305,8 +342,10 @@ dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
 dag.set_dag_file( 'bayeswave_{0}'.format(opts.user_tag) )
 
 # ---- Make instance of bayeswaveJob.
-bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injFile=opts.inj)
-bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injFile=opts.inj)
+bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injfile=injfile,
+        nrdata=nrdata, nrcatalog=nrcatalog)
+bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
+        nrdata=nrdata, nrcatalog=nrcatalog)
 
 #
 # Build Nodes
@@ -329,7 +368,7 @@ for g,gps in enumerate(trigtimes):
     bwp_node.set_PSDstart(gps)
     bwp_node.set_outputDir(outputDir)
 
-    if opts.inj is not None:
+    if injfile is not None:
 
         # STILL TO SUPPORT:
         # 1) xml, hdf5 file transfer
@@ -337,7 +376,6 @@ for g,gps in enumerate(trigtimes):
 
         bwb_node.set_injevent(injevents[g])
         bwp_node.set_injevent(injevents[g])
-
 
     bwp_node.add_parent(bwb_node)
 

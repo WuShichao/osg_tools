@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source ~/.local/etc/pycbc-user-env.sh
-
 catalogfile="GaTechCatalog.xml.gz"
 gpsstart=1126621184 # first CO2 frame for O1
 gpsend=`python -c "print ${gpsstart} + 1000"`

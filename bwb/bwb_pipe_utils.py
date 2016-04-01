@@ -26,7 +26,8 @@ import itertools
 
 class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, injFile=None, dax=False):
+    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None,
+            nrcatalog=None, dax=False):
 
 
         universe=cp.get('condor','universe')
@@ -43,10 +44,15 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
-        self.add_condor_cmd('transfer_input_files',
-                'bayeswave,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
         self.add_condor_cmd('getenv', 'True')
+
+        # --- Files to include in transfer
+        transferstring='bayeswave,datafind,$(macrooutputDir),logs'
+        if injfile is not None: transferstring+=','+injfile
+        if nrdata is not None: transferstring+=','+nrdata
+        if nrcatalog is not None: transferstring+=','+nrcatalog
+        self.add_condor_cmd('transfer_input_files', transferstring)
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
@@ -54,8 +60,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # XXX: hack to repeat option
         ifo_list_opt = ifoList[0]
-        for ifo in ifoList[1:]:
-            ifo_list_opt += ' --ifo {0}'.format(ifo)
+        for ifo in ifoList[1:]: ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
         self.add_opt('srate', cp.get('bwb_args', 'srate'))
@@ -110,8 +115,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
         # Injection file
-        if injFile is not None:
-            self.add_opt('inj', injFile)
+        if injfile is not None:
+            self.add_opt('inj', injfile)
 
         self.set_sub_file('bayeswave.sub')
 
@@ -147,8 +152,8 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
 class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, cp, cacheFiles, injFile=None, dax=False):
-
+    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None,
+            nrcatalog=None, dax=False):
 
         universe=cp.get('condor','universe')
 
@@ -164,10 +169,15 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
-        self.add_condor_cmd('transfer_input_files',
-                'bayeswave_post,datafind,$(macrooutputDir),logs')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
         self.add_condor_cmd('getenv', 'True')
+
+        # --- Files to include in transfer
+        transferstring='bayeswave,datafind,$(macrooutputDir),logs'
+        if injfile is not None: transferstring+=','+injfile
+        if nrdata is not None: transferstring+=','+nrdata
+        if nrcatalog is not None: transferstring+=','+nrcatalog
+        self.add_condor_cmd('transfer_input_files', transferstring)
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
@@ -199,9 +209,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwp_args', '0noise'):
             self.add_opt('0noise', cp.get('bwp_args', '0noise'))
 
-        # Injection file
-        if injFile is not None:
-            self.add_opt('inj', injFile)
 
         self.set_sub_file('bayeswave_post.sub')
 
