@@ -350,6 +350,9 @@ bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
 #
 # Build Nodes
 #
+if "LALSimAdLIGO" in channelList:
+    dataseed=cp.getint('datafind', 'dataseed')
+
 for g,gps in enumerate(trigtimes):
 
     outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid4())
@@ -363,6 +366,11 @@ for g,gps in enumerate(trigtimes):
     bwb_node.set_trigtime(gps)
     bwb_node.set_PSDstart(gps)
     bwb_node.set_outputDir(outputDir)
+
+    if "LALSimAdLIGO" in channelList:
+        bwb_node.set_dataseed(dataseed)
+        bwp_node.set_dataseed(dataseed)
+        dataseed+=1
 
     bwp_node.set_trigtime(gps)
     bwp_node.set_PSDstart(gps)

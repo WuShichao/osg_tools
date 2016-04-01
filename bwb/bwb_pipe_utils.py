@@ -118,6 +118,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if injfile is not None:
             self.add_opt('inj', injfile)
 
+        if nrdata is not None:
+            self.add_opt('inj-numreldata', nrdata)
+
         self.set_sub_file('bayeswave.sub')
 
 
@@ -143,6 +146,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_injevent(self, event):
         self.add_var_opt('event', event)
         self.__event = event
+
+    def set_dataseed(self, dataseed):
+        self.add_var_opt('dataseed', dataseed)
+        self.__dataseed = dataseed
 
   
 
@@ -209,6 +216,13 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwp_args', '0noise'):
             self.add_opt('0noise', cp.get('bwp_args', '0noise'))
 
+        # Injection file
+        if injfile is not None:
+            self.add_opt('inj', injfile)
+
+        if nrdata is not None:
+            self.add_opt('inj-numreldata', nrdata)
+
 
         self.set_sub_file('bayeswave_post.sub')
 
@@ -235,4 +249,9 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_injevent(self, event):
         self.add_var_opt('event', event)
         self.__event = event
+
+    def set_dataseed(self, dataseed):
+        self.add_var_opt('dataseed', dataseed)
+        self.__dataseed = dataseed
+
 
