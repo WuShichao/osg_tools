@@ -33,7 +33,8 @@ import nrburst_utils as nrbu
 # --- catalog Definition
 #
 bounds = dict()
-bounds['Mchirpmin30Hz'] = [-np.inf, 27.0]
+#bounds['Mchirpmin30Hz'] = [-np.inf, 27.0]
+bounds['Mmin30Hz'] = [-np.inf, 66.0]
 
 #
 # --- Generate initial catalog
