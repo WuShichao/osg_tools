@@ -112,6 +112,40 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'fixD'):
             self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
 
+        # signalOnly
+        if cp.has_option('bwb_args', 'signalOnly'):
+            self.add_opt('signalOnly', cp.get('bwb_args', 'signalOnly'))
+
+        # fullOnly
+        if cp.has_option('bwb_args', 'fullOnly'):
+            self.add_opt('fullOnly', cp.get('bwb_args', 'fullOnly'))
+
+        # noSignal
+        if cp.has_option('bwb_args', 'noSignal'):
+            self.add_opt('noSignal', cp.get('bwb_args', 'noSignal'))
+
+        # cleanOnly
+        if cp.has_option('bwb_args', 'cleanOnly'):
+            self.add_opt('cleanOnly', cp.get('bwb_args', 'cleanOnly'))
+
+        # noiseOnly
+        if cp.has_option('bwb_args', 'noiseOnly'):
+            self.add_opt('noiseOnly', cp.get('bwb_args', 'noiseOnly'))
+
+        # glitchOnly
+        if cp.has_option('bwb_args', 'glitchOnly'):
+            self.add_opt('glitchOnly', cp.get('bwb_args', 'glitchOnly'))
+
+        # noPSDfit
+        if cp.has_option('bwb_args', 'noPSDfit'):
+            self.add_opt('noPSDfit', cp.get('bwb_args', 'noPSDfit'))
+
+        # stochastic
+        if cp.has_option('bwb_args', 'stochastic'):
+            self.add_opt('stochastic', cp.get('bwb_args', 'stochastic'))
+
+
+
         # Injection file
         if injfile is not None:
             self.add_opt('inj', injfile)
