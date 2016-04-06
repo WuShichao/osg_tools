@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-catalogdir="${HOME}/lvc_nr_xml/GaTech"
+catalogdir="/home/jclark308/lvc_nr_xml/GaTech"
 catalogfile="${1}.xml.gz"
 totalmass=${2}
 
