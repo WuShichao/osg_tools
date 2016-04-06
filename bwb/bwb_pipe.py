@@ -127,13 +127,11 @@ try:
 except:
     nrdata=None
 if nrdata is not None:
-    try: 
-        # Remove the hdf5 file before copying - it's protected
-        os.remove(os.path.join(workdir, os.path.basename(nrdata)))
-    except OSError:
-        pass
     shutil.copy(nrdata, workdir)
     nrdata=os.path.basename(nrdata)
+
+    # Make sure normal permissions on hdf5
+    os.chmod(os.path.join(workdir, nrdata), 0644)
 
     # Modify xml IN WORKDIR to point to local hdf5
     localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
@@ -377,8 +375,6 @@ for g,gps in enumerate(trigtimes):
         os.symlink(os.path.join('..',injfile), os.path.join(outputDir, injfile))
     if nrdata is not None:
         os.symlink(os.path.join('..',nrdata), os.path.join(outputDir, nrdata))
-
-        print >> sys.stderr, "OSG DEPLOYMENT REQUIRES MODIFICATION TO XML PATHS"
 
     bwb_node = pipe_utils.bayeswaveNode(bwb_job)
     bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
