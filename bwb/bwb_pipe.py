@@ -384,7 +384,7 @@ for g,gps in enumerate(trigtimes):
     # add options for bayeswave node
     bwb_node.set_trigtime(gps)
     bwb_node.set_PSDstart(gps)
-    bwb_node.set_retry(3)
+    bwb_node.set_retry(1)
     bwb_node.set_outputDir(outputDir)
 
     if "LALSimAdLIGO" in channelList:
