@@ -94,6 +94,8 @@ def parser():
 
     return opts, args, cp
 
+# TODO
+# 1) set retry=1 or 2
 
 
 # ----------------
@@ -379,9 +381,10 @@ for g,gps in enumerate(trigtimes):
     bwb_node = pipe_utils.bayeswaveNode(bwb_job)
     bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
-    # add options
+    # add options for bayeswave node
     bwb_node.set_trigtime(gps)
     bwb_node.set_PSDstart(gps)
+    bwb_node.set_retry(3)
     bwb_node.set_outputDir(outputDir)
 
     if "LALSimAdLIGO" in channelList:
@@ -389,8 +392,10 @@ for g,gps in enumerate(trigtimes):
         bwp_node.set_dataseed(dataseed)
         dataseed+=1
 
+    # add options for bayeswave_post node
     bwp_node.set_trigtime(gps)
     bwp_node.set_PSDstart(gps)
+    bwp_node.set_retry(3)
     bwp_node.set_outputDir(outputDir)
 
     if injfile is not None:
