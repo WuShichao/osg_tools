@@ -167,7 +167,7 @@ if injfile is not None:
     #
     # Read inspinj file
     #
-    xmldoc=utils.load_filename(injfile, contenthandler=
+    xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
             ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
     table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
 
