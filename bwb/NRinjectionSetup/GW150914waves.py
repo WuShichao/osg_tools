@@ -15,7 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
-bhex_pca.py
+This script selects GaTech waveforms with sufficient cycles to model chirp
+masses down to 28 Msun with a 30 Hz cutoff.
+
+The output is a text file with the names of the permitted waveforms and the
+total mass to which they should be scaled such that the chirp mass of that
+waveform matches the best estimate from CBC PE of GW150914
 """
 
 import sys, os
@@ -26,15 +31,20 @@ import cPickle as pickle
 import timeit
 import numpy as np
 
+from pycbc import pnutils
 import nrburst_pca_utils as nrbu_pca
 import nrburst_utils as nrbu
+
+# XXX Useful info for GW150914
+#detector frame chirp mass: 30.3 +2.1±0.4 (−1.9±0.4)
+pe_mchirp=30.3
+
 
 #
 # --- catalog Definition
 #
 bounds = dict()
-#bounds['Mchirpmin30Hz'] = [-np.inf, 27.0]
-bounds['Mmin30Hz'] = [-np.inf, 66.0]
+bounds['Mchirpmin30Hz'] = [-np.inf, 28.0]
 
 #
 # --- Generate initial catalog
@@ -49,10 +59,16 @@ simulations = nrbu.simulation_details(param_bounds=bounds,
         catdir='/data/lvc_nr/GaTech')
 
 
-f=open('allowed_waves.txt','w')
+f=open('GW150914_masses.txt','w')
 for sim in simulations.simulations:
+
     wavefile=sim['wavefile'].split('/')[-1].replace('.h5','')
-    f.writelines("%s\n"%wavefile)
+
+    m1,m2 = pnutils.mchirp_eta_to_mass1_mass2(pe_mchirp, sim['eta'])
+    print m1,m2
+
+    f.writelines("%s %f\n"%(wavefile,m1+m2))
+
 f.close()
 
 
