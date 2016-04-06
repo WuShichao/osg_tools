@@ -19,6 +19,6 @@ lalapps_inspinj \
     --dchirp-distr uniform --i-distr uniform \
     --min-distance 50000 --max-distance 50000 \
     --m-distr nrwaves --disable-spin \
-    --min-mtotal 500. --max-mtotal 500.\
+    --min-mtotal 70 --max-mtotal 70\
     --taper-injection start --output ${outfile}
 
