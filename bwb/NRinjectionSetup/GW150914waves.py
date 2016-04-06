@@ -56,7 +56,7 @@ then = timeit.time.time()
 
 # Select simulations
 simulations = nrbu.simulation_details(param_bounds=bounds,
-        catdir='/data/lvc_nr/GaTech')
+        catdir='/home/jclark308/lvc_nr/GaTech')
 
 
 f=open('GW150914_masses.txt','w')
