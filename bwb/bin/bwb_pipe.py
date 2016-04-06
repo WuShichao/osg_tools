@@ -180,7 +180,7 @@ if injfile is not None:
     if events!='all':
         if ',' in events:
             injevents=[int(event) for event in events.split(',')]
-            injevents=np.arange(min(injevents), max(injevents))
+            injevents=np.arange(min(injevents), max(injevents)+1)
         else:
             # make them iterable
             injevents=[int(events)]
