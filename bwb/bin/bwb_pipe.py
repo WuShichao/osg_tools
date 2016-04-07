@@ -395,7 +395,7 @@ for g,gps in enumerate(trigtimes):
     # add options for bayeswave_post node
     bwp_node.set_trigtime(gps)
     bwp_node.set_PSDstart(gps)
-    bwp_node.set_retry(3)
+    bwp_node.set_retry(1)
     bwp_node.set_outputDir(outputDir)
 
     if injfile is not None:

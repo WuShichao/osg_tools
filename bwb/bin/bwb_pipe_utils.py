@@ -47,7 +47,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Files to include in transfer
-        transferstring='bayeswave,datafind,$(macrooutputDir),logs'
+        transferstring='bayeswave_post,datafind,$(macrooutputDir),logs'
         if injfile is not None: transferstring+=','+injfile
         if nrdata is not None: transferstring+=','+nrdata
         self.add_condor_cmd('transfer_input_files', transferstring)
