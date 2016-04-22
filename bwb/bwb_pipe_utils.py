@@ -100,6 +100,18 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'chainseed'):
             self.add_opt('chainseed', cp.get('bwb_args', 'chainseed'))
 
+        # runName
+        if cp.has_option('bwb_args', 'runName'):
+            self.add_opt('runName', cp.get('bwb_args', 'runName'))
+
+        # 0noise
+        if cp.has_option('bwb_args', '0noise'):
+            self.add_opt('0noise', cp.get('bwb_args', '0noise'))
+
+        # zeroLogL
+        if cp.has_option('bwb_args', 'zeroLogL'):
+            self.add_opt('zeroLogL', cp.get('bwb_args', 'zeroLogL'))
+
         # bayesLine
         if cp.has_option('bwb_args', 'BayesLine'):
             self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
