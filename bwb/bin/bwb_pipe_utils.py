@@ -37,17 +37,17 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.set_stdout_file('logs/bayeswave_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('logs/bayeswave_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('logs/bayeswave_$(cluster)-$(process)-$(node).log')
+        self.set_stdout_file('$(macrooutputDir)/logs/bayeswave_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macrooutputDir)/logs/bayeswave_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macrooutputDir)/logs/bayeswave_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
-        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
+        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
         self.add_condor_cmd('getenv', 'True')
 
         # --- Files to include in transfer
-        transferstring='bayeswave,datafind,$(macrooutputDir),logs'
+        transferstring='bayeswave,datafind,$(macrooutputDir)'
         if injfile is not None: transferstring+=','+injfile
         if nrdata is not None: transferstring+=','+nrdata
         self.add_condor_cmd('transfer_input_files', transferstring)
@@ -213,17 +213,17 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.set_stdout_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('logs/bayeswave_post_$(cluster)-$(process)-$(node).log')
+        self.set_stdout_file('$(macrooutputDir)/logs/bayeswave_post_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macrooutputDir)/logs/bayeswave_post_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macrooutputDir)/logs/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
         self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
-        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir),logs')
+        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
         self.add_condor_cmd('getenv', 'True')
 
         # --- Files to include in transfer
-        transferstring='bayeswave_post,datafind,$(macrooutputDir),logs'
+        transferstring='bayeswave_post,datafind,$(macrooutputDir)'
         if injfile is not None: transferstring+=','+injfile
         if nrdata is not None: transferstring+=','+nrdata
         self.add_condor_cmd('transfer_input_files', transferstring)
