@@ -60,14 +60,18 @@ simulations = nrbu.simulation_details(param_bounds=bounds,
 
 
 f=open('GW150914_masses.txt','w')
+f.writelines("# hdf5name mtotal q a1 a1dotL a2 a2dotL\n")
 for sim in simulations.simulations:
 
     wavefile=sim['wavefile'].split('/')[-1].replace('.h5','')
 
     m1,m2 = pnutils.mchirp_eta_to_mass1_mass2(pe_mchirp, sim['eta'])
-    print m1,m2
 
-    f.writelines("%s %f\n"%(wavefile,m1+m2))
+    print "%s %f %f %f %f %f %f\n"%(wavefile, m1+m2, sim['q'], sim['a1'],
+            sim['a1dotL'], sim['a2'], sim['a2dotL'])
+
+    f.writelines("%s %f %f %f %f %f %f\n"%(wavefile, m1+m2, sim['q'], sim['a1'],
+        sim['a1dotL'], sim['a2'], sim['a2dotL']))
 
 f.close()
 

@@ -167,7 +167,7 @@ if injfile is not None:
     #
     # Read inspinj file
     #
-    xmldoc=utils.load_filename(injfile, contenthandler=
+    xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
             ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
     table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
 
@@ -180,7 +180,7 @@ if injfile is not None:
     if events!='all':
         if ',' in events:
             injevents=[int(event) for event in events.split(',')]
-            injevents=np.arange(min(injevents), max(injevents))
+            injevents=np.arange(min(injevents), max(injevents)+1)
         else:
             # make them iterable
             injevents=[int(events)]
@@ -395,7 +395,7 @@ for g,gps in enumerate(trigtimes):
     # add options for bayeswave_post node
     bwp_node.set_trigtime(gps)
     bwp_node.set_PSDstart(gps)
-    bwp_node.set_retry(3)
+    bwp_node.set_retry(1)
     bwp_node.set_outputDir(outputDir)
 
     if injfile is not None:
