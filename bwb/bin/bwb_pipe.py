@@ -94,6 +94,25 @@ def parser():
 
     return opts, args, cp
 
+def hyphen_range(s):
+    """
+    yield each integer from a complex range string like "1-9,12, 15-20,23"
+
+    Stolen from:
+    http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
+    """
+
+    for x in s.split(','):
+        elem = x.split('-')
+        if len(elem) == 1: # a number
+            yield int(elem[0])
+        elif len(elem) == 2: # a range inclusive
+            start, end = map(int, elem)
+            for i in xrange(start, end+1):
+                yield i
+        else: # more than one hyphen
+            raise ValueError('format error in %s' % x)
+
 # TODO
 # 1) set retry=1 or 2
 
@@ -171,19 +190,18 @@ if injfile is not None:
             ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
     table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
 
-    # get gps list from sim_inspiral 
+    # Get gps list from sim_inspiral; for some reason we need both the trigtime
+    # and the event number
     trigtimes=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
             for sim in table])
     
     # reduce to specified values
     events=cp.get('injections', 'events')
+
     if events!='all':
-        if ',' in events:
-            injevents=[int(event) for event in events.split(',')]
-            injevents=np.arange(min(injevents), max(injevents)+1)
-        else:
-            # make them iterable
-            injevents=[int(events)]
+
+        injevents=list(hyphen_range(events))
+
         trigtimes=trigtimes[injevents]
 
 
@@ -207,6 +225,7 @@ shutil.copy(cp.get('paths','bwp_executable'), '.')
 # Call LIGO Data find
 # -------------------
 cacheFiles = {}
+
 if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
 
 
@@ -324,20 +343,17 @@ if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
 else:
     # user-specified cache files
     for i,ifo in enumerate(ifoList):
-        cacheFiles[ifo] = \
-                cp.get('datafind','cacheFiles').split(',')[i]
+
+        cacheFile = \
+                os.path.abspath(cp.get('datafind','cacheFiles').split(',')[i])
+        shutil.copy(cacheFile, 'datafind')
+
+        cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
 
 
 #############################################
 
 
-# ----------------------------------
-# Directory Structure
-# ----------------------------------
-
-#logdir = 'logs'
-
-#if not os.path.exists(logdir): os.makedirs(logdir)
 
 # -----------------------------------------------------------------------
 # DAG Writing
