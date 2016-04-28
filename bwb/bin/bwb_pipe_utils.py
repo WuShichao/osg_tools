@@ -42,7 +42,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_log_file('$(macrooutputDir)/logs/bayeswave_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
-        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
+        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
         self.add_condor_cmd('getenv', 'True')
 
@@ -218,7 +218,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_log_file('$(macrooutputDir)/logs/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
         self.add_condor_cmd('should_transfer_files', 'YES')
-        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT')
+        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
         self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
         self.add_condor_cmd('getenv', 'True')
 
