@@ -386,8 +386,6 @@ for g,gps in enumerate(trigtimes):
     outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid4())
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)
-    if not os.path.exists(os.path.join(outputDir,'logs')):
-        os.makedirs(os.path.join(outputDir,'logs'))
 
     # Create symlinks to injection data if present
     #  - BW expects necessary files in outputDir
