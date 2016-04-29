@@ -226,7 +226,9 @@ shutil.copy(cp.get('paths','bwp_executable'), '.')
 # -------------------
 cacheFiles = {}
 
-if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
+if "LALSimAdLIGO" in channelList: opts.skip_datafind=True
+
+if not opts.skip_datafind:
 
 
     # Set min/max gps times for LIGO data find:
@@ -261,12 +263,12 @@ if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
 
     if opts.copy_frames:
         
-        print >> sys.stdout, "Copying frame files for input IS DUMB, EXITING"
+        #print >> sys.stdout, "Copying frame files for input IS DUMB, EXITING"
 
         # XXX THIS NEEDS TO BE OVERHAULED SO WE SHIP FRAMES WITH JOBS, NOT COPY
         # FIRST!  DO this by adding the unique frames to a list whose elements
         # are then associated to individual jobs
-        sys.exit()
+        #sys.exit()
 
         # XXX Having found these files, we now want to copy them to the working
         # directory and make fresh, local cache files
@@ -341,14 +343,22 @@ if not opts.skip_datafind and "LALSimAdLIGO" not in channelList:
             new_cache.close()
 
 else:
-    # user-specified cache files
+
+
     for i,ifo in enumerate(ifoList):
 
-        cacheFile = \
-                os.path.abspath(cp.get('datafind','cacheFiles').split(',')[i])
-        shutil.copy(cacheFile, 'datafind')
 
-        cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
+        if "LALSimAdLIGO" not in channelList:
+            # skipping datafind but using user-specified cache files
+
+            cacheFile = \
+                    os.path.abspath(cp.get('datafind','cacheFiles').split(',')[i])
+            shutil.copy(cacheFile, 'datafind')
+            cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
+
+        else:
+
+            cacheFiles[ifo] = cp.get('datafind','cacheFiles').split(',')[i]
 
 
 #############################################
