@@ -356,8 +356,7 @@ else:
             try:
                 shutil.copy(cacheFile, 'datafind')
             except IOError:
-                print >> sys.stderr, 
-                    "Warning: cachefiles not found, remember to copy by hand"
+                print >> sys.stderr, "Warning: cachefiles not found, remember to copy by hand"
             cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
 
         else:
