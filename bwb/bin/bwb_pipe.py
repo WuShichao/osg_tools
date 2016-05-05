@@ -353,7 +353,11 @@ else:
 
             cacheFile = \
                     os.path.abspath(cp.get('datafind','cacheFiles').split(',')[i])
-            shutil.copy(cacheFile, 'datafind')
+            try:
+                shutil.copy(cacheFile, 'datafind')
+            except IOError:
+                print >> sys.stderr, 
+                    "Warning: cachefiles not found, remember to copy by hand"
             cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
 
         else:
