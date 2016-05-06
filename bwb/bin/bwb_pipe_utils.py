@@ -19,6 +19,7 @@
 
 from glue import pipeline
 import itertools
+import socket
 
 #
 # Main analysis
