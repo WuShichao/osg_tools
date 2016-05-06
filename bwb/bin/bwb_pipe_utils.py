@@ -20,6 +20,7 @@
 from glue import pipeline
 import itertools
 import socket
+import sys
 
 #
 # Main analysis
