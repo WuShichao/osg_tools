@@ -28,7 +28,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
 
-
         universe=cp.get('condor','universe')
 
         pipeline.CondorDAGJob.__init__(self,universe,'bayeswave')
@@ -41,18 +40,28 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).log')
 
-        self.add_condor_cmd('should_transfer_files', 'YES')
-        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
-        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
-        self.add_condor_cmd('getenv', 'True')
-        self.add_condor_cmd('stream_error', 'True')
-        self.add_condor_cmd('stream_output', 'True')
+        #
+        # Identify osg vs ldg site
+        #
+        # FIXME: currently only associates PACE (GaTech) as an OSG site
+        hostname = socket.gethostname()
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
-        # --- Files to include in transfer
-        transferstring='bayeswave,datafind,$(macrooutputDir)'
-        if injfile is not None: transferstring+=','+injfile
-        if nrdata is not None: transferstring+=','+nrdata
-        self.add_condor_cmd('transfer_input_files', transferstring)
+            # --- Perform file transfers
+            self.add_condor_cmd('should_transfer_files', 'YES')
+            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
+            self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
+            self.add_condor_cmd('stream_error', 'True')
+            self.add_condor_cmd('stream_output', 'True')
+
+            # --- Files to include in transfer
+            transferstring='datafind,$(macrooutputDir)'
+            if injfile is not None: transferstring+=','+injfile
+            if nrdata is not None: transferstring+=','+nrdata
+            self.add_condor_cmd('transfer_input_files', transferstring)
+
+        self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
@@ -219,18 +228,28 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
-        self.add_condor_cmd('should_transfer_files', 'YES')
-        self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
-        self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
-        self.add_condor_cmd('getenv', 'True')
-        self.add_condor_cmd('stream_error', 'True')
-        self.add_condor_cmd('stream_output', 'True')
 
-        # --- Files to include in transfer
-        transferstring='bayeswave_post,datafind,$(macrooutputDir)'
-        if injfile is not None: transferstring+=','+injfile
-        if nrdata is not None: transferstring+=','+nrdata
-        self.add_condor_cmd('transfer_input_files', transferstring)
+        #
+        # Identify osg vs ldg site
+        #
+        # FIXME: currently only associates PACE (GaTech) as an OSG site
+        hostname = socket.gethostname()
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+            # --- Perform file transfers
+            self.add_condor_cmd('should_transfer_files', 'YES')
+            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
+            self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
+            self.add_condor_cmd('stream_error', 'True')
+            self.add_condor_cmd('stream_output', 'True')
+
+            # --- Files to include in transfer
+            transferstring='datafind,$(macrooutputDir)'
+            if injfile is not None: transferstring+=','+injfile
+            if nrdata is not None: transferstring+=','+nrdata
+            self.add_condor_cmd('transfer_input_files', transferstring)
+
+        self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
         ifoList = cp.get('datafind', 'ifoList').split(',')
