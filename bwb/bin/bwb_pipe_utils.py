@@ -168,6 +168,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'stochastic'):
             self.add_opt('stochastic', cp.get('bwb_args', 'stochastic'))
 
+        # verbose
+        if cp.has_option('bwb_args', 'verbose'):
+            self.add_opt('verbose', cp.get('bwb_args', 'verbose'))
 
 
         # Injection file
