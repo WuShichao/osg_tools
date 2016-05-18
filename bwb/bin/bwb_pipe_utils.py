@@ -86,6 +86,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # --- Optional options
 
+        # self-checkpointing
+        if cp.has_option('condor', 'checkpoint'):
+            self.add_opt('checkpoint', cp.get('condor', 'checkpoint'))
 
         #
         # Priors
@@ -96,10 +99,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'Qmax'):
             self.add_opt('Qmax', cp.get('bwb_args', 'Qmax'))
 
-
-        # self-checkpointing
-        if cp.has_option('condor', 'checkpoint'):
-            self.add_opt('checkpoint', cp.get('condor', 'checkpoint'))
 
         # dataseed
         if cp.has_option('bwb_args', 'dataseed'):
@@ -207,14 +206,14 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # MDC Setup
         #
-        if cp.has_option('inj', 'mdc-cache'):
-            self.add_opt('MDC-cache', cp.get('inj', 'mdc-cache'))
+        if cp.has_option('injections', 'mdc-cache'):
+            self.add_opt('MDC-cache', cp.get('injections', 'mdc-cache'))
 
-        if cp.has_option('inj', 'mdc-channel'):
-            self.add_opt('MDC-channel', cp.get('inj', 'mdc-channel'))
+        if cp.has_option('injections', 'mdc-channel'):
+            self.add_opt('MDC-channel', cp.get('injections', 'mdc-channel'))
 
-        if cp.has_option('inj', 'mdc-prefactor'):
-            self.add_opt('MDC-prefactor', cp.get('inj', 'mdc-prefactor'))
+        if cp.has_option('injections', 'mdc-prefactor'):
+            self.add_opt('MDC-prefactor', cp.get('injections', 'mdc-prefactor'))
 
         self.set_sub_file('bayeswave.sub')
 
