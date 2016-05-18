@@ -392,7 +392,11 @@ bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
 # Build Nodes
 #
 if "LALSimAdLIGO" in channelList:
-    dataseed=cp.getint('datafind', 'dataseed')
+    try:
+        dataseed=cp.getint('datafind', 'dataseed')
+    except ConfigParser.NoOptionError:
+        print >> sys.stderr, "datafind section requires dataseed for sim data"
+        sys.exit()
 
 for g,gps in enumerate(trigtimes):
 
