@@ -173,6 +173,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'verbose'):
             self.add_opt('verbose', cp.get('bwb_args', 'verbose'))
 
+        # verbose
+        if cp.has_option('bwb_args', 'gnuplot'):
+            self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplo'))
+
 
         # Injection file
         if injfile is not None:
