@@ -85,6 +85,18 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
 
         # --- Optional options
+
+
+        #
+        # Priors
+        #
+        # Quality factor
+        if cp.has_option('bwb_args', 'Qmin'):
+            self.add_opt('Qmin', cp.get('bwb_args', 'Qmin'))
+        if cp.has_option('bwb_args', 'Qmax'):
+            self.add_opt('Qmax', cp.get('bwb_args', 'Qmax'))
+
+
         # self-checkpointing
         if cp.has_option('condor', 'checkpoint'):
             self.add_opt('checkpoint', cp.get('condor', 'checkpoint'))
@@ -173,10 +185,15 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'verbose'):
             self.add_opt('verbose', cp.get('bwb_args', 'verbose'))
 
-        # verbose
+        # gnuplot
         if cp.has_option('bwb_args', 'gnuplot'):
             self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplot'))
 
+        #
+        # Proposals
+        #
+        if cp.has_option('bwb_args', 'orientationProposal'):
+            self.add_opt('orientationProposal', cp.get('bwb_args', 'orientationProposal'))
 
         #
         # Injection file
@@ -195,6 +212,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         if cp.has_option('inj', 'mdc-channel'):
             self.add_opt('MDC-channel', cp.get('inj', 'mdc-channel'))
+
+        if cp.has_option('inj', 'mdc-prefactor'):
+            self.add_opt('MDC-prefactor', cp.get('inj', 'mdc-prefactor'))
 
         self.set_sub_file('bayeswave.sub')
 
