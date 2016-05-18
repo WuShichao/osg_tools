@@ -175,18 +175,28 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # verbose
         if cp.has_option('bwb_args', 'gnuplot'):
-            self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplo'))
+            self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplot'))
 
 
+        #
         # Injection file
+        #
         if injfile is not None:
             self.add_opt('inj', injfile)
 
         if nrdata is not None:
             self.add_opt('inj-numreldata', nrdata)
 
-        self.set_sub_file('bayeswave.sub')
+        #
+        # MDC Setup
+        #
+        if cp.has_option('inj', 'mdc-cache'):
+            self.add_opt('MDC-cache', cp.get('inj', 'mdc-cache'))
 
+        if cp.has_option('inj', 'mdc-channel'):
+            self.add_opt('MDC-channel', cp.get('inj', 'mdc-channel'))
+
+        self.set_sub_file('bayeswave.sub')
 
 class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
@@ -292,12 +302,23 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwp_args', '0noise'):
             self.add_opt('0noise', cp.get('bwp_args', '0noise'))
 
+        #
         # Injection file
+        #
         if injfile is not None:
             self.add_opt('inj', injfile)
 
         if nrdata is not None:
             self.add_opt('inj-numreldata', nrdata)
+
+        #
+        # MDC Setup
+        #
+        if cp.has_option('inj', 'mdc-cache'):
+            self.add_opt('MDC-cache', cp.get('inj', 'mdc-cache'))
+
+        if cp.has_option('inj', 'mdc-channel'):
+            self.add_opt('MDC-channel', cp.get('inj', 'mdc-channel'))
 
 
         self.set_sub_file('bayeswave_post.sub')
