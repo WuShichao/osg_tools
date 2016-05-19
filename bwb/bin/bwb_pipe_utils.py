@@ -54,8 +54,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
             self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
-            self.add_condor_cmd('stream_error', 'True')
-            self.add_condor_cmd('stream_output', 'True')
 
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
@@ -280,8 +278,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
             self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
-            self.add_condor_cmd('stream_error', 'True')
-            self.add_condor_cmd('stream_output', 'True')
 
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
