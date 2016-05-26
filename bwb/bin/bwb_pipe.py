@@ -137,8 +137,14 @@ except:
     injfile=None
 
 if injfile is not None:
+    # Copy injfile locally
     shutil.copy(injfile, workdir)
     injfile=os.path.basename(injfile)
+
+    # Also locate and copy rom chirp time data
+    rom_data_path = os.path.join(os.environ.get('LAL_DATA_PATH'),
+            'SEOBNRv2ChirpTimeSS.dat')
+    shutil.copy(rom_data_path, workdir)
 
 
 # NR HDF5 data

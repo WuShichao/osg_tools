@@ -57,9 +57,14 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
-            if injfile is not None: transferstring+=','+injfile
+            if injfile is not None:
+                transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
             if nrdata is not None: transferstring+=','+nrdata
             self.add_condor_cmd('transfer_input_files', transferstring)
+
+            # --- Point to ROM data (which should have been copied
+            if injfile is not None:
+                self.add_condor_cmd("environment", "LAL_DATA_PATH=./")
 
         self.add_condor_cmd('getenv', 'True')
 
@@ -285,9 +290,14 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
-            if injfile is not None: transferstring+=','+injfile
+            if injfile is not None:
+                transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
             if nrdata is not None: transferstring+=','+nrdata
             self.add_condor_cmd('transfer_input_files', transferstring)
+
+            # --- Point to ROM data (which should have been copied
+            if injfile is not None:
+                self.add_condor_cmd("environment", 'LAL_DATA_PATH="./"')
 
         self.add_condor_cmd('getenv', 'True')
 
