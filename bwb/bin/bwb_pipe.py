@@ -404,13 +404,6 @@ for g,gps in enumerate(trigtimes):
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-    # Create symlinks to injection data if present
-    #  - BW expects necessary files in outputDir
-    if injfile is not None:
-        os.symlink(os.path.join('..',injfile), os.path.join(outputDir, injfile))
-    if nrdata is not None:
-        os.symlink(os.path.join('..',nrdata), os.path.join(outputDir, nrdata))
-
     bwb_node = pipe_utils.bayeswaveNode(bwb_job)
     bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 

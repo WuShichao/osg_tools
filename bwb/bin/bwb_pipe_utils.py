@@ -20,7 +20,7 @@
 from glue import pipeline
 import itertools
 import socket
-import sys
+import sys,os
 
 #
 # Main analysis
@@ -196,9 +196,13 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Injection file
         #
         if injfile is not None:
+            # XXX: note that bayeswave works within the outputDir, so point to
+            # injection
+            injfile=os.path.join('..',injfile)
             self.add_opt('inj', injfile)
 
         if nrdata is not None:
+            nrdata=os.path.join('..',nrdata)
             self.add_opt('inj-numreldata', nrdata)
 
         #
