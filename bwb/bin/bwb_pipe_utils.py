@@ -335,9 +335,13 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Injection file
         #
         if injfile is not None:
+            # XXX: note that bayeswave works within the outputDir, so point to
+            # injection
+            injfile=os.path.join('..',injfile)
             self.add_opt('inj', injfile)
 
         if nrdata is not None:
+            nrdata=os.path.join('..',nrdata)
             self.add_opt('inj-numreldata', nrdata)
 
         #
