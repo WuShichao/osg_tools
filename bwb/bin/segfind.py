@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
+#
+#
+#
 
 
 import sys
@@ -29,12 +31,12 @@ config=ConfigParser.ConfigParser()
 config.read(args[0])
 
 ifo='H1'
-veto_categories=[1,2]
+veto_categories=[]
 
 
 (segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(config, ifo,
         veto_categories, generate_segments=True,
-        use_available_data=True, data_quality_vetoes=True)
+        use_available_data=False, data_quality_vetoes=False)
 
 segfile=open(segFileName)
 segs=segmentsUtils.fromsegwizard(segfile)
