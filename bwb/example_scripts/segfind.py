@@ -20,6 +20,7 @@
 
 
 import sys
+import ast
 from optparse import OptionParser
 import ConfigParser
 from lalapps import inspiralutils
@@ -30,16 +31,26 @@ opts,args = parser.parse_args()
 config=ConfigParser.ConfigParser()
 config.read(args[0])
 
-ifo='H1'
-veto_categories=[]
 
+if config.has_option('analysis','ifos'):
+  ifos=ast.literal_eval(config.get('analysis','ifos'))
+else:
+  ifos=['H1','L1','V1']
+segments={}
+if config.has_option('datafind','veto-categories'):
+  veto_categories=ast.literal_eval(config.get('datafind','veto-categories'))
+else: veto_categories=[]
 
-(segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(config, ifo,
-        veto_categories, generate_segments=True,
-        use_available_data=False, data_quality_vetoes=False)
+for ifo in ifos:
 
-segfile=open(segFileName)
-segs=segmentsUtils.fromsegwizard(segfile)
+    (segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(config, ifo,
+            veto_categories, generate_segments=True,
+            use_available_data=False, data_quality_vetoes=False)
+
+    segfile=open(segFileName)
+    segments[ifo]=segmentsUtils.fromsegwizard(segfile)
+
+    print segments[ifo]
 
 
 

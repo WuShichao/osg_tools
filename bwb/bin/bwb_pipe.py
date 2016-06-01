@@ -22,6 +22,7 @@ import os, shutil
 import subprocess
 import uuid
 import fileinput
+import ast
 
 from glue import pipeline
 
@@ -30,6 +31,9 @@ from glue.ligolw import table
 from glue.ligolw import utils
 from pylal.SimInspiralUtils import ExtractSimInspiralTableLIGOLWContentHandler
 lsctables.use_in(ExtractSimInspiralTableLIGOLWContentHandler)
+
+from lalapps import inspiralutils
+from glue import segmentsUtils, segments
 
 from optparse import OptionParser
 import ConfigParser
@@ -55,6 +59,19 @@ def localize_xml(xmlfile, old_path, new_path):
 
     return 0
 
+def job_times(trigtime, psdlen, padding):
+    """
+    Compute the gps times corresponding to a given trigger time
+
+    start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
+    stop  = max(start+psdlen, trigtime+0.5*Sseglen)
+    """
+
+    start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
+    stop = max(start+psdlen, trigtime+0.5*Sseglen)
+
+    return segments.segment(start,stop)
+
 def parser():
     """
     Parser for input (command line and ini file)
@@ -78,7 +95,7 @@ def parser():
     (opts,args) = parser.parse_args()
 
     if opts.workdir is None:
-        print >> sys.stderr, "ERROR: must specify --output-dir"
+        print >> sys.stderr, "ERROR: must specify --workdir"
         sys.exit()
 
 
@@ -163,20 +180,6 @@ if nrdata is not None:
     # Modify xml IN WORKDIR to point to local hdf5
     localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
 
-#
-# --- Params from config file
-#
-
-ifoList=cp.get('datafind', 'ifoList')
-channelList=cp.get('datafind', 'channelList')
-frtypeList=cp.get('datafind', 'frtypeList')
-
-# parse channels etc
-ifoList=ifoList.split(',')
-channelList=channelList.split(',')
-frtypeList=frtypeList.split(',')
-
-
 #############################################
 #
 # Get trigger time(s)
@@ -205,10 +208,27 @@ if injfile is not None:
     events=cp.get('injections', 'events')
 
     if events!='all':
-
         injevents=list(hyphen_range(events))
-
         trigtimes=trigtimes[injevents]
+
+
+#
+# --- Determine min/max times for data coverage
+#
+padding = cp.getint('input','padding')
+psdlen = cp.getint('input','PSDlength')
+
+if cp.has_option('input','gps-start-time'):
+    gps_start_time = cp.getint('input','gps-start-time')
+else:
+    gps_start_time = job_times(min(trigtimes), psdlen, padding)[0]
+    cp.set('input','gps-start-time',gps_start_time)
+
+if cp.has_option('input','gps-end-time'):
+    gps_end_time = cp.getint('input','gps-end-time')
+else:
+    gps_end_time = job_times(max(trigtimes), psdlen, padding)[1]
+    cp.set('input','gps-end-time',gps_end_time)
 
 
 #############################################
@@ -227,42 +247,73 @@ shutil.copy(cp.get('paths','bwb_executable'), '.')
 shutil.copy(cp.get('paths','bwp_executable'), '.')
 
 
-# -------------------
-# Call LIGO Data find
-# -------------------
-cacheFiles = {}
+################################################
 
-if "LALSimAdLIGO" in channelList: opts.skip_datafind=True
+# ----------------------------------------------
+# Data Acquisition: gw_data_find & segdb queries
+# ----------------------------------------------
+
+
+#
+# --- datafind params from config file
+#
+
+ifoList=ast.literal_eval(cp.get('datafind', 'ifoList'))
+channelList=ast.literal_eval(cp.get('datafind', 'channelList'))
+frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
+
+cacheFiles = {}
+segments = {}
 
 if not opts.skip_datafind:
 
+    for ifo in ifoList:
 
-    # Set min/max gps times for LIGO data find:
-    min_gps = min(trigtimes) - 25.0 # XXX: why 25???
-    max_gps = max(trigtimes) + 25.0
-
-    start = min_gps 
-    end   = max_gps
-
-    for ifo, frtype in zip(ifoList,frtypeList):
-        cachefilefmt = os.path.join(datafind, '{0}.cache')
-        if opts.server is not None:
-            ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {start} -e\
-    {end} --lal-cache --server={server} | grep file > {cachefile}".format(
-                    o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
-                    start=start, end=end, server=opts.server)
+        if frtypeList[ifo] == "LALSimAdLIGO": 
+            cacheFiles[ifo]= "LALSimAdLIGO"
+            continue
         else:
-            ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {start} -e {end} --lal-cache | grep file > {cachefile}".format(
-                    o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
-                    start=start, end=end)
-        print "Calling LIGO data find ..."
-        print ldfcmd
-        try:
-            subprocess.call(ldfcmd, shell=True)
-        except:
-            print >> sys.stderr, "ERROR: datafind failed, continuing for testing"
 
-        cacheFiles[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
+            #
+            # --- Run DataFind query to produce cache files for frames
+            #
+            cachefilefmt = os.path.join(datafind, '{0}.cache')
+
+            if opts.server is not None:
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e\
+        {gps_end_time} --lal-cache --server={server} | grep file > {cachefile}".format(
+                        o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
+                        gps_start_time=gps_start_time, gps_end_time=gps_end_time, server=opts.server)
+            else:
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e {gps_end_time} --lal-cache | grep file > {cachefile}".format(
+                        o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
+                        gps_start_time=gps_start_time, gps_end_time=gps_end_time)
+            print >> sys.stdout, "Calling LIGO data find ..."
+            print >> sys.stdout, ldfcmd
+
+            subprocess.call(ldfcmd, shell=True)
+
+            cacheFiles[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
+
+            #
+            # --- Run segdb query
+            #
+            # 0) move into datafind directory
+            # 1) Find segments \in [gps-start-time, gps-end-time]
+            # 2) Loop over trigtimes and identify analyzeable jobs
+            # 3) move out of datafind directory
+
+            if config.has_option('datafind','veto-categories'):
+              veto_categories=ast.literal_eval(config.get('datafind','veto-categories'))
+            else: veto_categories=[]
+
+            (segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(config, ifo,
+                    veto_categories, generate_segments=True,
+                    use_available_data=False, data_quality_vetoes=False)
+
+            segfile=open(segFileName)
+            segments[ifo]=segmentsUtils.fromsegwizard(segfile)
+
 
     #############################################
     # Get frame files from cache
@@ -351,14 +402,14 @@ if not opts.skip_datafind:
 else:
 
 
-    for i,ifo in enumerate(ifoList):
+    for ifo in ifoList:
 
 
         if "LALSimAdLIGO" not in channelList:
             # skipping datafind but using user-specified cache files
 
             cacheFile = \
-                    os.path.abspath(cp.get('datafind','cacheFiles').split(',')[i])
+                    os.path.abspath(ast.literal_eval(cp.get('datafind','cacheFiles')[ifo]))
             try:
                 shutil.copy(cacheFile, 'datafind')
             except IOError:
@@ -367,7 +418,8 @@ else:
 
         else:
 
-            cacheFiles[ifo] = cp.get('datafind','cacheFiles').split(',')[i]
+            cacheFiles[ifo] = \
+                    ast.literal_eval(cp.get('datafind','cacheFiles')[ifo])
 
 
 #############################################
@@ -458,127 +510,3 @@ dag.write_script()
 # move back
 os.chdir(topdir)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sys.exit()
-# -----------------
-# BWB cmdline 
-# -----------------
-bwbcmdline = """--ifo H1 --H1-flow $(macroflow) --H1-channel $(macroh1channel)   \
---ifo L1 --L1-flow $(macroflow) --L1-channel $(macrol1channel)  \
---H1-cache ./datafind/H1.cache \
---L1-cache ./datafind/L1.cache \
---trigtime $(macrotrigtime) --srate $(macrosrate) --seglen $(macroseglen) \
---bayesLine --PSDstart $(macropsdstart) --PSDlength $(macropsdlen) \
---outputDir $(macrooutputDir)  \
---L1-timeslide $(macrol1timeslide) 
-"""
-
-# ----------
-# Template for bwb submit file
-# ----------
-submit_str = """
-executable=bayeswave
-universe=standard
-arguments={bwbcmdline}
-output={outputDir}/{outputDir}.out
-error={outputDir}/{outputDir}.err
-log={outputDir}/{outputDir}.log
-notification=never
-should_transfer_files=YES
-when_to_transfer_output = ON_EXIT
-stream_error=False
-stream_output=False
-WantRemoteIO=False
-accounting_group=ligo.prod.o1.burst.paramest.bayeswave
-transfer_input_files=bayeswave,datafind,{outputDir},logs
-transfer_output_files={outputDir},logs
-queue 1
-"""
-
-dagfile = open(os.path.join(workdir, 'dagfile.dag'), 'w')
-
-   
-
-# -- Create BWB submit file
-
-submitname = os.path.join(workdir, 'submitBWB.sub')
-submitfile = open(submitname, 'w')
-submitfile.write(submit_str.format(bwbcmdline=bwbcmdline, outputDir=outputDir))
-submitfile.close()
-
-
-# ---- write the dag file
-
-dagfile.write("JOB {jobname} submitBWB.sub\n".format(jobname=outputDir))
-
-# -----------------
-# BWB arguments 
-# -----------------
-bwbargsfmt = """macroflow=\"{flow}\" macroh1channel=\"{h1_channel}\" \
-macrol1channel=\"{l1_channel}\" macrotrigtime=\"{gps}\" macrosrate=\"{srate}\" \
-macroseglen=\"{seglen}\" macropsdstart=\"{gps}\" macropsdlen=\"{psdlen}\" \
-macrooutputDir=\"{outputDir}\" macrol1timeslide=\"{lag}\" 
-"""
-
-bwbvars = bwbargsfmt.format(flow=flow, h1_channel=h1_channel,
-        l1_channel=l1_channel, gps=gps, srate=srate, seglen=seglen,
-        psdlen=psdlen, outputDir=outputDir, lag=lag )
-
-dagfile.write("VARS {jobname} {bwbvars}".format(jobname=outputDir,
-    bwbvars=bwbvars))
-dagfile.write("RETRY {jobname} 1 \n\n".format(jobname=outputDir))
-
-dagfile.close()
-
-# -----------------
-# BWB shell script 
-# -----------------
-fullcmdline = """./bayeswave \
---ifo H1 --H1-flow {flow} --H1-channel {h1_channel}   \
---ifo L1 --L1-flow {flow} --L1-channel {l1_channel}  \
---H1-cache ./datafind/H1.cache \
---L1-cache ./datafind/L1.cache \
---trigtime {gps} --srate {srate} --seglen {seglen} \
---bayesLine --PSDstart {gps} --PSDlength {psdlen} \
---outputDir {outputDir}  \
---L1-timeslide {lag}
-""".format(flow=flow, h1_channel=h1_channel, l1_channel=l1_channel, gps=gps,
-        srate=srate, seglen=seglen,
-        psdlen=psdlen, outputDir=outputDir, lag=lag )
-
-shellname = os.path.join(workdir, 'runBWB.sh')
-shellfile = open(shellname, 'w')
-shellfile.write(fullcmdline)
-shellfile.close()
-os.chmod(shellname,0755)
-
-
-
-
-
- 

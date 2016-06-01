@@ -69,23 +69,23 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
-        ifoList = cp.get('datafind', 'ifoList').split(',')
-        channelList = cp.get('datafind', 'channelList').split(',')
+        #ifoList = cp.get('datafind', 'ifoList').split(',')
+        #channelList = cp.get('datafind', 'channelList').split(',')
 
-        # XXX: hack to repeat option
+        # XXX: hack to repeat option for --ifo H1 --ifo L1 etc
         ifo_list_opt = ifoList[0]
         for ifo in ifoList[1:]: ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
-        self.add_opt('srate', cp.get('bwb_args', 'srate'))
-        self.add_opt('seglen', cp.get('bwb_args', 'seglen'))
-        self.add_opt('PSDlength', cp.get('bwb_args', 'PSDlength'))
+        self.add_opt('srate', cp.get('input', 'srate'))
+        self.add_opt('seglen', cp.get('input', 'seglen'))
+        self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
-        flow = cp.get('bwb_args','flow')
-        for i,ifo in enumerate(ifoList):
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow)
+        flow = ast.literal_eval(cp.get('input','flow'))
+        for ifo in ifoList:
+            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow[ifo])
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
+            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
 
         # --- Optional options
 
@@ -213,6 +213,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # MDC Setup
         #
+        # FIXME: set this up to use the ast.literal_eval() stuff
         if cp.has_option('injections', 'mdc-cache'):
             self.add_opt('MDC-cache', cp.get('injections', 'mdc-cache'))
 
@@ -311,15 +312,15 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
-        self.add_opt('srate', cp.get('bwb_args', 'srate'))
-        self.add_opt('seglen', cp.get('bwb_args', 'seglen'))
-        self.add_opt('PSDlength', cp.get('bwb_args', 'PSDlength'))
+        self.add_opt('srate', cp.get('input', 'srate'))
+        self.add_opt('seglen', cp.get('input', 'seglen'))
+        self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
-        flow = cp.get('bwb_args','flow')
-        for i,ifo in enumerate(ifoList):
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow)
+        flow = ast.literal_eval(cp.get('input','flow'))
+        for ifo in ifoList:
+            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow[ifo])
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[i])
+            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
 
 
         # --- Optional options
