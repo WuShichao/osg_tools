@@ -59,18 +59,20 @@ def localize_xml(xmlfile, old_path, new_path):
 
     return 0
 
-def job_times(trigtime, psdlen, padding):
+def job_times(trigtime, seglen, psdlen, padding):
     """
     Compute the gps times corresponding to a given trigger time
 
     start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
     stop  = max(start+psdlen, trigtime+0.5*Sseglen)
+
+    returns segment(start,stop), start
     """
 
     start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
-    stop = max(start+psdlen, trigtime+0.5*Sseglen)
+    stop = max(start+psdlen, trigtime+0.5*seglen)
 
-    return segments.segment(start,stop)
+    return segments.segment(start,stop), start
 
 def parser():
     """
@@ -87,11 +89,6 @@ def parser():
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
 
-# XXX: putting this in the config.ini for now
-#   parser.add_option("--inj", default=None)
-#   parser.add_option("--nrhdf5", default=None)
-#   parser.add_option("--events", default="all")
- 
     (opts,args) = parser.parse_args()
 
     if opts.workdir is None:
@@ -129,9 +126,6 @@ def hyphen_range(s):
                 yield i
         else: # more than one hyphen
             raise ValueError('format error in %s' % x)
-
-# TODO
-# 1) set retry=1 or 2
 
 
 # ----------------
@@ -185,10 +179,10 @@ if nrdata is not None:
 # Get trigger time(s)
 #
 if opts.trigger_time is not None:
-    trigtimes = [opts.trigger_time]
+    trigger_times = [opts.trigger_time]
 
 if opts.trigger_list is not None:
-    trigtimes = np.loadtxt(opts.trigger_list)
+    trigger_times = np.loadtxt(opts.trigger_list)
 
 if injfile is not None:
 
@@ -201,7 +195,7 @@ if injfile is not None:
 
     # Get gps list from sim_inspiral; for some reason we need both the trigtime
     # and the event number
-    trigtimes=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
+    trigger_times=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
             for sim in table])
     
     # reduce to specified values
@@ -209,27 +203,27 @@ if injfile is not None:
 
     if events!='all':
         injevents=list(hyphen_range(events))
-        trigtimes=trigtimes[injevents]
+        trigger_times=trigger_times[injevents]
 
 
 #
 # --- Determine min/max times for data coverage
 #
-padding = cp.getint('input','padding')
-psdlen = cp.getint('input','PSDlength')
+seglen = cp.getfloat('input','seglen')
+psdlen = cp.getfloat('input','PSDlength')
+padding = cp.getfloat('input','padding')
 
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
-    gps_start_time = job_times(min(trigtimes), psdlen, padding)[0]
-    cp.set('input','gps-start-time',gps_start_time)
+    gps_start_time,_ = job_times(min(trigger_times), seglen, psdlen, padding)[0]
+    cp.set('input','gps-start-time',str(int(gps_start_time)))
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
-    gps_end_time = job_times(max(trigtimes), psdlen, padding)[1]
-    cp.set('input','gps-end-time',gps_end_time)
-
+    gps_end_time,_ = job_times(max(trigger_times), seglen, psdlen, padding)[1]
+    cp.set('input','gps-end-time',str(int(gps_end_time)))
 
 #############################################
 
@@ -240,8 +234,10 @@ else:
 topdir=os.getcwd()
 os.chdir(workdir)
 
-datafind = 'datafind'
-if not os.path.exists(datafind): os.makedirs(datafind)
+datafind_dir = 'datafind'
+if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
+segment_dir = 'segments'
+if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
 shutil.copy(cp.get('paths','bwb_executable'), '.')
 shutil.copy(cp.get('paths','bwp_executable'), '.')
@@ -263,7 +259,7 @@ channelList=ast.literal_eval(cp.get('datafind', 'channelList'))
 frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
 
 cacheFiles = {}
-segments = {}
+segmentList = {}
 
 if not opts.skip_datafind:
 
@@ -277,16 +273,16 @@ if not opts.skip_datafind:
             #
             # --- Run DataFind query to produce cache files for frames
             #
-            cachefilefmt = os.path.join(datafind, '{0}.cache')
+            cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
 
             if opts.server is not None:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e\
         {gps_end_time} --lal-cache --server={server} | grep file > {cachefile}".format(
-                        o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
+                        o=ifo[0], frtype=frtypeList[ifo], cachefile = cachefilefmt.format(ifo),
                         gps_start_time=gps_start_time, gps_end_time=gps_end_time, server=opts.server)
             else:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e {gps_end_time} --lal-cache | grep file > {cachefile}".format(
-                        o=ifo[0], frtype=frtype, cachefile = cachefilefmt.format(ifo),
+                        o=ifo[0], frtype=frtypeList[ifo], cachefile = cachefilefmt.format(ifo),
                         gps_start_time=gps_start_time, gps_end_time=gps_end_time)
             print >> sys.stdout, "Calling LIGO data find ..."
             print >> sys.stdout, ldfcmd
@@ -298,21 +294,30 @@ if not opts.skip_datafind:
             #
             # --- Run segdb query
             #
-            # 0) move into datafind directory
             # 1) Find segments \in [gps-start-time, gps-end-time]
-            # 2) Loop over trigtimes and identify analyzeable jobs
-            # 3) move out of datafind directory
+            # 2) Loop over trigger_times and identify analyzeable jobs
 
-            if config.has_option('datafind','veto-categories'):
-              veto_categories=ast.literal_eval(config.get('datafind','veto-categories'))
+            if cp.has_option('datafind','veto-categories'):
+              veto_categories=ast.literal_eval(cp.get('datafind','veto-categories'))
             else: veto_categories=[]
 
-            (segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(config, ifo,
+            curdir=os.getcwd()
+            os.chdir(segment_dir)
+
+            (segFileName,dqVetoes)=inspiralutils.findSegmentsToAnalyze(cp, ifo,
                     veto_categories, generate_segments=True,
                     use_available_data=False, data_quality_vetoes=False)
 
             segfile=open(segFileName)
-            segments[ifo]=segmentsUtils.fromsegwizard(segfile)
+            segmentList[ifo]=segmentsUtils.fromsegwizard(segfile)
+            segmentList[ifo].coalesce()
+            segfile.close()
+
+            if segmentList[ifo] == []:
+                print >> sys.stderr, "No matching segments for %s"%ifo
+                sys.exit()
+
+            os.chdir(curdir)
 
 
     #############################################
@@ -449,47 +454,80 @@ bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
 #
 # Build Nodes
 #
-if "LALSimAdLIGO" in channelList:
+if "LALSimAdLIGO" in cacheFiles.values():
     try:
-        dataseed=cp.getint('datafind', 'dataseed')
+        dataseed=cp.getint('analysis', 'dataseed')
     except ConfigParser.NoOptionError:
-        print >> sys.stderr, "datafind section requires dataseed for sim data"
+        print >> sys.stderr, "[analysis] section requires dataseed for sim data"
         sys.exit()
 
-for g,gps in enumerate(trigtimes):
+unanalyzeable_jobs = []
 
-    outputDir  = 'bayeswave_' + str(int(gps)) + '_' + str(uuid.uuid4())
+#trigger_times = [1126252133, 1126259365]
+
+for t, trigger_time in enumerate(trigger_times):
+
+    print >> sys.stdout, "---------------------------------------"
+    print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
+            len(trigger_times))
+
+    # XXX: check job times fall within available data
+    job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
+
+    for ifo in ifoList:
+
+        job_in_segments = [seg.__contains__(job_segment) \
+                for seg in segmentList[ifo]]
+
+        if not any(job_in_segments):
+
+            bad_job={}
+            bad_job['ifo']=ifo
+            bad_job['trigger_time']=trigger_time
+            bad_job['seglen']=seglen
+            bad_job['psdlen']=psdlen
+            bad_job['padding']=padding
+            bad_job['job_segment']=job_segment
+            bad_job['data_segments']=segmentList[ifo]
+
+            unanalyzeable_jobs.append(bad_job)
+            
+            print >> sys.stderr, "Warning: No matching %s segments for job %d of %d"%(
+                    ifo, t+1, len(trigger_times))
+            print >> sys.stderr, bad_job
+            break
+
+else:
+
+    outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)
 
     bwb_node = pipe_utils.bayeswaveNode(bwb_job)
     bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
+
     # add options for bayeswave node
-    bwb_node.set_trigtime(gps)
-    bwb_node.set_PSDstart(gps)
+    bwb_node.set_trigtime(trigger_time)
+    bwb_node.set_PSDstart(psd_start)
     bwb_node.set_retry(1)
     bwb_node.set_outputDir(outputDir)
 
-    if "LALSimAdLIGO" in channelList:
+    if "LALSimAdLIGO" in cacheFiles.values():
         bwb_node.set_dataseed(dataseed)
         bwp_node.set_dataseed(dataseed)
         dataseed+=1
 
     # add options for bayeswave_post node
-    bwp_node.set_trigtime(gps)
-    bwp_node.set_PSDstart(gps)
+    bwp_node.set_trigtime(trigger_time)
+    bwp_node.set_PSDstart(psd_start)
     bwp_node.set_retry(1)
     bwp_node.set_outputDir(outputDir)
 
     if injfile is not None:
 
-        # STILL TO SUPPORT:
-        # 1) xml, hdf5 file transfer
-        # 2) xml needs to point to hdf5 correctly after transfer
-
-        bwb_node.set_injevent(injevents[g])
-        bwp_node.set_injevent(injevents[g])
+        bwb_node.set_injevent(injevents[t])
+        bwp_node.set_injevent(injevents[t])
 
     bwp_node.add_parent(bwb_node)
 
@@ -509,4 +547,22 @@ dag.write_script()
 
 # move back
 os.chdir(topdir)
+
+# print some summary info:
+print """
+Total number of requested trigger times: {ntrigs_desired}
+Number of triggers successfully added to DAG: {ntrigs_added}
+Number of triggers failing data criteria: {ntrigs_failed}
+
+To submit:
+    cd {workdir}
+    condor_submit_dag {dagfile}
+""".format(ntrigs_desired=len(trigger_times),
+        ntrigs_added=len(trigger_times)-len(unanalyzeable_jobs),
+        ntrigs_failed=len(unanalyzeable_jobs),
+        workdir=workdir, dagfile=dag.get_dag_file())
+
+
+
+
 

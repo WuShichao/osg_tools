@@ -21,6 +21,7 @@ from glue import pipeline
 import itertools
 import socket
 import sys,os
+import ast
 
 #
 # Main analysis
@@ -69,8 +70,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
-        #ifoList = cp.get('datafind', 'ifoList').split(',')
-        #channelList = cp.get('datafind', 'channelList').split(',')
+        ifoList = ast.literal_eval(cp.get('datafind', 'ifoList'))
+        channelList = ast.literal_eval(cp.get('datafind', 'channelList'))
 
         # XXX: hack to repeat option for --ifo H1 --ifo L1 etc
         ifo_list_opt = ifoList[0]
@@ -83,7 +84,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
  
         flow = ast.literal_eval(cp.get('input','flow'))
         for ifo in ifoList:
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow[ifo])
+            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
 
@@ -303,8 +304,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
-        ifoList = cp.get('datafind', 'ifoList').split(',')
-        channelList = cp.get('datafind', 'channelList').split(',')
+        ifoList = ast.literal_eval(cp.get('datafind', 'ifoList'))
+        channelList = ast.literal_eval(cp.get('datafind', 'channelList'))
 
         # XXX: hack to repeat option
         ifo_list_opt = ifoList[0]
@@ -318,7 +319,9 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
  
         flow = ast.literal_eval(cp.get('input','flow'))
         for ifo in ifoList:
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), flow[ifo])
+            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
+
+            # XXX: conditionally change these to LALSimAdLIGO
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
 
