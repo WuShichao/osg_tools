@@ -262,6 +262,7 @@ frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
 
 cacheFiles = {}
 segmentList = {}
+frame_paths={}
 
 if not opts.skip_datafind:
 
@@ -329,75 +330,41 @@ if not opts.skip_datafind:
             os.chdir(curdir)
 
 
-    #############################################
-    # Get frame files from cache
+        #############################################
+        # Get frame files from cache
 
-    if opts.copy_frames:
-        
-        frames_to_copy=[]
-        for ifo in ifoList:
-            cache_entries = np.loadtxt('datafind/{ifo}.cache'.format(ifo=ifo),
-                    dtype=str)
-
-            if cache_entries.ndim==1: cache_entries=[cache_entries]
-
-            frame_paths=[]
-            frame_files=[]
-            for c,cache_entry in enumerate(cache_entries):
-                frame_paths.append(cache_entry[-1].split('localhost')[-1])
-                frame_files.append(frame_paths[c].split('/')[-1])
-
-            unique_frames = list(set(frame_files))
-            unique_idx = []
-            for f,frame_file in enumerate(frame_files):
-                current_idx=unique_frames.index(frame_file)
-                if f==0:
-                    unique_idx.append(current_idx)
-                else:
-                    if unique_idx[f-1] !=current_idx:
-                        unique_idx.append(current_idx)
-            sys.exit()
-
-            unique_idx=np.array(unique_idx)
-            frame_paths=np.array(frame_paths)
-            if len(unique_frames)>1:
-                for frame_path in frame_paths[unique_idx]:
-                    frames_to_copy.append(frame_path)
-            else:
-                frames_to_copy.append(frame_paths[unique_idx][0])
+        if opts.copy_frames:
 
 
-        for frame in frames_to_copy:
-            print >> sys.stdout, "Copying %s"%frame
-            shutil.copy(frame, 'datafind')
-
-
-        #
-        # Now we need to make a new, local cache file
-        # - do this by manipulating the path string in the cache file to be relative 
-        for ifo in ifoList:
+            #
+            # Now we need to make a new, local cache file
+            # - do this by manipulating the path string in the cache file to be relative 
             cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
             shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
             cache_entries = np.loadtxt(cache_file, dtype=str)
-            if cache_entries.ndim>1:
-                cache_entries = cache_entries[unique_idx]
 
-            if cache_entries.ndim==1:
-                cache_entries = [cache_entries]
-
+            if cache_entries.ndim==1: cache_entries = [cache_entries]
+            
+            frame_paths[ifo]=[]
             new_cache = open(cache_file, 'w')
-            for entry in cache_entries:
+            for c,cache_entry in enumerate(cache_entries):
+                frame = cache_entry[-1].split('localhost')[-1]
+                frame_paths[ifo].append(frame)
+#               print >> sys.stdout, "Copying %s"%frame
+#               shutil.copy(frame, 'datafind')
 
-                local_path=os.path.join('datafind',entry[4].split('/')[-1])
+                local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
 
                 new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
-                    ifo=ifo, type=entry[1], gps=entry[2], length=entry[3],
-                    path=local_path))
+                    ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
+                    length=cache_entry[3], path=local_path))
 
             new_cache.close()
 
 else:
+
+    print "SKIPPING DATAFIND & SEGDB"
 
 
     for ifo in ifoList:

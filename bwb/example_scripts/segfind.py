@@ -35,7 +35,7 @@ config.read(args[0])
 if config.has_option('analysis','ifos'):
   ifos=ast.literal_eval(config.get('analysis','ifos'))
 else:
-  ifos=['H1','L1','V1']
+  ifos=['H1','L1']#,'V1']
 segments={}
 if config.has_option('datafind','veto-categories'):
   veto_categories=ast.literal_eval(config.get('datafind','veto-categories'))
