@@ -216,13 +216,15 @@ padding = cp.getfloat('input','padding')
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
-    gps_start_time,_ = job_times(min(trigger_times), seglen, psdlen, padding)[0]
+    seg, _ = job_times(min(trigger_times), seglen, psdlen, padding)
+    gps_start_time = seg[0]
     cp.set('input','gps-start-time',str(int(gps_start_time)))
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
-    gps_end_time,_ = job_times(max(trigger_times), seglen, psdlen, padding)[1]
+    gps_end_time,_ = job_times(max(trigger_times), seglen, psdlen, padding)
+    gps_end_time = seg[1]
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
 #############################################
@@ -266,7 +268,8 @@ if not opts.skip_datafind:
     for ifo in ifoList:
 
         if frtypeList[ifo] == "LALSimAdLIGO": 
-            cacheFiles[ifo]= "LALSimAdLIGO"
+            cacheFiles[ifo] = "LALSimAdLIGO"
+            segmentList[ifo] = segments.segment(gps_start_time, gps_end_time)
             continue
         else:
 
@@ -276,14 +279,20 @@ if not opts.skip_datafind:
             cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
 
             if opts.server is not None:
-                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e\
-        {gps_end_time} --lal-cache --server={server} | grep file > {cachefile}".format(
-                        o=ifo[0], frtype=frtypeList[ifo], cachefile = cachefilefmt.format(ifo),
-                        gps_start_time=gps_start_time, gps_end_time=gps_end_time, server=opts.server)
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
+    -s {gps_start_time} -e {gps_end_time} --lal-cache\
+    --server={server} -u {url_type}| grep file > {cachefile}".format(
+                        o=ifo[0], frtype=frtypeList[ifo],
+                        cachefile=cachefilefmt.format(ifo),
+                        gps_start_time=gps_start_time,
+                        gps_end_time=gps_end_time, server=opts.server,
+                        url_type=cp.get('datafind','url-type'))
             else:
-                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s {gps_start_time} -e {gps_end_time} --lal-cache | grep file > {cachefile}".format(
-                        o=ifo[0], frtype=frtypeList[ifo], cachefile = cachefilefmt.format(ifo),
-                        gps_start_time=gps_start_time, gps_end_time=gps_end_time)
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
+{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}| grep file >\
+{cachefile}".format( o=ifo[0], frtype=frtypeList[ifo],
+    cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
+    gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
             print >> sys.stdout, "Calling LIGO data find ..."
             print >> sys.stdout, ldfcmd
 
@@ -325,21 +334,6 @@ if not opts.skip_datafind:
 
     if opts.copy_frames:
         
-        #print >> sys.stdout, "Copying frame files for input IS DUMB, EXITING"
-
-        # XXX THIS NEEDS TO BE OVERHAULED SO WE SHIP FRAMES WITH JOBS, NOT COPY
-        # FIRST!  DO this by adding the unique frames to a list whose elements
-        # are then associated to individual jobs
-        #sys.exit()
-
-        # XXX Having found these files, we now want to copy them to the working
-        # directory and make fresh, local cache files
-
-        # 1) read cache file
-        # 2) identify unique frames
-        # 3) copy unique frames to datafind directory
-        # 4) add to transfer files
-
         frames_to_copy=[]
         for ifo in ifoList:
             cache_entries = np.loadtxt('datafind/{ifo}.cache'.format(ifo=ifo),
@@ -353,8 +347,6 @@ if not opts.skip_datafind:
                 frame_paths.append(cache_entry[-1].split('localhost')[-1])
                 frame_files.append(frame_paths[c].split('/')[-1])
 
-            #unique_frames, unique_idx = np.unique(frame_files, return_index=True)
-
             unique_frames = list(set(frame_files))
             unique_idx = []
             for f,frame_file in enumerate(frame_files):
@@ -364,6 +356,7 @@ if not opts.skip_datafind:
                 else:
                     if unique_idx[f-1] !=current_idx:
                         unique_idx.append(current_idx)
+            sys.exit()
 
             unique_idx=np.array(unique_idx)
             frame_paths=np.array(frame_paths)
@@ -471,7 +464,8 @@ for t, trigger_time in enumerate(trigger_times):
     print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
             len(trigger_times))
 
-    # XXX: check job times fall within available data
+    # -------------------------------------------
+    # Check job times fall within available data
     job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
 
     for ifo in ifoList:
@@ -497,6 +491,7 @@ for t, trigger_time in enumerate(trigger_times):
             print >> sys.stderr, bad_job
             break
 
+    # -------------------------------------------
 else:
 
     outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
@@ -549,18 +544,22 @@ dag.write_script()
 os.chdir(topdir)
 
 # print some summary info:
-print """
-Total number of requested trigger times: {ntrigs_desired}
-Number of triggers successfully added to DAG: {ntrigs_added}
-Number of triggers failing data criteria: {ntrigs_failed}
+if len(trigger_times)-len(unanalyzeable_jobs)>0:
+    print """
+    Total number of requested trigger times: {ntrigs_desired}
+    Number of triggers successfully added to DAG: {ntrigs_added}
+    Number of triggers failing data criteria: {ntrigs_failed}
 
-To submit:
-    cd {workdir}
-    condor_submit_dag {dagfile}
-""".format(ntrigs_desired=len(trigger_times),
-        ntrigs_added=len(trigger_times)-len(unanalyzeable_jobs),
-        ntrigs_failed=len(unanalyzeable_jobs),
-        workdir=workdir, dagfile=dag.get_dag_file())
+    To submit:
+        cd {workdir}
+        condor_submit_dag {dagfile}
+    """.format(ntrigs_desired=len(trigger_times),
+            ntrigs_added=len(trigger_times)-len(unanalyzeable_jobs),
+            ntrigs_failed=len(unanalyzeable_jobs),
+            workdir=workdir, dagfile=dag.get_dag_file())
+else:
+    print ""
+    print "No analyzeable jobs in requested time"
 
 
 

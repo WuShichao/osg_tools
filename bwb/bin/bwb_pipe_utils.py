@@ -202,8 +202,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Injection file
         #
         if injfile is not None:
-            # XXX: note that bayeswave works within the outputDir, so point to
-            # injection
             injfile=os.path.join('..',injfile)
             self.add_opt('inj', injfile)
 
@@ -321,9 +319,11 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         for ifo in ifoList:
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
-            # XXX: conditionally change these to LALSimAdLIGO
-            self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
+            # XXX: Postproc currently expects LALSimAdLIGO
+            #self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
+            #self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
+            self.add_opt('{ifo}-cache'.format(ifo=ifo), "LALSimAdLIGO")
+            self.add_opt('{ifo}-channel'.format(ifo=ifo), "LALSimAdLIGO")
 
 
         # --- Optional options
