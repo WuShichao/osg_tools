@@ -48,6 +48,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # FIXME: currently only associates PACE (GaTech) as an OSG site
         hostname = socket.gethostname()
+        #hostname = 'pace.gatech.edu'
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
@@ -58,6 +59,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
+
+            if cp.getboolean('condor','copy-frames'): transferstring+=',$(macroframes)'
+
             if injfile is not None:
                 transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
             if nrdata is not None: transferstring+=','+nrdata
@@ -66,6 +70,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             # --- Point to ROM data (which should have been copied
             if injfile is not None:
                 self.add_condor_cmd("environment", "LAL_DATA_PATH=./")
+
 
         self.add_condor_cmd('getenv', 'True')
 
@@ -251,6 +256,16 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('dataseed', dataseed)
         self.__dataseed = dataseed
 
+    def add_frame_transfer(self, framedict):
+        """
+        Add a list of frames to transfer
+        """
+        self.__frames=""
+        for ifo in framedict.keys():
+            for frame in framedict[ifo]:
+                self.__frames += frame + ','
+        self.__frames.strip(',')
+        self.add_var_opt('frames', self.__frames)
   
 
 #
@@ -289,6 +304,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_output_files', '$(macrooutputDir)')
 
             # --- Files to include in transfer
+            # FIXME: PostProc doesn't currently need frame transfer
             transferstring='datafind,$(macrooutputDir)'
             if injfile is not None:
                 transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile

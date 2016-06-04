@@ -134,6 +134,7 @@ def hyphen_range(s):
 
 # --- Parse options, arguments and ini file
 opts, args, cp = parser()
+cp.set('condor','copy-frames',str(opts.copy_frames))
 
 workdir = opts.workdir 
 if not os.path.exists(workdir): os.makedirs(workdir)
@@ -262,7 +263,8 @@ frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
 
 cacheFiles = {}
 segmentList = {}
-frame_paths={}
+framePaths={}
+frameSegs={}
 
 if not opts.skip_datafind:
 
@@ -302,6 +304,12 @@ if not opts.skip_datafind:
             cacheFiles[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
             #
+            # Record frame segments so we can identify frames for OSG transfers
+            #
+            frameSegs[ifo] = segmentsUtils.fromlalcache(open(cacheFiles[ifo]))
+
+
+            #
             # --- Run segdb query
             #
             # 1) Find segments \in [gps-start-time, gps-end-time]
@@ -330,11 +338,11 @@ if not opts.skip_datafind:
             os.chdir(curdir)
 
 
-        #############################################
-        # Get frame files from cache
+        # --------------------------------------------------------------------
+        # Set up cache files to point to local copies of frames in the working
+        # directory
 
         if opts.copy_frames:
-
 
             #
             # Now we need to make a new, local cache file
@@ -343,18 +351,16 @@ if not opts.skip_datafind:
             shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
             cache_entries = np.loadtxt(cache_file, dtype=str)
-
             if cache_entries.ndim==1: cache_entries = [cache_entries]
             
-            frame_paths[ifo]=[]
+            framePaths[ifo]=[]
             new_cache = open(cache_file, 'w')
             for c,cache_entry in enumerate(cache_entries):
                 frame = cache_entry[-1].split('localhost')[-1]
-                frame_paths[ifo].append(frame)
-#               print >> sys.stdout, "Copying %s"%frame
-#               shutil.copy(frame, 'datafind')
+                framePaths[ifo].append(frame)
 
-                local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
+                #local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
+                local_path=cache_entry[4].split('/')[-1]
 
                 new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
                     ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
@@ -425,6 +431,7 @@ unanalyzeable_jobs = []
 
 #trigger_times = [1126252133, 1126259365]
 
+transferFrames={}
 for t, trigger_time in enumerate(trigger_times):
 
     print >> sys.stdout, "---------------------------------------"
@@ -461,6 +468,14 @@ for t, trigger_time in enumerate(trigger_times):
     # -------------------------------------------
 else:
 
+    if "LALSimAdLIGO" not in cacheFiles.values():
+        #
+        # Identify frames associated with this job
+        for ifo in ifoList:
+            frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
+            transferFrames[ifo] = [frame for f,frame in
+                    enumerate(framePaths[ifo]) if frame_idx[f]] 
+
     outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)
@@ -474,6 +489,7 @@ else:
     bwb_node.set_PSDstart(psd_start)
     bwb_node.set_retry(1)
     bwb_node.set_outputDir(outputDir)
+    bwb_node.add_frame_transfer(transferFrames)
 
     if "LALSimAdLIGO" in cacheFiles.values():
         bwb_node.set_dataseed(dataseed)
