@@ -347,8 +347,7 @@ if not opts.skip_datafind:
         # Set up cache files to point to local copies of frames in the working
         # directory
 
-        hostname = socket.gethostname()
-        if 'pace.gatech.edu' in hostname and opts.copy_frames:
+        if opts.copy_frames:
 
             #
             # Now we need to make a new, local cache file
@@ -381,12 +380,11 @@ else:
 
     for ifo in ifoList:
 
-
-        if "LALSimAdLIGO" not in channelList:
+        if "LALSimAdLIGO" not in channelList[ifo]:
             # skipping datafind but using user-specified cache files
 
             cacheFile = \
-                    os.path.abspath(ast.literal_eval(cp.get('datafind','cacheFiles')[ifo]))
+                    os.path.abspath(ast.literal_eval(cp.get('datafind','cacheFiles'))[ifo])
             try:
                 shutil.copy(cacheFile, 'datafind')
             except IOError:
@@ -477,10 +475,11 @@ else:
     if "LALSimAdLIGO" not in cacheFiles.values():
         #
         # Identify frames associated with this job
-        for ifo in ifoList:
-            frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
-            transferFrames[ifo] = [frame for f,frame in
-                    enumerate(framePaths[ifo]) if frame_idx[f]] 
+        if opts.copy_frames:
+            for ifo in ifoList:
+                frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
+                transferFrames[ifo] = [frame for f,frame in
+                        enumerate(framePaths[ifo]) if frame_idx[f]] 
 
     outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
 
@@ -495,7 +494,7 @@ else:
     bwb_node.set_PSDstart(psd_start)
     bwb_node.set_retry(1)
     bwb_node.set_outputDir(outputDir)
-    bwb_node.add_frame_transfer(transferFrames)
+    if transferFrames: bwb_node.add_frame_transfer(transferFrames)
 
     if "LALSimAdLIGO" in cacheFiles.values():
         bwb_node.set_dataseed(dataseed)
