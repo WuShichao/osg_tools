@@ -19,6 +19,7 @@ import numpy as np
 import time
 import sys
 import os, shutil
+import socket
 import subprocess
 import uuid
 import fileinput
@@ -179,6 +180,9 @@ if nrdata is not None:
 #
 # Get trigger time(s)
 #
+#   Use cases: single trigger, ascii trigger list, sim_inspiral table
+#   Not yet supported: sim_burst, time-slides
+#
 if opts.trigger_time is not None:
     trigger_times = [opts.trigger_time]
 
@@ -190,6 +194,7 @@ if injfile is not None:
     #
     # Read inspinj file
     #
+    # XXX: should be easy to plug sim_bursts in here, too
     xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
             ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
     table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
@@ -284,7 +289,7 @@ if not opts.skip_datafind:
             if opts.server is not None:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
     -s {gps_start_time} -e {gps_end_time} --lal-cache\
-    --server={server} -u {url_type}| grep file > {cachefile}".format(
+    --server={server} -u {url_type} > {cachefile}".format(
                         o=ifo[0], frtype=frtypeList[ifo],
                         cachefile=cachefilefmt.format(ifo),
                         gps_start_time=gps_start_time,
@@ -292,7 +297,7 @@ if not opts.skip_datafind:
                         url_type=cp.get('datafind','url-type'))
             else:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
-{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}| grep file >\
+{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
 {cachefile}".format( o=ifo[0], frtype=frtypeList[ifo],
     cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
     gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
@@ -342,7 +347,8 @@ if not opts.skip_datafind:
         # Set up cache files to point to local copies of frames in the working
         # directory
 
-        if opts.copy_frames:
+        hostname = socket.gethostname()
+        if 'pace.gatech.edu' in hostname and opts.copy_frames:
 
             #
             # Now we need to make a new, local cache file
