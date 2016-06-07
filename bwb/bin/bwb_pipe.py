@@ -231,7 +231,7 @@ else:
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
-    gps_end_time,_ = job_times(max(trigger_times), seglen, psdlen, padding)
+    seg,_ = job_times(max(trigger_times), seglen, psdlen, padding)
     gps_end_time = seg[1]
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
