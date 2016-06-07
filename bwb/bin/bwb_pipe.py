@@ -140,7 +140,13 @@ opts, args, cp = parser()
 cp.set('condor','copy-frames',str(opts.copy_frames))
 
 workdir = opts.workdir 
-if not os.path.exists(workdir): os.makedirs(workdir)
+if not os.path.exists(workdir): 
+    print >> sys.stdout, "making work-directory: %s"%workdir
+    os.makedirs(workdir)
+else:
+    print >> sys.stdout, "work-directory %s exists, exiting"%workdir
+    sys.exit()
+
 
 # --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
@@ -279,7 +285,9 @@ if not opts.skip_datafind:
 
         if frtypeList[ifo] == "LALSimAdLIGO": 
             cacheFiles[ifo] = "LALSimAdLIGO"
-            segmentList[ifo] = segments.segment(gps_start_time, gps_end_time)
+            segmentList[ifo] = \
+                    segments.segmentlist([segments.segment(gps_start_time,
+                        gps_end_time)])
             continue
         else:
 
@@ -418,21 +426,23 @@ bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
 #
 if "LALSimAdLIGO" in cacheFiles.values():
     try:
-        dataseed=cp.getint('analysis', 'dataseed')
+        dataseed=cp.getint('input', 'dataseed')
     except ConfigParser.NoOptionError:
-        print >> sys.stderr, "[analysis] section requires dataseed for sim data"
+        print >> sys.stderr, "[input] section requires dataseed for sim data"
+        print >> sys.stderr, "...removing %s"%workdir
+        os.chdir(topdir)
+        shutil.rmtree(workdir)
         sys.exit()
 
 unanalyzeable_jobs = []
 
+# XXX: Testing times (one of these has no data)
 #trigger_times = [1126252133, 1126259365]
 
 transferFrames={}
 for t, trigger_time in enumerate(trigger_times):
 
     print >> sys.stdout, "---------------------------------------"
-    print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
-            len(trigger_times))
 
     # -------------------------------------------
     # Check job times fall within available data
@@ -461,54 +471,57 @@ for t, trigger_time in enumerate(trigger_times):
             print >> sys.stderr, bad_job
             break
 
-    # -------------------------------------------
-else:
+    else:
 
-    if "LALSimAdLIGO" not in cacheFiles.values():
-        #
-        # Identify frames associated with this job
-        if opts.copy_frames:
-            for ifo in ifoList:
-                frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
-                transferFrames[ifo] = [frame for f,frame in
-                        enumerate(framePaths[ifo]) if frame_idx[f]] 
-
-    outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
-
-    if not os.path.exists(outputDir): os.makedirs(outputDir)
-
-    bwb_node = pipe_utils.bayeswaveNode(bwb_job)
-    bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
+        print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
+                len(trigger_times))
 
 
-    # add options for bayeswave node
-    bwb_node.set_trigtime(trigger_time)
-    bwb_node.set_PSDstart(psd_start)
-    bwb_node.set_retry(1)
-    bwb_node.set_outputDir(outputDir)
-    if transferFrames: bwb_node.add_frame_transfer(transferFrames)
+        if "LALSimAdLIGO" not in cacheFiles.values():
+            #
+            # Identify frames associated with this job
+            if opts.copy_frames:
+                for ifo in ifoList:
+                    frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
+                    transferFrames[ifo] = [frame for f,frame in
+                            enumerate(framePaths[ifo]) if frame_idx[f]] 
 
-    if "LALSimAdLIGO" in cacheFiles.values():
-        bwb_node.set_dataseed(dataseed)
-        bwp_node.set_dataseed(dataseed)
-        dataseed+=1
+        outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
 
-    # add options for bayeswave_post node
-    bwp_node.set_trigtime(trigger_time)
-    bwp_node.set_PSDstart(psd_start)
-    bwp_node.set_retry(1)
-    bwp_node.set_outputDir(outputDir)
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-    if injfile is not None:
+        bwb_node = pipe_utils.bayeswaveNode(bwb_job)
+        bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
-        bwb_node.set_injevent(injevents[t])
-        bwp_node.set_injevent(injevents[t])
 
-    bwp_node.add_parent(bwb_node)
+        # add options for bayeswave node
+        bwb_node.set_trigtime(trigger_time)
+        bwb_node.set_PSDstart(psd_start)
+        bwb_node.set_retry(1)
+        bwb_node.set_outputDir(outputDir)
+        if transferFrames: bwb_node.add_frame_transfer(transferFrames)
 
-    # Add Nodes to DAG
-    dag.add_node(bwb_node)
-    dag.add_node(bwp_node)
+        if "LALSimAdLIGO" in cacheFiles.values():
+            bwb_node.set_dataseed(dataseed)
+            bwp_node.set_dataseed(dataseed)
+            dataseed+=1
+
+        # add options for bayeswave_post node
+        bwp_node.set_trigtime(trigger_time)
+        bwp_node.set_PSDstart(psd_start)
+        bwp_node.set_retry(1)
+        bwp_node.set_outputDir(outputDir)
+
+        if injfile is not None:
+
+            bwb_node.set_injevent(injevents[t])
+            bwp_node.set_injevent(injevents[t])
+
+        bwp_node.add_parent(bwb_node)
+
+        # Add Nodes to DAG
+        dag.add_node(bwb_node)
+        dag.add_node(bwp_node)
 
 #
 # Finalise DAG
