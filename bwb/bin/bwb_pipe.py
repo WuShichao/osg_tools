@@ -64,16 +64,16 @@ def job_times(trigtime, seglen, psdlen, padding):
     """
     Compute the gps times corresponding to a given trigger time
 
-    start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
-    stop  = max(start+psdlen, trigtime+0.5*Sseglen)
+    start = floor(min(trigtime - (psdlen + padding), trigtime-0.5*seglen))
+    stop  = ceil(max(start+psdlen, trigtime+0.5*Sseglen))
 
     returns segment(start,stop), start
 
     so that start can be used easily as a psd start
     """
 
-    start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
-    stop = max(start+psdlen, trigtime+0.5*seglen)
+    start = np.floor(min(trigtime - (psdlen + padding), trigtime-0.5*seglen))
+    stop = np.ceil(max(start+psdlen, trigtime+0.5*seglen))
 
     return segments.segment(start,stop), start
 
@@ -84,7 +84,7 @@ def parser():
 
     # --- cmd line
     parser = OptionParser()
-    parser.add_option("-t", "--user-tag", default="TEST", type=str)
+    parser.add_option("-t", "--user-tag", default="", type=str)
     parser.add_option("-o", "--workdir", type=str, default=None)
     parser.add_option("--trigger-time", type=float, default=None)
     parser.add_option("--trigger-list", type=str, default=None)
@@ -264,7 +264,7 @@ shutil.copy(cp.get('bw_paths','bwp_executable'), '.')
 # --- datafind params from config file
 #
 
-ifoList=ast.literal_eval(cp.get('datafind', 'input'))
+ifoList=ast.literal_eval(cp.get('input','ifoList'))
 channelList=ast.literal_eval(cp.get('datafind', 'channelList'))
 frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
 
@@ -402,10 +402,10 @@ else:
 #
 
 # ---- Create a dag to which we can add jobs.
-dag = pipeline.CondorDAG(log=opts.user_tag+'.log')
+dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
-dag.set_dag_file( 'bayeswave_{0}'.format(opts.user_tag) )
+dag.set_dag_file( 'bayeswave_{0}'.format(opts.workdir) )
 
 # ---- Make instance of bayeswaveJob.
 bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injfile=injfile,
