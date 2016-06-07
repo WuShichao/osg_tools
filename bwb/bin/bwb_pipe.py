@@ -68,6 +68,8 @@ def job_times(trigtime, seglen, psdlen, padding):
     stop  = max(start+psdlen, trigtime+0.5*Sseglen)
 
     returns segment(start,stop), start
+
+    so that start can be used easily as a psd start
     """
 
     start = min(trigtime - (psdlen + padding), trigtime-0.5*seglen)
@@ -247,8 +249,8 @@ if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
 segment_dir = 'segments'
 if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
-shutil.copy(cp.get('paths','bwb_executable'), '.')
-shutil.copy(cp.get('paths','bwp_executable'), '.')
+shutil.copy(cp.get('bw_paths','bwb_executable'), '.')
+shutil.copy(cp.get('bw_paths','bwp_executable'), '.')
 
 
 ################################################
@@ -262,7 +264,7 @@ shutil.copy(cp.get('paths','bwp_executable'), '.')
 # --- datafind params from config file
 #
 
-ifoList=ast.literal_eval(cp.get('datafind', 'ifoList'))
+ifoList=ast.literal_eval(cp.get('datafind', 'input'))
 channelList=ast.literal_eval(cp.get('datafind', 'channelList'))
 frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
 
@@ -377,24 +379,14 @@ else:
 
     print "SKIPPING DATAFIND & SEGDB"
 
-
     for ifo in ifoList:
 
-        if "LALSimAdLIGO" not in channelList[ifo]:
-            # skipping datafind but using user-specified cache files
-
-            cacheFile = \
-                    os.path.abspath(ast.literal_eval(cp.get('datafind','cacheFiles'))[ifo])
-            try:
-                shutil.copy(cacheFile, 'datafind')
-            except IOError:
-                print >> sys.stderr, "Warning: cachefiles not found, remember to copy by hand"
-            cacheFiles[ifo] = os.path.join('datafind',os.path.basename(cacheFile))
-
+        if  frtypeList[ifo] == "LALSimAdLIGO":
+            cacheFiles[ifo] == "LALSimAdLIGO"
         else:
+            cacheFiles[ifo] = os.path.join('datafind','%s.cache'%ifo)
 
-            cacheFiles[ifo] = \
-                    ast.literal_eval(cp.get('datafind','cacheFiles')[ifo])
+        segmentList[ifo] = segments.segment(gps_start_time, gps_end_time)
 
 
 #############################################
