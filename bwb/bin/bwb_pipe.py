@@ -209,15 +209,24 @@ if injfile is not None:
     #
     # Read inspinj file
     #
-    # XXX: should be easy to plug sim_bursts in here, too
-    xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
-            ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
-    table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
+    try:
+        xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
+                ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
+        table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
 
-    # Get gps list from sim_inspiral; for some reason we need both the trigtime
-    # and the event number
-    trigger_times=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
-            for sim in table])
+        # Get gps list from sim_inspiral; for some reason we need both the trigtime
+        # and the event number
+        trigger_times=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
+                for sim in table])
+    except:
+        pass
+    else try:
+        #table = lalburst.SimRingdownTableFromLIGOLw(filename, start, stop)
+        table = lalburst.SimBurstTableFromLIGOLw(filename, start, stop)
+    except:
+        print >> sys.stderr, "Don't know how to parse injfile %s"%injfile
+        sys.exit()
+
     
     # reduce to specified values
     events=cp.get('injections', 'events')
@@ -516,7 +525,9 @@ for t, trigger_time in enumerate(trigger_times):
         if "LALSimAdLIGO" in cache_files.values():
             bwb_node.set_dataseed(dataseed)
             bwp_node.set_dataseed(dataseed)
-            dataseed+=random.randint(1,dataseed)
+            #gpsNow = int(os.popen('lalapps_tconvert now').readline())
+            #dataseed+=np.random.randint(1,gpsNow)
+            dataseed+=1
 
         # add options for bayeswave_post node
         bwp_node.set_trigtime(trigger_time)
