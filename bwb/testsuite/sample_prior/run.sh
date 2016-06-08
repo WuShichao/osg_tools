@@ -11,8 +11,8 @@
 ###############################################################
 
 # Setup paths for LAL install
-source /usr/local/etc/master_rc
-source /Users/tyson/bayeswave/trunk/utils/setup_paths.sh
+#source /usr/local/etc/master_rc
+#source /Users/tyson/bayeswave/trunk/utils/setup_paths.sh
 
 # Main BayesWave analysis
 bayeswave \
