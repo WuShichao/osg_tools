@@ -27,12 +27,7 @@ import ast
 
 from glue import pipeline
 
-from glue.ligolw import lsctables
-from glue.ligolw import table
-from glue.ligolw import utils
-from pylal.SimInspiralUtils import ExtractSimInspiralTableLIGOLWContentHandler
-lsctables.use_in(ExtractSimInspiralTableLIGOLWContentHandler)
-
+import lalinspiral, lalburst
 from lalapps import inspiralutils
 from glue import segmentsUtils, segments
 
@@ -132,6 +127,58 @@ def hyphen_range(s):
         else: # more than one hyphen
             raise ValueError('format error in %s' % x)
 
+def read_injection_table(filename):
+    try:
+        sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
+        if sim_inspiral_table == -1:
+            raise AttributeError("%s has no sim-inspiral table")
+    
+        print >> sys.stdout, "Reading trigger times from sim_inspiral table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_inspiral_table.geocent_end_time))
+
+            if sim_inspiral_table.next is None: break
+            sim_inspiral_table = sim_inspiral_table.next
+    
+        return trigger_times
+
+    except:
+        pass
+    
+    try:
+        sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
+    
+        print >> sys.stdout, "Reading trigger times from sim_burst table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_burst_table.time_geocent_gps))
+    
+            if sim_burst_table.next is None: break
+            sim_burst_table = sim_burst_table.next
+    
+        return trigger_times
+    except:
+        pass
+    
+    try:
+        sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
+        if sim_ringdown_table == -1:
+            raise AttributeError("%s has no sim-ringdown table")
+    
+        print >> sys.stdout, "Reading trigger times from sim_ringdown table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_ringdown_table.geocent_start_time))
+    
+            if sim_ringdown_table.next is None: break
+            sim_ringdown_table = sim_ringdown_table.next
+    
+        return trigger_times
+    
+    except:
+        print >> sys.stderr, "Error: cannot read injection file %s"%injfile
+        sys.exit()
 
 # ----------------
 # Set Parameters
@@ -207,33 +254,17 @@ if opts.trigger_list is not None:
 if injfile is not None:
 
     #
-    # Read inspinj file
+    # Read injection file
     #
-    try:
-        xmldoc=utils.load_filename(os.path.join(workdir,injfile), contenthandler=
-                ExtractSimInspiralTableLIGOLWContentHandler, verbose=True)
-        table=table.get_table(xmldoc, lsctables.SimInspiralTable.tableName)
-
-        # Get gps list from sim_inspiral; for some reason we need both the trigtime
-        # and the event number
-        trigger_times=np.array([sim.geocent_end_time+1e-9*sim.geocent_end_time_ns \
-                for sim in table])
-    except:
-        pass
-    else try:
-        #table = lalburst.SimRingdownTableFromLIGOLw(filename, start, stop)
-        table = lalburst.SimBurstTableFromLIGOLw(filename, start, stop)
-    except:
-        print >> sys.stderr, "Don't know how to parse injfile %s"%injfile
-        sys.exit()
-
+    filename=os.path.join(workdir,injfile)
+    trigger_times = read_injection_table(filename)
     
     # reduce to specified values
     events=cp.get('injections', 'events')
 
     if events!='all':
         injevents=list(hyphen_range(events))
-        trigger_times=trigger_times[injevents]
+        trigger_times=np.array(trigger_times)[injevents]
 
 
 #
