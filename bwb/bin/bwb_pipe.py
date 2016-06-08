@@ -64,18 +64,20 @@ def job_times(trigtime, seglen, psdlen, padding):
     """
     Compute the gps times corresponding to a given trigger time
 
-    start = floor(min(trigtime - (psdlen + padding), trigtime-0.5*seglen))
+    psdstart = trigtime - (psdlen + padding)
+    start = floor(min(psdstart, trigtime-0.5*seglen))
     stop  = ceil(max(start+psdlen, trigtime+0.5*Sseglen))
 
-    returns segment(start,stop), start
+    returns segment(start,stop), psdstart
 
     so that start can be used easily as a psd start
     """
 
-    start = np.floor(min(trigtime - (psdlen + padding), trigtime-0.5*seglen))
+    psdstart=trigtime - (psdlen + padding)
+    start = np.floor(min(psdstart, trigtime-0.5*seglen))
     stop = np.ceil(max(start+psdlen, trigtime+0.5*seglen))
 
-    return segments.segment(start,stop), start
+    return segments.segment(start,stop), psdstart
 
 def parser():
     """
@@ -514,7 +516,7 @@ for t, trigger_time in enumerate(trigger_times):
         if "LALSimAdLIGO" in cache_files.values():
             bwb_node.set_dataseed(dataseed)
             bwp_node.set_dataseed(dataseed)
-            dataseed+=1
+            dataseed+=random.randint(1,dataseed)
 
         # add options for bayeswave_post node
         bwp_node.set_trigtime(trigger_time)
