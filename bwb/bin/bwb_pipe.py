@@ -144,8 +144,7 @@ if not os.path.exists(workdir):
     print >> sys.stdout, "making work-directory: %s"%workdir
     os.makedirs(workdir)
 else:
-    print >> sys.stdout, "work-directory %s exists, exiting"%workdir
-    sys.exit()
+    print >> sys.stderr, "WARNING: work-directory %s exists"%workdir
 
 
 # --- Make local copies of necessary input files
@@ -252,6 +251,11 @@ os.chdir(workdir)
 
 datafind_dir = 'datafind'
 if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
+if cp.has_option('injections', 'mdc-cache'):
+    shutil.copy(cp.get('injections', 'mdc-cache'),
+            os.path.join('datafind','MDC.cache'))
+
+
 segment_dir = 'segments'
 if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
@@ -270,21 +274,21 @@ shutil.copy(cp.get('bw_paths','bwp_executable'), '.')
 # --- datafind params from config file
 #
 
-ifoList=ast.literal_eval(cp.get('input','ifoList'))
-channelList=ast.literal_eval(cp.get('datafind', 'channelList'))
-frtypeList=ast.literal_eval(cp.get('datafind', 'frtypeList'))
+ifo_list=ast.literal_eval(cp.get('input','ifo-list'))
+channel_list=ast.literal_eval(cp.get('datafind', 'channel-list'))
+frtype_list=ast.literal_eval(cp.get('datafind', 'frtype-list'))
 
-cacheFiles = {}
+cache_files = {}
 segmentList = {}
 framePaths={}
 frameSegs={}
 
 if not opts.skip_datafind:
 
-    for ifo in ifoList:
+    for ifo in ifo_list:
 
-        if frtypeList[ifo] == "LALSimAdLIGO": 
-            cacheFiles[ifo] = "LALSimAdLIGO"
+        if frtype_list[ifo] == "LALSimAdLIGO": 
+            cache_files[ifo] = "LALSimAdLIGO"
             segmentList[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])
@@ -300,7 +304,7 @@ if not opts.skip_datafind:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
     -s {gps_start_time} -e {gps_end_time} --lal-cache\
     --server={server} -u {url_type} > {cachefile}".format(
-                        o=ifo[0], frtype=frtypeList[ifo],
+                        o=ifo[0], frtype=frtype_list[ifo],
                         cachefile=cachefilefmt.format(ifo),
                         gps_start_time=gps_start_time,
                         gps_end_time=gps_end_time, server=opts.server,
@@ -308,7 +312,7 @@ if not opts.skip_datafind:
             else:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
 {gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
-{cachefile}".format( o=ifo[0], frtype=frtypeList[ifo],
+{cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
     cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
     gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
             print >> sys.stdout, "Calling LIGO data find ..."
@@ -316,12 +320,12 @@ if not opts.skip_datafind:
 
             subprocess.call(ldfcmd, shell=True)
 
-            cacheFiles[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
+            cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
             #
             # Record frame segments so we can identify frames for OSG transfers
             #
-            frameSegs[ifo] = segmentsUtils.fromlalcache(open(cacheFiles[ifo]))
+            frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
 
 
             #
@@ -387,12 +391,12 @@ else:
 
     print "SKIPPING DATAFIND & SEGDB"
 
-    for ifo in ifoList:
+    for ifo in ifo_list:
 
-        if  frtypeList[ifo] == "LALSimAdLIGO":
-            cacheFiles[ifo] == "LALSimAdLIGO"
+        if  frtype_list[ifo] == "LALSimAdLIGO":
+            cache_files[ifo] == "LALSimAdLIGO"
         else:
-            cacheFiles[ifo] = os.path.join('datafind','%s.cache'%ifo)
+            cache_files[ifo] = os.path.join('datafind','%s.cache'%ifo)
 
         segmentList[ifo] = segments.segment(gps_start_time, gps_end_time)
 
@@ -416,15 +420,15 @@ dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 dag.set_dag_file( 'bayeswave_{0}'.format(opts.workdir) )
 
 # ---- Make instance of bayeswaveJob.
-bwb_job = pipe_utils.bayeswaveJob(cp, cacheFiles, injfile=injfile,
+bwb_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
-bwp_job = pipe_utils.bayeswave_postJob(cp, cacheFiles, injfile=injfile,
+bwp_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
 
 #
 # Build Nodes
 #
-if "LALSimAdLIGO" in cacheFiles.values():
+if "LALSimAdLIGO" in cache_files.values():
     try:
         dataseed=cp.getint('input', 'dataseed')
     except ConfigParser.NoOptionError:
@@ -448,7 +452,7 @@ for t, trigger_time in enumerate(trigger_times):
     # Check job times fall within available data
     job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
 
-    for ifo in ifoList:
+    for ifo in ifo_list:
 
         job_in_segments = [seg.__contains__(job_segment) \
                 for seg in segmentList[ifo]]
@@ -477,11 +481,11 @@ for t, trigger_time in enumerate(trigger_times):
                 len(trigger_times))
 
 
-        if "LALSimAdLIGO" not in cacheFiles.values():
+        if "LALSimAdLIGO" not in cache_files.values():
             #
             # Identify frames associated with this job
             if opts.copy_frames:
-                for ifo in ifoList:
+                for ifo in ifo_list:
                     frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
                     transferFrames[ifo] = [frame for f,frame in
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
@@ -501,7 +505,7 @@ for t, trigger_time in enumerate(trigger_times):
         bwb_node.set_outputDir(outputDir)
         if transferFrames: bwb_node.add_frame_transfer(transferFrames)
 
-        if "LALSimAdLIGO" in cacheFiles.values():
+        if "LALSimAdLIGO" in cache_files.values():
             bwb_node.set_dataseed(dataseed)
             bwp_node.set_dataseed(dataseed)
             dataseed+=1

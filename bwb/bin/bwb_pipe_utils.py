@@ -75,12 +75,12 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
-        ifoList = ast.literal_eval(cp.get('input', 'ifoList'))
-        channelList = ast.literal_eval(cp.get('datafind', 'channelList'))
+        ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
+        channel_list = ast.literal_eval(cp.get('datafind', 'channel-list'))
 
         # XXX: hack to repeat option for --ifo H1 --ifo L1 etc
-        ifo_list_opt = ifoList[0]
-        for ifo in ifoList[1:]: ifo_list_opt += ' --ifo {0}'.format(ifo)
+        ifo_list_opt = ifo_list[0]
+        for ifo in ifo_list[1:]: ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
         self.add_opt('srate', cp.get('input', 'srate'))
@@ -88,10 +88,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
-        for ifo in ifoList:
+        for ifo in ifo_list:
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
+            self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
         # --- Optional options
 
@@ -217,12 +217,18 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # MDC Setup
         #
-        # FIXME: set this up to use the ast.literal_eval() stuff
         if cp.has_option('injections', 'mdc-cache'):
-            self.add_opt('MDC-cache', cp.get('injections', 'mdc-cache'))
+            mdc_cache_list=str(['../datafind/MDC.cache' for ifo in
+                ifo_list]).replace("'",'')
+            mdc_cache_list=mdc_cache_list.replace(' ','')
+            self.add_opt('MDC-cache', mdc_cache_list)
 
-        if cp.has_option('injections', 'mdc-channel'):
-            self.add_opt('MDC-channel', cp.get('injections', 'mdc-channel'))
+        if cp.has_option('injections', 'mdc-channels'):
+            #mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
+            mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
+            mdc_channel_str=str(mdc_channel_list.values()).replace("'",'')
+            mdc_channel_str=mdc_channel_str.replace(' ','')
+            self.add_opt('MDC-channel', mdc_channel_str)
 
         if cp.has_option('injections', 'mdc-prefactor'):
             self.add_opt('MDC-prefactor', cp.get('injections', 'mdc-prefactor'))
@@ -318,12 +324,12 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_condor_cmd('getenv', 'True')
 
         # --- Required options
-        ifoList = ast.literal_eval(cp.get('input', 'ifoList'))
-        channelList = ast.literal_eval(cp.get('datafind', 'channelList'))
+        ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
+        channel_list = ast.literal_eval(cp.get('datafind', 'channel-list'))
 
         # XXX: hack to repeat option
-        ifo_list_opt = ifoList[0]
-        for ifo in ifoList[1:]:
+        ifo_list_opt = ifo_list[0]
+        for ifo in ifo_list[1:]:
             ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
@@ -332,12 +338,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
-        for ifo in ifoList:
+        for ifo in ifo_list:
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
             # XXX: Postproc currently expects LALSimAdLIGO
-            #self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            #self.add_opt('{ifo}-channel'.format(ifo=ifo), channelList[ifo])
             self.add_opt('{ifo}-cache'.format(ifo=ifo), "LALSimAdLIGO")
             self.add_opt('{ifo}-channel'.format(ifo=ifo), "LALSimAdLIGO")
 
@@ -367,11 +371,21 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # MDC Setup
         #
-        if cp.has_option('inj', 'mdc-cache'):
-            self.add_opt('MDC-cache', cp.get('inj', 'mdc-cache'))
+        if cp.has_option('injections', 'mdc-cache'):
+            mdc_cache_list=str(['../datafind/MDC.cache' for ifo in
+                ifo_list]).replace("'",'')
+            mdc_cache_list=mdc_cache_list.replace(' ','')
+            self.add_opt('MDC-cache', mdc_cache_list)
 
-        if cp.has_option('inj', 'mdc-channel'):
-            self.add_opt('MDC-channel', cp.get('inj', 'mdc-channel'))
+        if cp.has_option('injections', 'mdc-channels'):
+            #mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
+            mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
+            mdc_channel_str=str(mdc_channel_list.values()).replace("'",'')
+            mdc_channel_str=mdc_channel_str.replace(' ','')
+            self.add_opt('MDC-channel', mdc_channel_str)
+
+        if cp.has_option('injections', 'mdc-prefactor'):
+            self.add_opt('MDC-prefactor', cp.get('injections', 'mdc-prefactor'))
 
 
         self.set_sub_file('bayeswave_post.sub')
