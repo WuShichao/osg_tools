@@ -197,6 +197,16 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bwb_args', 'gnuplot'):
             self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplot'))
 
+        # NC
+        if cp.has_option('bwb_args','NC'):
+            self.add_opt('NC', cp.get('bwb_args', 'NC'))
+        # NCmin
+        if cp.has_option('bwb_args','NCmin'):
+            self.add_opt('NCmin', cp.get('bwb_args', 'NCmin'))
+        # NCmax
+        if cp.has_option('bwb_args','NCmax'):
+            self.add_opt('NCmax', cp.get('bwb_args', 'NCmax'))
+
         #
         # Proposals
         #
