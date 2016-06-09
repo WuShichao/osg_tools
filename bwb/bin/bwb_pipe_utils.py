@@ -33,7 +33,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        pipeline.CondorDAGJob.__init__(self,universe,'bayeswave')
+        bayeswave_exec = cp.get('bayeswave_paths','bayeswave_executable')
+
+        pipeline.CondorDAGJob.__init__(self,universe,bayeswave_exec)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
@@ -103,115 +105,115 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Priors
         #
         # Quality factor
-        if cp.has_option('bwb_args', 'Qmin'):
-            self.add_opt('Qmin', cp.get('bwb_args', 'Qmin'))
-        if cp.has_option('bwb_args', 'Qmax'):
-            self.add_opt('Qmax', cp.get('bwb_args', 'Qmax'))
+        if cp.has_option('bayeswave_args', 'Qmin'):
+            self.add_opt('Qmin', cp.get('bayeswave_args', 'Qmin'))
+        if cp.has_option('bayeswave_args', 'Qmax'):
+            self.add_opt('Qmax', cp.get('bayeswave_args', 'Qmax'))
 
 
         # dataseed
-        if cp.has_option('bwb_args', 'dataseed'):
-            self.add_opt('dataseed', cp.get('bwb_args', 'dataseed'))
+        if cp.has_option('bayeswave_args', 'dataseed'):
+            self.add_opt('dataseed', cp.get('bayeswave_args', 'dataseed'))
 
         # Niter
-        if cp.has_option('bwb_args', 'Niter'):
-            self.add_opt('Niter', cp.get('bwb_args', 'Niter'))
+        if cp.has_option('bayeswave_args', 'Niter'):
+            self.add_opt('Niter', cp.get('bayeswave_args', 'Niter'))
 
         # Nchain
-        if cp.has_option('bwb_args', 'Nchain'):
-            self.add_opt('Nchain', cp.get('bwb_args', 'Nchain'))
+        if cp.has_option('bayeswave_args', 'Nchain'):
+            self.add_opt('Nchain', cp.get('bayeswave_args', 'Nchain'))
             
         # Ncycle
-        if cp.has_option('bwb_args', 'Ncycle'):
-            self.add_opt('Ncycle', cp.get('bwb_args', 'Ncycle'))
+        if cp.has_option('bayeswave_args', 'Ncycle'):
+            self.add_opt('Ncycle', cp.get('bayeswave_args', 'Ncycle'))
 
         # Nburnin
-        if cp.has_option('bwb_args', 'Nburnin'):
-            self.add_opt('Nburnin', cp.get('bwb_args', 'Nburnin'))
+        if cp.has_option('bayeswave_args', 'Nburnin'):
+            self.add_opt('Nburnin', cp.get('bayeswave_args', 'Nburnin'))
 
         # chainseed
-        if cp.has_option('bwb_args', 'chainseed'):
-            self.add_opt('chainseed', cp.get('bwb_args', 'chainseed'))
+        if cp.has_option('bayeswave_args', 'chainseed'):
+            self.add_opt('chainseed', cp.get('bayeswave_args', 'chainseed'))
 
         # runName
-        if cp.has_option('bwb_args', 'runName'):
-            self.add_opt('runName', cp.get('bwb_args', 'runName'))
+        if cp.has_option('bayeswave_args', 'runName'):
+            self.add_opt('runName', cp.get('bayeswave_args', 'runName'))
 
         # 0noise
-        if cp.has_option('bwb_args', '0noise'):
-            self.add_opt('0noise', cp.get('bwb_args', '0noise'))
+        if cp.has_option('bayeswave_args', '0noise'):
+            self.add_opt('0noise', cp.get('bayeswave_args', '0noise'))
 
         # zeroLogL
-        if cp.has_option('bwb_args', 'zeroLogL'):
-            self.add_opt('zeroLogL', cp.get('bwb_args', 'zeroLogL'))
+        if cp.has_option('bayeswave_args', 'zeroLogL'):
+            self.add_opt('zeroLogL', cp.get('bayeswave_args', 'zeroLogL'))
 
         # bayesLine
-        if cp.has_option('bwb_args', 'BayesLine'):
-            self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
+        if cp.has_option('bayeswave_args', 'BayesLine'):
+            self.add_opt('bayesLine', cp.get('bayeswave_args', 'BayesLine'))
 
         # noClean
-        if cp.has_option('bwb_args', 'noClean'):
-            self.add_opt('noClean', cp.get('bwb_args', 'noClean'))
+        if cp.has_option('bayeswave_args', 'noClean'):
+            self.add_opt('noClean', cp.get('bayeswave_args', 'noClean'))
 
         # fixD
-        if cp.has_option('bwb_args', 'fixD'):
-            self.add_opt('fixD', cp.get('bwb_args', 'fixD'))
+        if cp.has_option('bayeswave_args', 'fixD'):
+            self.add_opt('fixD', cp.get('bayeswave_args', 'fixD'))
 
         # signalOnly
-        if cp.has_option('bwb_args', 'signalOnly'):
-            self.add_opt('signalOnly', cp.get('bwb_args', 'signalOnly'))
+        if cp.has_option('bayeswave_args', 'signalOnly'):
+            self.add_opt('signalOnly', cp.get('bayeswave_args', 'signalOnly'))
 
         # fullOnly
-        if cp.has_option('bwb_args', 'fullOnly'):
-            self.add_opt('fullOnly', cp.get('bwb_args', 'fullOnly'))
+        if cp.has_option('bayeswave_args', 'fullOnly'):
+            self.add_opt('fullOnly', cp.get('bayeswave_args', 'fullOnly'))
 
         # noSignal
-        if cp.has_option('bwb_args', 'noSignal'):
-            self.add_opt('noSignal', cp.get('bwb_args', 'noSignal'))
+        if cp.has_option('bayeswave_args', 'noSignal'):
+            self.add_opt('noSignal', cp.get('bayeswave_args', 'noSignal'))
 
         # cleanOnly
-        if cp.has_option('bwb_args', 'cleanOnly'):
-            self.add_opt('cleanOnly', cp.get('bwb_args', 'cleanOnly'))
+        if cp.has_option('bayeswave_args', 'cleanOnly'):
+            self.add_opt('cleanOnly', cp.get('bayeswave_args', 'cleanOnly'))
 
         # noiseOnly
-        if cp.has_option('bwb_args', 'noiseOnly'):
-            self.add_opt('noiseOnly', cp.get('bwb_args', 'noiseOnly'))
+        if cp.has_option('bayeswave_args', 'noiseOnly'):
+            self.add_opt('noiseOnly', cp.get('bayeswave_args', 'noiseOnly'))
 
         # glitchOnly
-        if cp.has_option('bwb_args', 'glitchOnly'):
-            self.add_opt('glitchOnly', cp.get('bwb_args', 'glitchOnly'))
+        if cp.has_option('bayeswave_args', 'glitchOnly'):
+            self.add_opt('glitchOnly', cp.get('bayeswave_args', 'glitchOnly'))
 
         # noPSDfit
-        if cp.has_option('bwb_args', 'noPSDfit'):
-            self.add_opt('noPSDfit', cp.get('bwb_args', 'noPSDfit'))
+        if cp.has_option('bayeswave_args', 'noPSDfit'):
+            self.add_opt('noPSDfit', cp.get('bayeswave_args', 'noPSDfit'))
 
         # stochastic
-        if cp.has_option('bwb_args', 'stochastic'):
-            self.add_opt('stochastic', cp.get('bwb_args', 'stochastic'))
+        if cp.has_option('bayeswave_args', 'stochastic'):
+            self.add_opt('stochastic', cp.get('bayeswave_args', 'stochastic'))
 
         # verbose
-        if cp.has_option('bwb_args', 'verbose'):
-            self.add_opt('verbose', cp.get('bwb_args', 'verbose'))
+        if cp.has_option('bayeswave_args', 'verbose'):
+            self.add_opt('verbose', cp.get('bayeswave_args', 'verbose'))
 
         # gnuplot
-        if cp.has_option('bwb_args', 'gnuplot'):
-            self.add_opt('gnuplot', cp.get('bwb_args', 'gnuplot'))
+        if cp.has_option('bayeswave_args', 'gnuplot'):
+            self.add_opt('gnuplot', cp.get('bayeswave_args', 'gnuplot'))
 
         # NC
-        if cp.has_option('bwb_args','NC'):
-            self.add_opt('NC', cp.get('bwb_args', 'NC'))
+        if cp.has_option('bayeswave_args','NC'):
+            self.add_opt('NC', cp.get('bayeswave_args', 'NC'))
         # NCmin
-        if cp.has_option('bwb_args','NCmin'):
-            self.add_opt('NCmin', cp.get('bwb_args', 'NCmin'))
+        if cp.has_option('bayeswave_args','NCmin'):
+            self.add_opt('NCmin', cp.get('bayeswave_args', 'NCmin'))
         # NCmax
-        if cp.has_option('bwb_args','NCmax'):
-            self.add_opt('NCmax', cp.get('bwb_args', 'NCmax'))
+        if cp.has_option('bayeswave_args','NCmax'):
+            self.add_opt('NCmax', cp.get('bayeswave_args', 'NCmax'))
 
         #
         # Proposals
         #
-        if cp.has_option('bwb_args', 'orientationProposal'):
-            self.add_opt('orientationProposal', cp.get('bwb_args', 'orientationProposal'))
+        if cp.has_option('bayeswave_args', 'orientationProposal'):
+            self.add_opt('orientationProposal', cp.get('bayeswave_args', 'orientationProposal'))
 
         #
         # Injection file
@@ -247,9 +249,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    def __init__(self, bwb_job):
+    def __init__(self, bayeswave_job):
 
-        pipeline.CondorDAGNode.__init__(self,bwb_job)
+        pipeline.CondorDAGNode.__init__(self,bayeswave_job)
         pipeline.AnalysisNode.__init__(self)
 
     def set_trigtime(self, trigtime):
@@ -296,6 +298,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
     def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
 
         universe=cp.get('condor','universe')
+
+        bayeswave_post_exec = cp.get('bayeswave_paths','bayeswave_post_executable')
 
         pipeline.CondorDAGJob.__init__(self,universe,'bayeswave_post')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -361,12 +365,12 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # --- Optional options
         # bayesLine
-        if cp.has_option('bwb_args', 'BayesLine'):
-            self.add_opt('bayesLine', cp.get('bwb_args', 'BayesLine'))
+        if cp.has_option('bayeswave_args', 'BayesLine'):
+            self.add_opt('bayesLine', cp.get('bayeswave_args', 'BayesLine'))
 
         # 0noise
-        if cp.has_option('bwp_args', '0noise'):
-            self.add_opt('0noise', cp.get('bwp_args', '0noise'))
+        if cp.has_option('bayeswave_post_args', '0noise'):
+            self.add_opt('0noise', cp.get('bayeswave_post_args', '0noise'))
 
         #
         # Injection file
@@ -406,9 +410,9 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    def __init__(self, bwp_job):
+    def __init__(self, bayeswave_post_job):
 
-        pipeline.CondorDAGNode.__init__(self, bwp_job)
+        pipeline.CondorDAGNode.__init__(self, bayeswave_post_job)
         pipeline.AnalysisNode.__init__(self)
 
     def set_trigtime(self, trigtime):
@@ -442,11 +446,13 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
 class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, workdir, dax=False):
+    def __init__(self, cp, dax=False):
 
+        # XXX consider local universe?
         universe='vanilla'
 
         # Point this to the src dir
+        megasky_exec = cp.get('bayeswave_paths','megasky')
         pipeline.CondorDAGJob.__init__(self,universe,'megasky')
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
@@ -460,16 +466,16 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_sub_file('megasky.sub')
 
 
-class skymapNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    def __init__(self, megasky_job):
+    def __init__(self, megasky_job, rundir):
 
         pipeline.CondorDAGNode.__init__(self, megasky_job)
         pipeline.AnalysisNode.__init__(self)
 
-#   def set_trigtime(self, trigtime):
-#       self.add_var_opt('trigtime', trigtime)
-#       self.__trigtime = trigtime
+    def set_initialdir(self, rundir):
+        #self.add_var_opt('trigtime', trigtime)
+        self.__rundir = rundir
 
 #
 # megaplot job
@@ -477,7 +483,7 @@ class skymapNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
 class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
-    def __init__(self, workdir, dax=False):
+    def __init__(self, cp, dax=False):
 
         universe='vanilla'
 
@@ -497,7 +503,7 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    def __init__(self, megaplot_job):
+    def __init__(self, megaplot_job, rundir):
 
         pipeline.CondorDAGNode.__init__(self, megaplot_job)
         pipeline.AnalysisNode.__init__(self)

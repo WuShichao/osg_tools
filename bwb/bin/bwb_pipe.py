@@ -315,8 +315,10 @@ if cp.has_option('injections', 'mdc-cache'):
 segment_dir = 'segments'
 if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
-shutil.copy(cp.get('bw_paths','bwb_executable'), '.')
-shutil.copy(cp.get('bw_paths','bwp_executable'), '.')
+# XXX: don't think i really need this as file transfer should copy the
+# executable anyway
+#shutil.copy(cp.get('bayeswave_paths','bayeswave_executable'), '.')
+#shutil.copy(cp.get('bayeswave_paths','bayeswave_post_executable'), '.')
 
 
 ################################################
@@ -475,11 +477,17 @@ dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 # ---- Set the name of the file that will contain the DAG.
 dag.set_dag_file( 'bayeswave_{0}'.format(opts.workdir) )
 
-# ---- Make instance of bayeswaveJob.
-bwb_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
+# ---- Create DAG jobs
+#   bayeswave: main bayeswave analysis
+#   bayeswave_post: bayeswave_post
+#   megasky: skymap job
+#   megaplot: remaining plots & webpage generation
+bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
-bwp_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
+bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
+megasky_job = pipe_utils.megaskyJob(cp)
+megaplot_job = pipe_utils.megaskyJob(cp)
 
 #
 # Build Nodes
@@ -553,44 +561,61 @@ for t, trigger_time in enumerate(trigger_times):
 
             if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-            bwb_node = pipe_utils.bayeswaveNode(bwb_job)
-            bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
+            # Create DAG nodes
+            #   bayeswave: main bayeswave analysis
+            #   bayeswave_post: bayeswave_post
+            #   megasky: skymap job
+            #   megaplot: remaining plots & webpage generation
+            bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
+            bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
+            megasky_node = pipe_utils.bayeswaveNode(megasky_job)
+            megaplot_node = pipe_utils.bayeswaveNode(megaplot_job)
 
 
-            # add options for bayeswave node
-            bwb_node.set_trigtime(trigger_time)
-            bwb_node.set_PSDstart(psd_start)
-            bwb_node.set_retry(1)
-            bwb_node.set_outputDir(outputDir)
-            if transferFrames: bwb_node.add_frame_transfer(transferFrames)
+            # Add options for bayeswave node
+            bayeswave_node.set_trigtime(trigger_time)
+            bayeswave_node.set_PSDstart(psd_start)
+            bayeswave_node.set_retry(1)
+            bayeswave_node.set_outputDir(outputDir)
+            if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 
             if "LALSimAdLIGO" in cache_files.values():
-                bwb_node.set_dataseed(dataseed)
-                bwp_node.set_dataseed(dataseed)
+                bayeswave_node.set_dataseed(dataseed)
+                bayeswave_post_node.set_dataseed(dataseed)
                 #gpsNow = int(os.popen('lalapps_tconvert now').readline())
                 #dataseed+=np.random.randint(1,gpsNow)
                 dataseed+=1
 
-            # add options for bayeswave_post node
-            bwp_node.set_trigtime(trigger_time)
-            bwp_node.set_PSDstart(psd_start)
-            bwp_node.set_retry(1)
-            bwp_node.set_outputDir(outputDir)
+            # Add options for bayeswave_post node
+            bayeswave_post_node.set_trigtime(trigger_time)
+            bayeswave_post_node.set_PSDstart(psd_start)
+            bayeswave_post_node.set_retry(1)
+            bayeswave_post_node.set_outputDir(outputDir)
 
             if injfile is not None:
-
-                bwb_node.set_injevent(injevents[t])
-                bwp_node.set_injevent(injevents[t])
+                bayeswave_node.set_injevent(injevents[t])
+                bayeswave_post_node.set_injevent(injevents[t])
 
             if cp.has_option('input','L1-timeslides'):
-                bwb_node.set_L1_timeslide(L1_timeslide)
-                bwp_node.set_L1_timeslide(L1_timeslide)
+                bayeswave_node.set_L1_timeslide(L1_timeslide)
+                bayeswave_post_node.set_L1_timeslide(L1_timeslide)
 
-            bwp_node.add_parent(bwb_node)
+            # Add options for megasky and megaplot
+            megasky_node.set_workdir(outputDir)
+            megaplot_node.set_workdir(outputDir)
+
+            # Add parent/child relationships
+            bayeswave_post_node.add_parent(bayeswave_node)
+            megasky_node.add_parent(bayeswave_post_node)
+            megaplot_node.add_parent(megasky_node) 
+            # XXX: does megaplot fail without megasky?  if not, set parent to bayeswave_post_node
 
             # Add Nodes to DAG
-            dag.add_node(bwb_node)
-            dag.add_node(bwp_node)
+            dag.add_node(bayeswave_node)
+            dag.add_node(bayeswave_post_node)
+            dag.add_node(megasky_node)
+            dag.add_node(megaplot_node)
+
 
 #
 # Finalise DAG
