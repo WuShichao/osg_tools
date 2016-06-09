@@ -224,8 +224,8 @@ LAL_DATA_PATH"
 
 # NR HDF5 data
 try:
-    nrdata=cp.get('injections', 'nrdata')
-    nr_full_path=cp.get('injections', 'nrdata')
+    nrdata=cp.get('injections', 'nrhdf5')
+    nr_full_path=cp.get('injections', 'nrhdf5')
 except:
     nrdata=None
 if nrdata is not None:
