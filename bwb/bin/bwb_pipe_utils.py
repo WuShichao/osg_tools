@@ -33,9 +33,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave_exec = cp.get('bayeswave_paths','bayeswave_executable')
+        bayeswave = cp.get('bayeswave_paths','bayeswave')
 
-        pipeline.CondorDAGJob.__init__(self,universe,bayeswave_exec)
+        pipeline.CondorDAGJob.__init__(self,universe,bayeswave)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
@@ -299,9 +299,9 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave_post_exec = cp.get('bayeswave_paths','bayeswave_post_executable')
+        bayeswave_post = cp.get('bayeswave_paths','bayeswave_post')
 
-        pipeline.CondorDAGJob.__init__(self,universe,'bayeswave_post')
+        pipeline.CondorDAGJob.__init__(self,universe,bayeswave_post)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
@@ -452,8 +452,8 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        megasky_exec = cp.get('bayeswave_paths','megasky')
-        pipeline.CondorDAGJob.__init__(self,universe,'megasky')
+        megasky = cp.get('bayeswave_paths','megasky')
+        pipeline.CondorDAGJob.__init__(self,universe,megasky)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
@@ -462,7 +462,6 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stdout_file('megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('megasky_$(cluster)-$(process)-$(node).err')
         self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
-
         self.set_sub_file('megasky.sub')
 
 
@@ -472,9 +471,8 @@ class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
         pipeline.CondorDAGNode.__init__(self, megasky_job)
         pipeline.AnalysisNode.__init__(self)
-
-    def set_initialdir(self, rundir):
-        #self.add_var_opt('trigtime', trigtime)
+        # Set job initialdir, so python codes know where to expect input files
+        self.add_var_condor_cmd('initialdir', rundir)   
         self.__rundir = rundir
 
 #
@@ -488,7 +486,8 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        pipeline.CondorDAGJob.__init__(self,universe,'megaplot')
+        megaplot = cp.get('bayeswave_paths','megaplot')
+        pipeline.CondorDAGJob.__init__(self,universe, megaplot)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         if cp.has_option('condor', 'accounting_group'):
@@ -497,7 +496,6 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stdout_file('megaplot_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('megaplot_$(cluster)-$(process)-$(node).err')
         self.set_log_file('megaplot_$(cluster)-$(process)-$(node).log')
-
         self.set_sub_file('megaplot.sub')
 
 
@@ -507,8 +505,8 @@ class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
         pipeline.CondorDAGNode.__init__(self, megaplot_job)
         pipeline.AnalysisNode.__init__(self)
+        # Set job initialdir, so python codes know where to expect input files
+        self.add_var_condor_cmd('initialdir', rundir)   
+        self.__rundir = rundir
 
-#   def set_trigtime(self, trigtime):
-#       self.add_var_opt('trigtime', trigtime)
-#       self.__trigtime = trigtime
 

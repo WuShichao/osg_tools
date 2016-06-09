@@ -487,7 +487,7 @@ bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
 bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
 megasky_job = pipe_utils.megaskyJob(cp)
-megaplot_job = pipe_utils.megaskyJob(cp)
+megaplot_job = pipe_utils.megaplotJob(cp)
 
 #
 # Build Nodes
@@ -568,8 +568,8 @@ for t, trigger_time in enumerate(trigger_times):
             #   megaplot: remaining plots & webpage generation
             bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
             bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
-            megasky_node = pipe_utils.bayeswaveNode(megasky_job)
-            megaplot_node = pipe_utils.bayeswaveNode(megaplot_job)
+            megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
+            megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
 
             # Add options for bayeswave node
@@ -599,10 +599,6 @@ for t, trigger_time in enumerate(trigger_times):
             if cp.has_option('input','L1-timeslides'):
                 bayeswave_node.set_L1_timeslide(L1_timeslide)
                 bayeswave_post_node.set_L1_timeslide(L1_timeslide)
-
-            # Add options for megasky and megaplot
-            megasky_node.set_workdir(outputDir)
-            megaplot_node.set_workdir(outputDir)
 
             # Add parent/child relationships
             bayeswave_post_node.add_parent(bayeswave_node)
