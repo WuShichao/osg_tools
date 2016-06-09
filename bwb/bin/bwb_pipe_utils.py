@@ -283,6 +283,9 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__frames.strip(',')
         self.add_var_opt('frames', self.__frames)
   
+    def set_L1_timeslide(self, L1_timeslide):
+        self.add_var_opt('L1-timeslide', L1_timeslide)
+        self.__L1_timeslide = L1_timeslide
 
 #
 # Post-processing
@@ -427,5 +430,9 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_dataseed(self, dataseed):
         self.add_var_opt('dataseed', dataseed)
         self.__dataseed = dataseed
+
+    def set_L1_timeslide(self, L1_timeslide):
+        self.add_var_opt('L1-timeslide', L1_timeslide)
+        self.__L1_timeslide = L1_timeslide
 
 

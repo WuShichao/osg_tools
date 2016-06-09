@@ -288,6 +288,14 @@ else:
     gps_end_time = seg[1]
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
+if cp.has_option('input','L1-timeslides'):
+    L1_timeslides = cp.get('input','L1-timeslides')
+    L1_timeslides=list(hyphen_range(L1_timeslides))
+else:
+    L1_timeslides=[0]
+gps_start_time -= min(L1_timeslides)
+gps_end_time += max(L1_timeslides)
+
 #############################################
 
 # ----------------------------------------
@@ -496,86 +504,93 @@ for t, trigger_time in enumerate(trigger_times):
 
     print >> sys.stdout, "---------------------------------------"
 
-    # -------------------------------------------
-    # Check job times fall within available data
-    job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
+    for L1_timeslide in L1_timeslides:
 
-    for ifo in ifo_list:
+        # -------------------------------------------
+        # Check job times fall within available data
+        job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
 
-        job_in_segments = [seg.__contains__(job_segment) \
-                for seg in segmentList[ifo]]
+        for ifo in ifo_list:
 
-        if not any(job_in_segments):
+            job_in_segments = [seg.__contains__(job_segment) \
+                    for seg in segmentList[ifo]]
 
-            bad_job={}
-            bad_job['ifo']=ifo
-            bad_job['trigger_time']=trigger_time
-            bad_job['seglen']=seglen
-            bad_job['psdlen']=psdlen
-            bad_job['padding']=padding
-            bad_job['job_segment']=job_segment
-            bad_job['data_segments']=segmentList[ifo]
+            if not any(job_in_segments):
 
-            unanalyzeable_jobs.append(bad_job)
-            
-            print >> sys.stderr, "Warning: No matching %s segments for job %d of %d"%(
-                    ifo, t+1, len(trigger_times))
-            print >> sys.stderr, bad_job
-            break
+                bad_job={}
+                bad_job['ifo']=ifo
+                bad_job['trigger_time']=trigger_time
+                bad_job['seglen']=seglen
+                bad_job['psdlen']=psdlen
+                bad_job['padding']=padding
+                bad_job['job_segment']=job_segment
+                bad_job['data_segments']=segmentList[ifo]
 
-    else:
+                unanalyzeable_jobs.append(bad_job)
+                
+                print >> sys.stderr, "Warning: No matching %s segments for job %d of %d"%(
+                        ifo, t+1, len(trigger_times))
+                print >> sys.stderr, bad_job
+                break
 
-        print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
-                len(trigger_times))
+        else:
 
-
-        if "LALSimAdLIGO" not in cache_files.values():
-            #
-            # Identify frames associated with this job
-            if opts.copy_frames:
-                for ifo in ifo_list:
-                    frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
-                    transferFrames[ifo] = [frame for f,frame in
-                            enumerate(framePaths[ifo]) if frame_idx[f]] 
-
-        outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + str(uuid.uuid4())
-
-        if not os.path.exists(outputDir): os.makedirs(outputDir)
-
-        bwb_node = pipe_utils.bayeswaveNode(bwb_job)
-        bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
+            print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
+                    len(trigger_times))
 
 
-        # add options for bayeswave node
-        bwb_node.set_trigtime(trigger_time)
-        bwb_node.set_PSDstart(psd_start)
-        bwb_node.set_retry(1)
-        bwb_node.set_outputDir(outputDir)
-        if transferFrames: bwb_node.add_frame_transfer(transferFrames)
+            if "LALSimAdLIGO" not in cache_files.values():
+                #
+                # Identify frames associated with this job
+                if opts.copy_frames:
+                    for ifo in ifo_list:
+                        frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
+                        transferFrames[ifo] = [frame for f,frame in
+                                enumerate(framePaths[ifo]) if frame_idx[f]] 
 
-        if "LALSimAdLIGO" in cache_files.values():
-            bwb_node.set_dataseed(dataseed)
-            bwp_node.set_dataseed(dataseed)
-            #gpsNow = int(os.popen('lalapps_tconvert now').readline())
-            #dataseed+=np.random.randint(1,gpsNow)
-            dataseed+=1
+            outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + \
+                    str(float(L1_timeslide)) + '_' + str(uuid.uuid4())
 
-        # add options for bayeswave_post node
-        bwp_node.set_trigtime(trigger_time)
-        bwp_node.set_PSDstart(psd_start)
-        bwp_node.set_retry(1)
-        bwp_node.set_outputDir(outputDir)
+            if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-        if injfile is not None:
+            bwb_node = pipe_utils.bayeswaveNode(bwb_job)
+            bwp_node = pipe_utils.bayeswave_postNode(bwp_job)
 
-            bwb_node.set_injevent(injevents[t])
-            bwp_node.set_injevent(injevents[t])
 
-        bwp_node.add_parent(bwb_node)
+            # add options for bayeswave node
+            bwb_node.set_trigtime(trigger_time)
+            bwb_node.set_PSDstart(psd_start)
+            bwb_node.set_retry(1)
+            bwb_node.set_outputDir(outputDir)
+            if transferFrames: bwb_node.add_frame_transfer(transferFrames)
 
-        # Add Nodes to DAG
-        dag.add_node(bwb_node)
-        dag.add_node(bwp_node)
+            if "LALSimAdLIGO" in cache_files.values():
+                bwb_node.set_dataseed(dataseed)
+                bwp_node.set_dataseed(dataseed)
+                #gpsNow = int(os.popen('lalapps_tconvert now').readline())
+                #dataseed+=np.random.randint(1,gpsNow)
+                dataseed+=1
+
+            # add options for bayeswave_post node
+            bwp_node.set_trigtime(trigger_time)
+            bwp_node.set_PSDstart(psd_start)
+            bwp_node.set_retry(1)
+            bwp_node.set_outputDir(outputDir)
+
+            if injfile is not None:
+
+                bwb_node.set_injevent(injevents[t])
+                bwp_node.set_injevent(injevents[t])
+
+            if cp.has_option('input','L1-timeslides'):
+                bwb_node.set_L1_timeslide(L1_timeslide)
+                bwp_node.set_L1_timeslide(L1_timeslide)
+
+            bwp_node.add_parent(bwb_node)
+
+            # Add Nodes to DAG
+            dag.add_node(bwb_node)
+            dag.add_node(bwp_node)
 
 #
 # Finalise DAG
