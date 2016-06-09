@@ -436,3 +436,73 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__L1_timeslide = L1_timeslide
 
 
+#
+# skymap job
+#
+
+class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+
+    def __init__(self, workdir, dax=False):
+
+        universe='vanilla'
+
+        # Point this to the src dir
+        pipeline.CondorDAGJob.__init__(self,universe,'megasky')
+        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        if cp.has_option('condor', 'accounting_group'):
+            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+
+        self.set_stdout_file('megasky_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('megasky_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
+
+        self.set_sub_file('megasky.sub')
+
+
+class skymapNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+
+    def __init__(self, megasky_job):
+
+        pipeline.CondorDAGNode.__init__(self, megasky_job)
+        pipeline.AnalysisNode.__init__(self)
+
+#   def set_trigtime(self, trigtime):
+#       self.add_var_opt('trigtime', trigtime)
+#       self.__trigtime = trigtime
+
+#
+# megaplot job
+#
+
+class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+
+    def __init__(self, workdir, dax=False):
+
+        universe='vanilla'
+
+        # Point this to the src dir
+        pipeline.CondorDAGJob.__init__(self,universe,'megaplot')
+        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        if cp.has_option('condor', 'accounting_group'):
+            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+
+        self.set_stdout_file('megaplot_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('megaplot_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('megaplot_$(cluster)-$(process)-$(node).log')
+
+        self.set_sub_file('megaplot.sub')
+
+
+class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+
+    def __init__(self, megaplot_job):
+
+        pipeline.CondorDAGNode.__init__(self, megaplot_job)
+        pipeline.AnalysisNode.__init__(self)
+
+#   def set_trigtime(self, trigtime):
+#       self.add_var_opt('trigtime', trigtime)
+#       self.__trigtime = trigtime
+
