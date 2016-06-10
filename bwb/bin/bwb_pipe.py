@@ -607,7 +607,7 @@ for t, trigger_time in enumerate(trigger_times):
             # Add parent/child relationships
             bayeswave_post_node.add_parent(bayeswave_node)
             megasky_node.add_parent(bayeswave_post_node)
-            megaplot_node.add_parent(megasky_node) 
+            megaplot_node.add_parent(bayeswave_post_node) 
             # XXX: does megaplot fail without megasky?  if not, set parent to bayeswave_post_node
 
             # Add Nodes to DAG
