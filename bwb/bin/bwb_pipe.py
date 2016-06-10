@@ -288,10 +288,12 @@ else:
     gps_end_time = seg[1]
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
-if cp.has_option('input','L1-timeslides'):
-    L1_timeslides = cp.get('input','L1-timeslides')
-    L1_timeslides=list(hyphen_range(L1_timeslides))
-else:
+try:
+    L1_timeslides = ast.literal_eval(
+            cp.get('bayeswave_options','L1-timeslides'))
+    if L1_timeslides == None:
+        raise ValueError('L1-timeslides not specified properly')
+except:
     L1_timeslides=[0]
 gps_start_time -= min(L1_timeslides)
 gps_end_time += max(L1_timeslides)
@@ -508,6 +510,7 @@ unanalyzeable_jobs = []
 #trigger_times = [1126252133, 1126259365]
 
 transferFrames={}
+totaltrigs=0
 for t, trigger_time in enumerate(trigger_times):
 
     print >> sys.stdout, "---------------------------------------"
@@ -543,8 +546,9 @@ for t, trigger_time in enumerate(trigger_times):
 
         else:
 
-            print >> sys.stdout, "Adding node for GPS %d (%d of %d)"%(trigger_time, t+1,
-                    len(trigger_times))
+            print >> sys.stdout, "Adding node for GPS %d, L1-timeslide %f (%d of %d)"%(
+                    trigger_time, L1_timeslide, totaltrigs+1,
+                    len(trigger_times)*len(L1_timeslides))
 
 
             if "LALSimAdLIGO" not in cache_files.values():
@@ -611,6 +615,8 @@ for t, trigger_time in enumerate(trigger_times):
             dag.add_node(bayeswave_post_node)
             dag.add_node(megasky_node)
             dag.add_node(megaplot_node)
+
+            totaltrigs+=1
 
 
 #
