@@ -640,6 +640,7 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
         self.set_sub_file('megasky.sub')
 
+        hostname = socket.gethostname()
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
@@ -673,6 +674,7 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         pipeline.CondorDAGJob.__init__(self,universe, megaplot)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
+        hostname = socket.gethostname()
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
