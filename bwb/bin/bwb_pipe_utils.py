@@ -62,6 +62,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             # --- Files to include in transfer
             transferstring='datafind,$(macrooutputDir)'
 
+            if cp.has_option('condor','transfer-files'):
+                # allow specification of additional files to transfer
+                transferstring+=',%s'%cp.get('condor','transfer-files')
+
             if cp.getboolean('condor','copy-frames'): transferstring+=',$(macroframes)'
 
             if injfile is not None:
@@ -487,6 +491,11 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             # --- Files to include in transfer
             # FIXME: PostProc doesn't currently need frame transfer
             transferstring='datafind,$(macrooutputDir)'
+
+            if cp.has_option('condor','transfer-files'):
+                # allow specification of additional files to transfer
+                transferstring+=',%s'%cp.get('condor','transfer-files')
+
             if injfile is not None:
                 transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
             if nrdata is not None: transferstring+=','+nrdata
