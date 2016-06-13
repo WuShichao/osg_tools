@@ -54,6 +54,11 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
+            # --- Allow desired sites
+            +DESIRED_Sites = "GATech"
+            if cp.has_option('condor','desired-sites'):
+                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
             # --- Perform file transfers
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
@@ -483,6 +488,12 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         hostname = socket.gethostname()
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Allow desired sites
+            +DESIRED_Sites = "GATech"
+            if cp.has_option('condor','desired-sites'):
+                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
             # --- Perform file transfers
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
@@ -631,6 +642,14 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
         self.set_sub_file('megasky.sub')
 
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Allow desired sites
+            +DESIRED_Sites = "GATech"
+            if cp.has_option('condor','desired-sites'):
+                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
 
 class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
@@ -656,6 +675,14 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         megaplot = cp.get('bayeswave_paths','megaplot')
         pipeline.CondorDAGJob.__init__(self,universe, megaplot)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Allow desired sites
+            +DESIRED_Sites = "GATech"
+            if cp.has_option('condor','desired-sites'):
+                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
