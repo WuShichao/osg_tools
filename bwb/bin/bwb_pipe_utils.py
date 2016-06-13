@@ -489,7 +489,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
             # --- Allow desired sites
-            +DESIRED_Sites = "GATech"
             if cp.has_option('condor','desired-sites'):
                 self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
@@ -645,7 +644,6 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
             # --- Allow desired sites
-            +DESIRED_Sites = "GATech"
             if cp.has_option('condor','desired-sites'):
                 self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
@@ -679,7 +677,6 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
             # --- Allow desired sites
-            +DESIRED_Sites = "GATech"
             if cp.has_option('condor','desired-sites'):
                 self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
