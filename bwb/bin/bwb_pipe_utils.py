@@ -635,6 +635,8 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
+        self.add_condor_cmd('getenv', 'True')
+
         self.set_stdout_file('megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('megasky_$(cluster)-$(process)-$(node).err')
         self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
@@ -684,6 +686,8 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+
+        self.add_condor_cmd('getenv', 'True')
 
         self.set_stdout_file('megaplot_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('megaplot_$(cluster)-$(process)-$(node).err')
