@@ -264,7 +264,9 @@ if injfile is not None:
 
     if events!='all':
         injevents=list(hyphen_range(events))
-        trigger_times=np.array(trigger_times)[injevents]
+    else:
+        injevents=range(len(trigger_times))
+    trigger_times=np.array(trigger_times)[injevents]
 
 
 #
