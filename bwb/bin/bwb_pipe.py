@@ -88,7 +88,7 @@ def parser():
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
-    parser.add_option("--injfile", default=None)
+    parser.add_option("-I", "--injfile", default=None)
 
     (opts,args) = parser.parse_args()
 
