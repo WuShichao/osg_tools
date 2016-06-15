@@ -478,7 +478,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_log_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
         # Request 4GB of RAM for pp jobs
-        self.add_condor_cmd('request_memory', '4000')
+        #self.add_condor_cmd('request_memory', '4000')
 
         #
         # Identify osg vs ldg site
