@@ -88,6 +88,7 @@ def parser():
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
+    parser.add_option("-I", "--injfile", default=None)
 
     (opts,args) = parser.parse_args()
 
@@ -199,11 +200,14 @@ else:
 # --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
 
-# Injection file (e.g., sim-inspiral table)
-try:
-    injfile=cp.get('injections', 'injfile')
-except:
-    injfile=None
+# Injection file (e.g., sim-inspiral table).  Try commandline first, if none,
+# try config file
+injfile=opts.injfile
+if injfile is None:
+    try:
+        injfile=cp.get('injections', 'injfile')
+    except:
+        injfile=None
 
 if injfile is not None:
     # Copy injfile locally
