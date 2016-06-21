@@ -84,7 +84,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('getenv', 'True')
 
-        # --- Required options
+        # ----------------------------------------------------------------------------------
+        # --- Required options  ------------------------------------------------------------
+        # ----------------------------------------------------------------------------------
         ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
         channel_list = ast.literal_eval(cp.get('datafind', 'channel-list'))
 
@@ -102,8 +104,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
             self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
-
-        # --- Optional options
 
 
         # dataseed
@@ -129,6 +129,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Nburnin
         if cp.has_option('bayeswave_options', 'Nburnin'):
             self.add_opt('Nburnin', cp.get('bayeswave_options', 'Nburnin'))
+
+        # maxLogL
+        if cp.has_option('bayeswave_options', 'maxLogL'):
+            self.add_opt('maxLogL', cp.get('bayeswave_options', 'maxLogL'))
 
         # chainseed
         if cp.has_option('bayeswave_options', 'chainseed'):
@@ -238,6 +242,11 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_options', 'Qmax'):
            self.add_opt('Qmax', cp.get('bayeswave_options', 'Qmax'))
 
+        # waveletPrior
+        if cp.has_option('bayeswave_options', 'waveletPrior'):
+             self.add_opt('waveletPrior', cp.get('bayeswave_options',
+                 'waveletPrior'))
+
         # clusterPrior
         if cp.has_option('bayeswave_options', 'clusterPrior'):
              self.add_opt('clusterPrior', cp.get('bayeswave_options',
@@ -267,11 +276,17 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_options', 'backgroundPrior'):
              self.add_opt('backgroundPrior', cp.get('bayeswave_options',
                  'backgroundPrior'))
+             
+        if cp.get('bayeswave_options', 'backgroundPrior') == None:
+            print >> sys.stderr, "must specifiy name of 2-column bkg frequency
+distribution file"
+            sys.exit()
 
-        # orientationProposal
-        if cp.has_option('bayeswave_options', 'orientationProposal'):
-             self.add_opt('orientationProposal', cp.get('bayeswave_options',
-                 'orientationProposal'))
+
+        # noOrientationProposal
+        if cp.has_option('bayeswave_options', 'noOrientationProposal'):
+             self.add_opt('noOrientationProposal', cp.get('bayeswave_options',
+                 'noOrientationProposal'))
 
 
         # uniformAmplitudePrior 
@@ -294,18 +309,18 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
              self.add_opt('varyExtrinsicAmplitude', cp.get('bayeswave_options',
                  'varyExtrinsicAmplitude'))
 
-        # clusterProposal
-        if cp.has_option('bayeswave_options', 'clusterProposal'):
-             self.add_opt('clusterProposal', cp.get('bayeswave_options',
-                 'clusterProposal'))
+        # noClusterProposal
+        if cp.has_option('bayeswave_options', 'noClusterProposal'):
+             self.add_opt('noClusterProposal', cp.get('bayeswave_options',
+                 'noClusterProposal'))
 
         # clusterWeight
         if cp.has_option('bayeswave_options', 'clusterWeight'):
-             self.add_opt('', cp.get('bayeswave_options', 'clusterWeight'))
+             self.add_opt('clusterWeight', cp.get('bayeswave_options', 'clusterWeight'))
 
         # ampPriorPeak
         if cp.has_option('bayeswave_options', 'ampPriorPeak'):
-             self.add_opt('', cp.get('bayeswave_options', 'ampPriorPeak'))
+             self.add_opt('ampPriorPeak', cp.get('bayeswave_options', 'ampPriorPeak'))
 
         # signalPriorPeak
         if cp.has_option('bayeswave_options', 'signalPriorPeak'):
@@ -313,15 +328,15 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # dimensionDecayRate
         if cp.has_option('bayeswave_options', 'dimensionDecayRate'):
-             self.add_opt('', cp.get('bayeswave_options', 'dimensionDecayRate'))
+             self.add_opt('dimensionDecayRate', cp.get('bayeswave_options', 'dimensionDecayRate'))
 
         # fixIntrinsicParams
         if cp.has_option('bayeswave_options', 'fixIntrinsicParams'):
-             self.add_opt('', cp.get('bayeswave_options', 'fixIntrinsicParams'))
+             self.add_opt('fixIntrinsicParams', cp.get('bayeswave_options', 'fixIntrinsicParams'))
 
         # fixExtrinsicParams
         if cp.has_option('bayeswave_options', 'fixExtrinsicParams'):
-             self.add_opt('', cp.get('bayeswave_options', 'fixExtrinsicParams'))
+             self.add_opt('fixExtrinsicParams', cp.get('bayeswave_options', 'fixExtrinsicParams'))
 
         # ----------------------------------------------------------------------------------
         # --- Parallel Tempering parameters  -----------------------------------------------
@@ -329,19 +344,19 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # tempMin
         if cp.has_option('bayeswave_options', 'tempMin'):
-             self.add_opt('', cp.get('bayeswave_options', 'tempMin'))
+             self.add_opt('tempMin', cp.get('bayeswave_options', 'tempMin'))
 
         # noAdaptTemperature
         if cp.has_option('bayeswave_options', 'noAdaptTemperature'):
-             self.add_opt('', cp.get('bayeswave_options', 'noAdaptTemperature'))
+             self.add_opt('noAdaptTemperature', cp.get('bayeswave_options', 'noAdaptTemperature'))
              k
         # tempSpacing
         if cp.has_option('bayeswave_options', 'tempSpacing'):
-             self.add_opt('', cp.get('bayeswave_options', 'tempSpacing'))
+             self.add_opt('tempSpacing', cp.get('bayeswave_options', 'tempSpacing'))
 
         # noSplineEvidence
         if cp.has_option('bayeswave_options', 'noSplineEvidence'):
-             self.add_opt('', cp.get('bayeswave_options', 'noSplineEvidence'))
+             self.add_opt('noSplineEvidence', cp.get('bayeswave_options', 'noSplineEvidence'))
 
         # ----------------------------------------------------------------------------------
         # --- LALInference Injection Options  ----------------------------------------------
@@ -384,19 +399,19 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # ----------------------------------------------------------------------------------
         # BW-inject
         if cp.has_option('bayeswave_options', 'BW-inject'):
-             self.add_opt('', cp.get('bayeswave_options', 'BW-inject'))
+             self.add_opt('BW-inject', cp.get('bayeswave_options', 'BW-inject'))
 
         # BW-injName
         if cp.has_option('bayeswave_options', 'BW-injName'):
-             self.add_opt('', cp.get('bayeswave_options', 'BW-injName'))
+             self.add_opt('BW-injName', cp.get('bayeswave_options', 'BW-injName'))
 
         # BW-path
         if cp.has_option('bayeswave_options', 'BW-path'):
-             self.add_opt('', cp.get('bayeswave_options', 'BW-path'))
+             self.add_opt('BW-path', cp.get('bayeswave_options', 'BW-path'))
 
         # BW-event
         if cp.has_option('bayeswave_options', 'BW-event'):
-             self.add_opt('', cp.get('bayeswave_options', 'BW-event'))
+             self.add_opt('BW-event', cp.get('bayeswave_options', 'BW-event'))
 
         # XXX: where is this?
         # NC
