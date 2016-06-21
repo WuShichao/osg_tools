@@ -27,6 +27,9 @@ import ast
 # Main analysis
 #
 
+
+
+
 class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
@@ -81,8 +84,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             if injfile is not None:
                 self.add_condor_cmd("environment", "LAL_DATA_PATH=./")
 
-
         self.add_condor_cmd('getenv', 'True')
+
 
         # ----------------------------------------------------------------------------------
         # --- Required options  ------------------------------------------------------------
@@ -113,6 +116,11 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # ----------------------------------------------------------------------------------
         # --- Run parameters   -------------------------------------------------------------
         # ----------------------------------------------------------------------------------
+
+        # segment-start
+        if cp.has_option('bayeswave_options', 'segment-start'):
+            self.add_opt('segment-start', cp.get('bayeswave_options',
+                'segment-start'))
 
         # Niter
         if cp.has_option('bayeswave_options', 'Niter'):
@@ -274,13 +282,14 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # backgroundPrior
         if cp.has_option('bayeswave_options', 'backgroundPrior'):
-             self.add_opt('backgroundPrior', cp.get('bayeswave_options',
-                 'backgroundPrior'))
              
-        if cp.get('bayeswave_options', 'backgroundPrior') == None:
-            print >> sys.stderr, "must specifiy name of 2-column bkg frequency
-distribution file"
-            sys.exit()
+            if cp.get('bayeswave_options', 'backgroundPrior') == None:
+                print >> sys.stderr, "must specifiy name of 2-column bkg frequency\
+    distribution file"
+                sys.exit()
+
+                self.add_opt('backgroundPrior', cp.get('bayeswave_options',
+                    'backgroundPrior'))
 
 
         # noOrientationProposal
@@ -324,7 +333,7 @@ distribution file"
 
         # signalPriorPeak
         if cp.has_option('bayeswave_options', 'signalPriorPeak'):
-             self.add_opt('', cp.get('bayeswave_options', 'signalPriorPeak'))
+             self.add_opt('signalPriorPeak', cp.get('bayeswave_options', 'signalPriorPeak'))
 
         # dimensionDecayRate
         if cp.has_option('bayeswave_options', 'dimensionDecayRate'):
@@ -423,7 +432,6 @@ distribution file"
         # NCmax
         if cp.has_option('bayeswave_options','NCmax'):
             self.add_opt('NCmax', cp.get('bayeswave_options', 'NCmax'))
-
 
 
         self.set_sub_file('bayeswave.sub')

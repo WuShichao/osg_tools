@@ -104,6 +104,7 @@ def parser():
 
     # --- Read config file
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = str
     cp.read(args[0])
 
 
