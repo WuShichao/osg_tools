@@ -82,7 +82,7 @@ def parser():
     # --- cmd line
     parser = OptionParser()
     parser.add_option("-t", "--user-tag", default="", type=str)
-    parser.add_option("-o", "--workdir", type=str, default=None)
+    parser.add_option("-r", "--workdir", type=str, default=None)
     parser.add_option("--trigger-time", type=float, default=None)
     parser.add_option("--trigger-list", type=str, default=None)
     parser.add_option("--server", type=str, default=None)
