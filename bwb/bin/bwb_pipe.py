@@ -104,6 +104,7 @@ def parser():
 
     # --- Read config file
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = str
     cp.read(args[0])
 
 
@@ -460,11 +461,11 @@ else:
     for ifo in ifo_list:
 
         if  frtype_list[ifo] == "LALSimAdLIGO":
-            cache_files[ifo] == "LALSimAdLIGO"
+            cache_files[ifo] = "LALSimAdLIGO"
         else:
             cache_files[ifo] = os.path.join('datafind','%s.cache'%ifo)
 
-        segmentList[ifo] = segments.segment(gps_start_time, gps_end_time)
+        segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
 
 
 #############################################
