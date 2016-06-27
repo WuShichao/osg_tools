@@ -72,6 +72,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             if cp.getboolean('condor','copy-frames'): transferstring+=',$(macroframes)'
 
+            # XXX FIXME: better handling of ROM data
             if injfile is not None:
                 transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
             if nrdata is not None: transferstring+=','+nrdata
@@ -93,7 +94,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         for ifo in ifo_list[1:]: ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
-        self.add_opt('srate', cp.get('input', 'srate'))
+#        self.add_opt('srate', cp.get('input', 'srate'))
         self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
@@ -424,6 +425,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('trigtime', trigtime)
         self.__trigtime = trigtime
 
+    def set_srate(self, srate):
+        self.add_var_opt('srate', srate)
+        self.__srate = srate
+
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)
         self.__PSDstart = PSDstart
@@ -526,7 +531,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
-        self.add_opt('srate', cp.get('input', 'srate'))
+        #self.add_opt('srate', cp.get('input', 'srate'))
         self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
@@ -594,6 +599,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_trigtime(self, trigtime):
         self.add_var_opt('trigtime', trigtime)
         self.__trigtime = trigtime
+
+    def set_srate(self, srate):
+        self.add_var_opt('srate', srate)
+        self.__srate = srate
 
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)

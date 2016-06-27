@@ -36,6 +36,10 @@ import ConfigParser
 
 import bwb_pipe_utils as pipe_utils
 
+#############################################
+#
+# Local function defs
+
 def localize_xml(xmlfile, old_path, new_path):
     """
     Modify absolute paths in xml files to relative paths
@@ -181,10 +185,113 @@ def read_injection_table(filename):
         print >> sys.stderr, "Error: cannot read injection file %s"%injfile
         sys.exit()
 
-# ----------------
-# Set Parameters
-# ----------------
+class triggerList:
+    """
+    Object to store trigger properties and associated configuration
 
+    Allowed formats:
+        trigger_gps
+        trigger_gps | trigger_frequency
+        trigger_gps | trigger_frequency | rho
+    """
+
+    def __init__(self, cp, trigger_file=None, frequency_threshold=200.,
+            min_srate=1024., max_srate=4096., rho_threshold=0.):
+
+        #
+        # Get run configuration
+        #
+        try:
+            self.frequency_threshold = cp.getfloat('input', 'frequency-threshold')
+        except:
+            self.frequency_threshold = frequency_threshold
+
+        try:
+            self.static_srate = cp.getfloat('input', 'srate')
+        except:
+            print >> sys.stderr, "Error: must supply default srate in [input] of config"
+            sys.exit()
+
+
+        try:
+            self.min_srate = cp.getfloat('input', 'min-srate')
+        except:
+            self.min_srate = min_srate
+
+        try:
+            self.max_srate = cp.getfloat('input', 'max-srate')
+        except:
+            self.max_srate = max_srate
+
+        try:
+            self.rho_threshold = cp.getfloat('input', 'rho-threshold')
+        except:
+            self.rho_threshold = rho_threshold
+
+
+        #
+        # Extract trigger data
+        #
+        self.parse_trigger_list(trigger_file)
+
+
+    def parse_trigger_list(self,trigger_file):
+        trigger_data = np.loadtxt(trigger_file)
+        try:
+            nrows, ncols = trigger_data.shape
+        except ValueError:
+            nrows = trigger_data.shape
+            ncols = 1
+
+        if ncols==1:
+            self.trigger_times = trigger_data
+            self.srates  = self.static_srate*np.ones(len(self.trigger_times))
+
+        elif ncols>=2:
+            self.trigger_times = trigger_data[:,0]
+
+            # --- get frequency information
+            trigger_frequencies = trigger_data[:,1]
+            self.srates=[]
+            for freq in trigger_frequencies:
+                if freq < self.frequency_threshold:
+                   self.srates.append(self.min_srate)
+                else:
+                   self.srates.append(self.max_srate)
+            # For handy manipulation later...
+            self.srates = np.array(self.srates)
+
+        if ncols==3:
+            # Apply rho threshold
+            self.rhos = trigger_data[:,2]
+            keepidx = self.rhos > self.rho_threshold
+
+            print >> sys.stdout, "Discarding rho<=%f"%self.rho_threshold
+            print >> sys.stdout, "Read %d triggers, following up %d"%(
+                    len(trigger_data), sum(keepidx))
+
+            if sum(keepidx)==0:
+                print >> sys.stderr, "Warning: no triggers above rho threshold\
+(%f), exiting"%self.rho_threshold
+                sys.exit()
+            self.rhos = self.rhos[keepidx]
+            self.srates = self.srates[keepidx]
+            self.trigger_times = self.trigger_times[keepidx]
+
+
+
+    # -- END trigger_list class
+
+
+    
+
+
+
+
+# END --- Local function defs
+#############################################
+
+#############################################
 # --- Parse options, arguments and ini file
 opts, args, cp = parser()
 cp.set('condor','copy-frames',str(opts.copy_frames))
@@ -244,16 +351,19 @@ if nrdata is not None:
 
 #############################################
 #
-# Get trigger time(s)
+# Get trigger time(s) and sample rates
 #
 #   Use cases: single trigger, ascii trigger list, sim_inspiral table
 #   Not yet supported: sim_burst, time-slides
 #
 if opts.trigger_time is not None:
     trigger_times = [opts.trigger_time]
+    srates = [cp.getfloat('input', 'srate')]
 
 if opts.trigger_list is not None:
-    trigger_times = np.loadtxt(opts.trigger_list)
+    trigger_list = triggerList(cp, opts.trigger_list)
+    trigger_times = trigger_list.trigger_times
+    srates = trigger_list.srates
 
 if injfile is not None:
 
@@ -272,6 +382,7 @@ if injfile is not None:
         injevents=range(len(trigger_times))
     trigger_times=np.array(trigger_times)[injevents]
 
+    srates = [cp.getfloat('input', 'srate')]
 
 #
 # --- Determine min/max times for data coverage
@@ -517,7 +628,7 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
-for t, trigger_time in enumerate(trigger_times):
+for t, (trigger_time, srate) in enumerate(zip(trigger_times, srates)):
 
     print >> sys.stdout, "---------------------------------------"
 
@@ -584,6 +695,7 @@ for t, trigger_time in enumerate(trigger_times):
 
             # Add options for bayeswave node
             bayeswave_node.set_trigtime(trigger_time)
+            bayeswave_node.set_srate(srate)
             bayeswave_node.set_PSDstart(psd_start)
             bayeswave_node.set_retry(1)
             bayeswave_node.set_outputDir(outputDir)
@@ -598,6 +710,7 @@ for t, trigger_time in enumerate(trigger_times):
 
             # Add options for bayeswave_post node
             bayeswave_post_node.set_trigtime(trigger_time)
+            bayeswave_post_node.set_srate(srate)
             bayeswave_post_node.set_PSDstart(psd_start)
             bayeswave_post_node.set_retry(1)
             bayeswave_post_node.set_outputDir(outputDir)
