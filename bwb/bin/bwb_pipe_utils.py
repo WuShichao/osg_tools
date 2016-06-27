@@ -82,20 +82,13 @@ def read_injection_table(filename):
         print >> sys.stderr, "Error: cannot read injection file %s"%injfile
         sys.exit()
 
-    
-
-class triggerList:
+class eventTrigger:
     """
-    Object to store trigger properties and associated configuration
-
-    Allowed formats:
-        trigger_gps
-        trigger_gps | trigger_frequency
-        trigger_gps | trigger_frequency | rho
+    Stores event characteristics and determines run configuration for this event
     """
-
-    def __init__(self, cp, trigger_file=None, frequency_threshold=200.,
-            min_srate=1024., max_srate=4096., rho_threshold=0.):
+    def __init__(self, cp, trigger_time, time_lag=0.0, trigger_frequency=None,
+            rho=None, graceID=None, frequency_threshold=200., min_srate=1024.,
+            max_srate=4096.):
 
         #
         # Get run configuration
@@ -106,11 +99,10 @@ class triggerList:
             self.frequency_threshold = frequency_threshold
 
         try:
-            self.static_srate = cp.getfloat('input', 'srate')
+            self.default_srate = cp.getfloat('input', 'srate')
         except:
             print >> sys.stderr, "Error: must supply default srate in [input] of config"
             sys.exit()
-
 
         try:
             self.min_srate = cp.getfloat('input', 'min-srate')
@@ -122,60 +114,147 @@ class triggerList:
         except:
             self.max_srate = max_srate
 
-        try:
-            self.rho_threshold = cp.getfloat('input', 'rho-threshold')
-        except:
-            self.rho_threshold = rho_threshold
+        #
+        # Add trigger properties
+        #
+        self.trigger_time = trigger_time
+        self.time_lag = time_lag
+        self.trigger_frequency = trigger_frequency
+        if trigger_frequency is not None:
+            # Adjust sample rate for this trigger
+            if trigger_frequency < self.frequency_threshold:
+               self.srate = self.min_srate
+            else:
+               self.srate = self.max_srate
+        else:
+            self.srate = self.default_srate
 
+        self.rho = rho
+        self.graceID = graceID
+
+
+
+class triggerList:
+    """
+    Object to store trigger properties and associated configuration
+
+    Allowed formats:
+        trigger_gps 
+        trigger_gps | time_lag
+        trigger_gps | time_lag | trigger_frequency
+        trigger_gps | time_lag | trigger_frequency | rho
+    """
+
+    def __init__(self, cp, gps_times=None, trigger_file=None,
+            injection_file=None, rho_threshold=-1.0):
 
         #
-        # Extract trigger data
+        # Assign trigger data
         #
-        self.parse_trigger_list(trigger_file)
+        if gps_times is not None:
+            # Create trigger list from gps times
+            self.triggers=list()
+            for gps_time in gps_times:
+                self.triggers.append(eventTrigger(cp, trigger_time=gps_time))
+
+        elif trigger_file is not None:
+            # Create trigger list from ascii file
+            self.triggers = self.parse_trigger_list(cp,trigger_file)
+
+        elif injection_file is not None:
+            # Create trigger list from sim* LIGOLW-XML table
+            self.triggers = self.parse_injection_file
+
+        else:
+            # Fail
+            print >> sys.stdout, "don't know what to do."
+            sys.exit()
+
+    def parse_injection_file(self, cp, injection_file):
+        triggers = list()
+        trigger_times = read_injection_table(injection_file)
+
+        # reduce to specified values
+        events=cp.get('injections', 'events')
+
+        if events!='all':
+            injevents=list(hyphen_range(events))
+        else:
+            injevents=range(len(trigger_times))
+
+        for i in injevents:
+            triggers.append(eventTrigger(cp, trigger_time=trigger_times[i]))
+
+        return triggers
 
 
-    def parse_trigger_list(self,trigger_file):
+
+    def parse_trigger_list(self, cp, trigger_file, rho_threshold=-1.0,
+            keep_frac=1.0):
+
         trigger_data = np.loadtxt(trigger_file)
         try:
             nrows, ncols = trigger_data.shape
         except ValueError:
-            nrows = trigger_data.shape
+            nrows = len(trigger_data)
             ncols = 1
 
+        triggers = list()
+
         if ncols==1:
-            self.trigger_times = trigger_data
-            self.srates  = self.static_srate*np.ones(len(self.trigger_times))
+            # Just have trigger time
+            for i in xrange(nrows):
+                triggers.append(eventTrigger(cp,
+                    trigger_time=trigger_data[i]))
 
-        elif ncols>=2:
-            self.trigger_times = trigger_data[:,0]
+        elif ncols==2:
+            # Trigger time, lag
+            for i in xrange(nrows):
+                triggers.append(eventTrigger(cp,
+                    trigger_time=trigger_data[i,0],
+                    time_lag=trigger_data[i,1]))
 
-            # --- get frequency information
-            trigger_frequencies = trigger_data[:,1]
-            self.srates=[]
-            for freq in trigger_frequencies:
-                if freq < self.frequency_threshold:
-                   self.srates.append(self.min_srate)
-                else:
-                   self.srates.append(self.max_srate)
-            # For handy manipulation later...
-            self.srates = np.array(self.srates)
+        elif ncols==3:
+            # Trigger time, lag, frequency
+            for i in xrange(nrows):
+                triggers.append(eventTrigger(cp,
+                    trigger_time=trigger_data[i,0],
+                    time_lag=trigger_data[i,1],
+                    trigger_frequency=trigger_data[i,2]))
 
-        if ncols==3:
-            # Apply rho threshold
-            self.rhos = trigger_data[:,2]
-            keepidx = self.rhos > self.rho_threshold
+        elif ncols==4:
+            # Trigger time, lag, frequency, rho
+            try:
+                rho_threshold = cp.getfloat('input', 'rho-threshold')
+            except:
+                rho_threshold = rho_threshold
 
-            print >> sys.stdout, "Discarding rho<=%f"%self.rho_threshold
-            print >> sys.stdout, "Read %d triggers, following up %d"%(
-                    len(trigger_data), sum(keepidx))
+            print >> sys.stdout, "Discarding rho<=%f"%rho_threshold
 
-            if sum(keepidx)==0:
-                print >> sys.stderr, "Warning: no triggers above rho threshold\
-(%f), exiting"%self.rho_threshold
-                sys.exit()
-            self.rhos = self.rhos[keepidx]
-            self.srates = self.srates[keepidx]
-            self.trigger_times = self.trigger_times[keepidx]
+            for i in xrange(nrows):
+                # Apply rho threshold
+                if trigger_data[i,3] > rho_threshold:
+                    triggers.append(eventTrigger(cp,
+                        trigger_time=trigger_data[i,0],
+                        time_lag=trigger_data[i,1],
+                        trigger_frequency=trigger_data[i,2],
+                        rho=trigger_data[i,3]))
+
+
+        # Finally, downsample to a smaller fraction of triggers
+        try:
+            keep_frac = cp.getfloat('input', 'keep-frac')
+        except:
+            keep_frac = keep_frac
+
+        nkeep=np.ceil(keep_frac*len(triggers))
+        keepidx=np.random.randint(low=0,high=len(triggers),size=nkeep)
+        triggers=[triggers[i] for i in keepidx]
+
+        print >> sys.stdout, "Read %d triggers, following up %d"%(
+                nrows, len(triggers))
+
+        return triggers
 
 
 

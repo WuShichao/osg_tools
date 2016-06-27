@@ -77,6 +77,23 @@ def job_times(trigtime, seglen, psdlen, padding):
 
     return segments.segment(start,stop), psdstart
 
+def dump_job_info(job_dir, trigger):
+    """
+    Writes a text file with job info to outputDir:
+
+    GPS time, lag or GraceID, frequency, and cWB’s rho
+    """
+    f=open(os.path.join(job_dir, 'job_info.txt'), 'w')
+
+    f.write('# gps_time time_lag trig_frequency rho graceID\n')
+    f.write('{gps_time} {time_lag} {trig_frequency} {rho} {graceID}'.format(
+        gps_time=trigger.trigger_time,
+        time_lag=trigger.time_lag,
+        trig_frequency=trigger.trigger_frequency,
+        rho=trigger.rho,
+        graceID=trigger.graceID))
+    f.close()
+
 
 def hyphen_range(s):
     """
@@ -112,6 +129,8 @@ def parser():
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
     parser.add_option("-I", "--injfile", default=None)
+    parser.add_option("-G", "--graceID", default=None)
+    parser.add_option("--graceID-list", default=None)
 
     (opts,args) = parser.parse_args()
 
@@ -196,38 +215,36 @@ if nrdata is not None:
 
 #############################################
 #
-# Get trigger time(s) and sample rates
-#
-#   Use cases: single trigger, ascii trigger list, sim_inspiral table
-#   Not yet supported: sim_burst, time-slides
+# Get Trigger Info
 #
 if opts.trigger_time is not None:
-    trigger_times = [opts.trigger_time]
-    srates = [cp.getfloat('input', 'srate')]
+    #
+    # Read trigger from commandline
+    #
+    trigger_list = pipe_utils.triggerList(cp, [opts.trigger_time])
 
 if opts.trigger_list is not None:
-    trigger_list = pipe_utils.triggerList(cp, opts.trigger_list)
-    trigger_times = trigger_list.trigger_times
-    srates = trigger_list.srates
+    #
+    # Read triggers from ascii list 
+    #
+    trigger_list = pipe_utils.triggerList(cp, trigger_file=opts.trigger_list)
 
 if injfile is not None:
-
     #
     # Read injection file
     #
     filename=os.path.join(workdir,injfile)
-    trigger_times = read_injection_table(filename)
+    trigger_list = pipe_utils.triggerList(cp, injection_file=filename)
     
-    # reduce to specified values
-    events=cp.get('injections', 'events')
 
-    if events!='all':
-        injevents=list(hyphen_range(events))
-    else:
-        injevents=range(len(trigger_times))
-    trigger_times=np.array(trigger_times)[injevents]
+# XXX: GraceDB support
+if opts.graceID is not None:
+    graceIDs = [opts.graceID]
+if opts.graceID_list is not None:
+    graceIDs = np.loadtxt(opts.graceID_list)
 
-    srates = [cp.getfloat('input', 'srate')]
+# Extract trigger times for readability
+trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
 
 #
 # --- Determine min/max times for data coverage
@@ -250,15 +267,11 @@ else:
     gps_end_time = seg[1]
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
-try:
-    L1_timeslides = ast.literal_eval(
-            cp.get('bayeswave_options','L1-timeslides'))
-    if L1_timeslides == None:
-        raise ValueError('L1-timeslides not specified properly')
-except:
-    L1_timeslides=[0]
-gps_start_time -= min(L1_timeslides)
-gps_end_time += max(L1_timeslides)
+
+# Adjust times to cover min/max lags
+all_time_lags = [trig.time_lag for trig in trigger_list.triggers]
+gps_start_time -= min(all_time_lags)
+gps_end_time += max(all_time_lags)
 
 #############################################
 
@@ -473,114 +486,112 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
-for t, (trigger_time, srate) in enumerate(zip(trigger_times, srates)):
+for trigger in trigger_list.triggers:
 
     print >> sys.stdout, "---------------------------------------"
 
-    for L1_timeslide in L1_timeslides:
+    # -------------------------------------------
+    # Check job times fall within available data
+    job_segment, psd_start = job_times(trigger.trigger_time, seglen, psdlen, padding)
 
-        # -------------------------------------------
-        # Check job times fall within available data
-        job_segment, psd_start = job_times(trigger_time, seglen, psdlen, padding)
+    for ifo in ifo_list:
 
-        for ifo in ifo_list:
+        job_in_segments = [seg.__contains__(job_segment) \
+                for seg in segmentList[ifo]]
 
-            job_in_segments = [seg.__contains__(job_segment) \
-                    for seg in segmentList[ifo]]
+        if not any(job_in_segments):
 
-            if not any(job_in_segments):
+            bad_job={}
+            bad_job['ifo']=ifo
+            bad_job['trigger_time']=trigger.trigger_time
+            bad_job['seglen']=seglen
+            bad_job['psdlen']=psdlen
+            bad_job['padding']=padding
+            bad_job['job_segment']=job_segment
+            bad_job['data_segments']=segmentList[ifo]
 
-                bad_job={}
-                bad_job['ifo']=ifo
-                bad_job['trigger_time']=trigger_time
-                bad_job['seglen']=seglen
-                bad_job['psdlen']=psdlen
-                bad_job['padding']=padding
-                bad_job['job_segment']=job_segment
-                bad_job['data_segments']=segmentList[ifo]
+            unanalyzeable_jobs.append(bad_job)
+            
+            print >> sys.stderr, "Warning: No matching %s segments for job %d of %d"%(
+                    ifo, t+1, len(trigger_times))
+            print >> sys.stderr, bad_job
+            break
 
-                unanalyzeable_jobs.append(bad_job)
-                
-                print >> sys.stderr, "Warning: No matching %s segments for job %d of %d"%(
-                        ifo, t+1, len(trigger_times))
-                print >> sys.stderr, bad_job
-                break
+    else:
 
-        else:
-
-            print >> sys.stdout, "Adding node for GPS %d, L1-timeslide %f (%d of %d)"%(
-                    trigger_time, L1_timeslide, totaltrigs+1,
-                    len(trigger_times)*len(L1_timeslides))
+        print >> sys.stdout, "Adding node for GPS %d, L1-timeslide %f (%d of %d)"%(
+                trigger.trigger_time, trigger.time_lag, totaltrigs+1,
+                len(trigger_times))
 
 
-            if "LALSimAdLIGO" not in cache_files.values():
-                #
-                # Identify frames associated with this job
-                if opts.copy_frames:
-                    for ifo in ifo_list:
-                        frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
-                        transferFrames[ifo] = [frame for f,frame in
-                                enumerate(framePaths[ifo]) if frame_idx[f]] 
+        if "LALSimAdLIGO" not in cache_files.values():
+            #
+            # Identify frames associated with this job
+            if opts.copy_frames:
+                for ifo in ifo_list:
+                    frame_idx = [seg.intersects(job_segment) for seg in frameSegs[ifo]]
+                    transferFrames[ifo] = [frame for f,frame in
+                            enumerate(framePaths[ifo]) if frame_idx[f]] 
 
-            outputDir  = 'bayeswave_' + str(int(trigger_time)) + '_' + \
-                    str(float(L1_timeslide)) + '_' + str(uuid.uuid4())
+        outputDir  = 'bayeswave_' + str(int(trigger.trigger_time)) + '_' + \
+                str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
 
-            if not os.path.exists(outputDir): os.makedirs(outputDir)
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-            # Create DAG nodes
-            #   bayeswave: main bayeswave analysis
-            #   bayeswave_post: bayeswave_post
-            #   megasky: skymap job
-            #   megaplot: remaining plots & webpage generation
-            bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
-            bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
-            megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
-            megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
+        # XXX Dump job info file
+        #GPS time, lag or GraceID, frequency, and cWB’s rho
+        dump_job_info(outputDir, trigger) 
+
+        # Create DAG nodes
+        #   bayeswave: main bayeswave analysis
+        #   bayeswave_post: bayeswave_post
+        #   megasky: skymap job
+        #   megaplot: remaining plots & webpage generation
+        bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
+        bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
+        megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
+        megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
 
-            # Add options for bayeswave node
-            bayeswave_node.set_trigtime(trigger_time)
-            bayeswave_node.set_srate(srate)
-            bayeswave_node.set_PSDstart(psd_start)
-            bayeswave_node.set_retry(1)
-            bayeswave_node.set_outputDir(outputDir)
-            if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
+        # Add options for bayeswave node
+        bayeswave_node.set_trigtime(trigger.trigger_time)
+        bayeswave_node.set_srate(trigger.srate)
+        bayeswave_node.set_PSDstart(psd_start)
+        bayeswave_node.set_outputDir(outputDir)
+        if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 
-            if "LALSimAdLIGO" in cache_files.values():
-                bayeswave_node.set_dataseed(dataseed)
-                bayeswave_post_node.set_dataseed(dataseed)
-                #gpsNow = int(os.popen('lalapps_tconvert now').readline())
-                #dataseed+=np.random.randint(1,gpsNow)
-                dataseed+=1
+        if "LALSimAdLIGO" in cache_files.values():
+            bayeswave_node.set_dataseed(dataseed)
+            bayeswave_post_node.set_dataseed(dataseed)
+            #gpsNow = int(os.popen('lalapps_tconvert now').readline())
+            #dataseed+=np.random.randint(1,gpsNow)
+            dataseed+=1
 
-            # Add options for bayeswave_post node
-            bayeswave_post_node.set_trigtime(trigger_time)
-            bayeswave_post_node.set_srate(srate)
-            bayeswave_post_node.set_PSDstart(psd_start)
-            bayeswave_post_node.set_retry(1)
-            bayeswave_post_node.set_outputDir(outputDir)
+        # Add options for bayeswave_post node
+        bayeswave_post_node.set_trigtime(trigger.trigger_time)
+        bayeswave_post_node.set_srate(trigger.srate)
+        bayeswave_post_node.set_PSDstart(psd_start)
+        bayeswave_post_node.set_outputDir(outputDir)
 
-            if injfile is not None:
-                bayeswave_node.set_injevent(injevents[t])
-                bayeswave_post_node.set_injevent(injevents[t])
+        if injfile is not None:
+            bayeswave_node.set_injevent(injevents[t])
+            bayeswave_post_node.set_injevent(injevents[t])
 
-            if cp.has_option('input','L1-timeslides'):
-                bayeswave_node.set_L1_timeslide(L1_timeslide)
-                bayeswave_post_node.set_L1_timeslide(L1_timeslide)
+        bayeswave_node.set_L1_timeslide(trigger.time_lag)
+        bayeswave_post_node.set_L1_timeslide(trigger.time_lag)
 
-            # Add parent/child relationships
-            bayeswave_post_node.add_parent(bayeswave_node)
-            megasky_node.add_parent(bayeswave_post_node)
-            megaplot_node.add_parent(bayeswave_post_node) 
-            # XXX: does megaplot fail without megasky?  if not, set parent to bayeswave_post_node
+        # Add parent/child relationships
+        bayeswave_post_node.add_parent(bayeswave_node)
+        megasky_node.add_parent(bayeswave_post_node)
+        megaplot_node.add_parent(bayeswave_post_node) 
 
-            # Add Nodes to DAG
-            dag.add_node(bayeswave_node)
-            dag.add_node(bayeswave_post_node)
-            dag.add_node(megasky_node)
-            dag.add_node(megaplot_node)
+        # Add Nodes to DAG
+        dag.add_node(bayeswave_node)
+        dag.add_node(bayeswave_post_node)
+        dag.add_node(megasky_node)
+        dag.add_node(megaplot_node)
 
-            totaltrigs+=1
+        totaltrigs+=1
 
 
 #
