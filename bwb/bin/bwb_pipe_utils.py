@@ -18,17 +18,174 @@
 # DAG Class definitions for bayeswave
 
 from glue import pipeline
+import lalinspiral, lalburst
+
 import itertools
 import socket
 import sys,os
 import ast
+import numpy as np
 
 #
-# Main analysis
+# Convenience Defs
 #
+def read_injection_table(filename):
+    try:
+        sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
+        if sim_inspiral_table == -1:
+            raise AttributeError("%s has no sim-inspiral table")
+    
+        print >> sys.stdout, "Reading trigger times from sim_inspiral table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_inspiral_table.geocent_end_time))
+
+            if sim_inspiral_table.next is None: break
+            sim_inspiral_table = sim_inspiral_table.next
+    
+        return trigger_times
+
+    except:
+        pass
+    
+    try:
+        sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
+    
+        print >> sys.stdout, "Reading trigger times from sim_burst table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_burst_table.time_geocent_gps))
+    
+            if sim_burst_table.next is None: break
+            sim_burst_table = sim_burst_table.next
+    
+        return trigger_times
+    except:
+        pass
+    
+    try:
+        sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
+        if sim_ringdown_table == -1:
+            raise AttributeError("%s has no sim-ringdown table")
+    
+        print >> sys.stdout, "Reading trigger times from sim_ringdown table"
+        trigger_times=[]
+        while True:
+            trigger_times.append(float(sim_ringdown_table.geocent_start_time))
+    
+            if sim_ringdown_table.next is None: break
+            sim_ringdown_table = sim_ringdown_table.next
+    
+        return trigger_times
+    
+    except:
+        print >> sys.stderr, "Error: cannot read injection file %s"%injfile
+        sys.exit()
+
+    
+
+class triggerList:
+    """
+    Object to store trigger properties and associated configuration
+
+    Allowed formats:
+        trigger_gps
+        trigger_gps | trigger_frequency
+        trigger_gps | trigger_frequency | rho
+    """
+
+    def __init__(self, cp, trigger_file=None, frequency_threshold=200.,
+            min_srate=1024., max_srate=4096., rho_threshold=0.):
+
+        #
+        # Get run configuration
+        #
+        try:
+            self.frequency_threshold = cp.getfloat('input', 'frequency-threshold')
+        except:
+            self.frequency_threshold = frequency_threshold
+
+        try:
+            self.static_srate = cp.getfloat('input', 'srate')
+        except:
+            print >> sys.stderr, "Error: must supply default srate in [input] of config"
+            sys.exit()
+
+
+        try:
+            self.min_srate = cp.getfloat('input', 'min-srate')
+        except:
+            self.min_srate = min_srate
+
+        try:
+            self.max_srate = cp.getfloat('input', 'max-srate')
+        except:
+            self.max_srate = max_srate
+
+        try:
+            self.rho_threshold = cp.getfloat('input', 'rho-threshold')
+        except:
+            self.rho_threshold = rho_threshold
+
+
+        #
+        # Extract trigger data
+        #
+        self.parse_trigger_list(trigger_file)
+
+
+    def parse_trigger_list(self,trigger_file):
+        trigger_data = np.loadtxt(trigger_file)
+        try:
+            nrows, ncols = trigger_data.shape
+        except ValueError:
+            nrows = trigger_data.shape
+            ncols = 1
+
+        if ncols==1:
+            self.trigger_times = trigger_data
+            self.srates  = self.static_srate*np.ones(len(self.trigger_times))
+
+        elif ncols>=2:
+            self.trigger_times = trigger_data[:,0]
+
+            # --- get frequency information
+            trigger_frequencies = trigger_data[:,1]
+            self.srates=[]
+            for freq in trigger_frequencies:
+                if freq < self.frequency_threshold:
+                   self.srates.append(self.min_srate)
+                else:
+                   self.srates.append(self.max_srate)
+            # For handy manipulation later...
+            self.srates = np.array(self.srates)
+
+        if ncols==3:
+            # Apply rho threshold
+            self.rhos = trigger_data[:,2]
+            keepidx = self.rhos > self.rho_threshold
+
+            print >> sys.stdout, "Discarding rho<=%f"%self.rho_threshold
+            print >> sys.stdout, "Read %d triggers, following up %d"%(
+                    len(trigger_data), sum(keepidx))
+
+            if sum(keepidx)==0:
+                print >> sys.stderr, "Warning: no triggers above rho threshold\
+(%f), exiting"%self.rho_threshold
+                sys.exit()
+            self.rhos = self.rhos[keepidx]
+            self.srates = self.srates[keepidx]
+            self.trigger_times = self.trigger_times[keepidx]
 
 
 
+    # -- END trigger_list class
+
+
+
+#
+# Condor Definitions
+#
 
 class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
