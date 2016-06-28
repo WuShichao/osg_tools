@@ -106,7 +106,7 @@ class eventTrigger:
     """
     def __init__(self, cp, trigger_time, time_lag=0.0, trigger_frequency=None,
             rho=None, graceID=None, injevent=None, frequency_threshold=200.,
-            min_srate=1024., max_srate=4096.):
+            min_srate=1024., max_srate=4096., veto1=None, veto2=None):
 
         #
         # Get run configuration
@@ -151,6 +151,9 @@ class eventTrigger:
         self.graceID = graceID
         self.injevent = injevent
 
+        self.veto1=veto1
+        self.veto2=veto2
+
 
 
 class triggerList:
@@ -184,6 +187,10 @@ class triggerList:
             # Create trigger list from sim* LIGOLW-XML table
             self.triggers = self.parse_injection_file(cp,injection_file)
 
+        elif cwb_trigger_file is not None:
+            # Create trigger list from cwb triggers
+            self.triggers = self.parse_cwb_trigger_list(cp, cwb_trigger_list)
+
         else:
             # Fail
             print >> sys.stdout, "don't know what to do."
@@ -209,6 +216,56 @@ class triggerList:
 
         return triggers
 
+
+    def parse_cwb_trigger_list(self, cp, cwb_trigger_file, rho_threshold=-1.0,
+            keep_frac=1.0):
+
+        # Get rho threshold
+        try:
+            rho_threshold = cp.getfloat('input', 'rho-threshold')
+        except:
+            rho_threshold = rho_threshold
+
+        print >> sys.stdout, "Discarding rho<=%f"%rho_threshold
+        
+        names = ['veto1', 'veto2', 'rho', 'cc1', 'cc2', 'cc3', 'amp', 'tshift',
+                'tsupershift', 'like', 'penalty', 'disbalance', 'f',
+                'bandwidth', 'duration', 'pixels', 'resolution', 'runnumber',
+                'Lgps', 'Hgps', 'sSNRL', 'sSNRH', 'hrssL', 'hrssH', 'phi',
+                'theta', 'psi']
+
+        data = np.recfromtxt(triglist,names=names)
+
+        Hgps = data['Hgps']
+        Lgps = data['Lgps']
+        rhoList = data['rho']
+        freqList = data['f']
+
+        plusveto = data['veto1']
+        minusveto = data['veto2']
+
+        lagList = []
+
+        for h,l in zip(Hgps,Lgps):
+           lagList.append(round(h-l))
+
+        gpsList = Hgps
+
+        triggers=[]
+        for gps, lag, freq, rho, veto1, veto2 in zip(gpsList, lagList, freqList,
+                rhoList, plusveto, minusveto):
+            # Apply rho threshold
+            if rho < rho_threshold: continue
+
+            triggers.append(eventTrigger(cp,
+                trigger_time=gps,
+                time_lag=lag,
+                trigger_frequency=freq,
+                rho=rho,
+                veto1=veto1,
+                veto2=veto2)
+
+        return triggers
 
 
     def parse_trigger_list(self, cp, trigger_file, rho_threshold=-1.0,
@@ -255,12 +312,12 @@ class triggerList:
 
             for i in xrange(nrows):
                 # Apply rho threshold
-                if trigger_data[i,3] > rho_threshold:
-                    triggers.append(eventTrigger(cp,
-                        trigger_time=trigger_data[i,0],
-                        time_lag=trigger_data[i,1],
-                        trigger_frequency=trigger_data[i,2],
-                        rho=trigger_data[i,3]))
+                if trigger_data[i,3] < rho_threshold: continue
+                triggers.append(eventTrigger(cp,
+                    trigger_time=trigger_data[i,0],
+                    time_lag=trigger_data[i,1],
+                    trigger_frequency=trigger_data[i,2],
+                    rho=trigger_data[i,3]))
 
 
         # Finally, downsample to a smaller fraction of triggers

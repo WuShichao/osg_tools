@@ -85,12 +85,14 @@ def dump_job_info(job_dir, trigger):
     """
     f=open(os.path.join(job_dir, 'job_info.txt'), 'w')
 
-    f.write('# gps_time time_lag trig_frequency rho graceID\n')
-    f.write('{gps_time} {time_lag} {trig_frequency} {rho} {graceID}'.format(
+    f.write('# rho gps lag freq veto1 veto2 graceID\n')
+    f.write('{rho} {gps_time} {time_lag} {trig_frequency} {veto1} {veto2} {graceID}'.format(
         gps_time=trigger.trigger_time,
         time_lag=trigger.time_lag,
         trig_frequency=trigger.trigger_frequency,
         rho=trigger.rho,
+        veto1=trigger.veto1,
+        veto2=trigger.veto2,
         graceID=trigger.graceID))
     f.close()
 
@@ -107,6 +109,7 @@ def parser():
     parser.add_option("-r", "--workdir", type=str, default=None)
     parser.add_option("--trigger-time", type=float, default=None)
     parser.add_option("--trigger-list", type=str, default=None)
+    parser.add_option("--cwb-trigger-list", type=str, default=None)
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
