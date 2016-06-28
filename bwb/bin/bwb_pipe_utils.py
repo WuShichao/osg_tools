@@ -47,6 +47,7 @@ def hyphen_range(s):
                 yield i
         else: # more than one hyphen
             raise ValueError('format error in %s' % x)
+
 def read_injection_table(filename):
     try:
         sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
