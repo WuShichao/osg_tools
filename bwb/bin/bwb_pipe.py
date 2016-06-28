@@ -316,9 +316,7 @@ frameSegs={}
 
 if not opts.skip_datafind:
 
-    print ifo_list
     for ifo in ifo_list:
-        print ifo
 
         if frtype_list[ifo] == "LALSimAdLIGO": 
             cache_files[ifo] = "LALSimAdLIGO"

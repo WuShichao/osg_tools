@@ -266,6 +266,20 @@ class triggerList:
                 veto1=veto1,
                 veto2=veto2))
 
+        # Finally, downsample to a smaller fraction of triggers
+        try:
+            keep_frac = cp.getfloat('input', 'keep-frac')
+        except:
+            keep_frac = keep_frac
+
+        nall=len(triggers)
+        nkeep=np.ceil(keep_frac*nall)
+        keepidx=np.random.randint(low=0,high=nall,size=nkeep)
+        triggers=[triggers[i] for i in keepidx]
+
+        print >> sys.stdout, "Read %d triggers, following up %d"%(
+                nall, len(triggers))
+
         return triggers
 
 
