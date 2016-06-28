@@ -240,6 +240,7 @@ if opts.graceID_list is not None:
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
+lag_times = [trig.time_lag for trig in trigger_list.triggers]
 
 #
 # --- Determine min/max times for data coverage
@@ -263,6 +264,9 @@ else:
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
 
+# Timelag adjustment
+gps_start_time = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
+gps_end_time   = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
 
 #############################################
 
@@ -309,16 +313,16 @@ segmentList = {}
 framePaths={}
 frameSegs={}
 
+
 if not opts.skip_datafind:
 
+    print ifo_list
     for ifo in ifo_list:
+        print ifo
 
         if frtype_list[ifo] == "LALSimAdLIGO": 
             cache_files[ifo] = "LALSimAdLIGO"
-            segmentList[ifo] = \
-                    segments.segmentlist([segments.segment(gps_start_time,
-                        gps_end_time)])
-            continue
+            segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
         else:
 
             #
@@ -383,35 +387,36 @@ if not opts.skip_datafind:
             os.chdir(curdir)
 
 
-        # --------------------------------------------------------------------
-        # Set up cache files to point to local copies of frames in the working
-        # directory
+            # --------------------------------------------------------------------
+            # Set up cache files to point to local copies of frames in the working
+            # directory
 
-        if opts.copy_frames:
+            if opts.copy_frames:
+                print "Setting up frame copying"
 
-            #
-            # Now we need to make a new, local cache file
-            # - do this by manipulating the path string in the cache file to be relative 
-            cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
-            shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
+                #
+                # Now we need to make a new, local cache file
+                # - do this by manipulating the path string in the cache file to be relative 
+                cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
+                shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
-            cache_entries = np.loadtxt(cache_file, dtype=str)
-            if cache_entries.ndim==1: cache_entries = [cache_entries]
-            
-            framePaths[ifo]=[]
-            new_cache = open(cache_file, 'w')
-            for c,cache_entry in enumerate(cache_entries):
-                frame = cache_entry[-1].split('localhost')[-1]
-                framePaths[ifo].append(frame)
+                cache_entries = np.loadtxt(cache_file, dtype=str)
+                if cache_entries.ndim==1: cache_entries = [cache_entries]
+                
+                framePaths[ifo]=[]
+                new_cache = open(cache_file, 'w')
+                for c,cache_entry in enumerate(cache_entries):
+                    frame = cache_entry[-1].split('localhost')[-1]
+                    framePaths[ifo].append(frame)
 
-                #local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
-                local_path=cache_entry[4].split('/')[-1]
+                    #local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
+                    local_path=cache_entry[4].split('/')[-1]
 
-                new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
-                    ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
-                    length=cache_entry[3], path=local_path))
+                    new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
+                        ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
+                        length=cache_entry[3], path=local_path))
 
-            new_cache.close()
+                new_cache.close()
 
 else:
 
@@ -428,7 +433,6 @@ else:
 
 
 #############################################
-
 
 
 # -----------------------------------------------------------------------
