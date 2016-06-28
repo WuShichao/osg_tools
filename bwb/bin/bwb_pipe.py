@@ -86,7 +86,8 @@ def dump_job_info(job_dir, trigger):
     f=open(os.path.join(job_dir, 'job_info.txt'), 'w')
 
     f.write('# rho gps lag freq veto1 veto2 graceID\n')
-    f.write('{rho} {gps_time} {time_lag} {trig_frequency} {veto1} {veto2} {graceID}'.format(
+    f.write('{rho} {gps_time} {time_lag} {trig_frequency} {veto1} \
+{veto2} {graceID}\n'.format(
         gps_time=trigger.trigger_time,
         time_lag=trigger.time_lag,
         trig_frequency=trigger.trigger_frequency,
@@ -202,6 +203,9 @@ if nrdata is not None:
 #
 # Get Trigger Info
 #
+
+# XXX: Careful, there's nothing here to handle the non-exclusivity of these
+# options other than common sense
 if opts.trigger_time is not None:
     #
     # Read trigger from commandline
@@ -213,6 +217,12 @@ if opts.trigger_list is not None:
     # Read triggers from ascii list 
     #
     trigger_list = pipe_utils.triggerList(cp, trigger_file=opts.trigger_list)
+
+if opts.cwb_trigger_list is not None:
+    #
+    # Read triggers from ascii list 
+    #
+    trigger_list = pipe_utils.triggerList(cp, cwb_trigger_file=opts.cwb_trigger_list)
 
 if injfile is not None:
     #
@@ -253,10 +263,6 @@ else:
     cp.set('input','gps-end-time',str(int(gps_end_time)))
 
 
-# Adjust times to cover min/max lags
-all_time_lags = [trig.time_lag for trig in trigger_list.triggers]
-gps_start_time -= min(all_time_lags)
-gps_end_time += max(all_time_lags)
 
 #############################################
 
@@ -471,7 +477,7 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
-for trigger in trigger_list.triggers:
+for t,trigger in enumerate(trigger_list.triggers):
 
     print >> sys.stdout, "---------------------------------------"
 

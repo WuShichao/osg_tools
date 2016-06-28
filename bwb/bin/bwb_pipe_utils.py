@@ -169,7 +169,7 @@ class triggerList:
     """
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
-            injection_file=None, rho_threshold=-1.0):
+            injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0):
 
         #
         # Assign trigger data
@@ -182,15 +182,15 @@ class triggerList:
 
         elif trigger_file is not None:
             # Create trigger list from ascii file
-            self.triggers = self.parse_trigger_list(cp,trigger_file)
+            self.triggers = self.parse_trigger_list(cp, trigger_file)
 
         elif injection_file is not None:
             # Create trigger list from sim* LIGOLW-XML table
-            self.triggers = self.parse_injection_file(cp,injection_file)
+            self.triggers = self.parse_injection_file(cp, injection_file)
 
         elif cwb_trigger_file is not None:
             # Create trigger list from cwb triggers
-            self.triggers = self.parse_cwb_trigger_list(cp, cwb_trigger_list)
+            self.triggers = self.parse_cwb_trigger_list(cp, cwb_trigger_file)
 
         else:
             # Fail
@@ -235,7 +235,7 @@ class triggerList:
                 'Lgps', 'Hgps', 'sSNRL', 'sSNRH', 'hrssL', 'hrssH', 'phi',
                 'theta', 'psi']
 
-        data = np.recfromtxt(triglist,names=names)
+        data = np.recfromtxt(cwb_trigger_file,names=names)
 
         Hgps = data['Hgps']
         Lgps = data['Lgps']
