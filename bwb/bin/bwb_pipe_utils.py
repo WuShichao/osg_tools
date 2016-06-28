@@ -29,6 +29,24 @@ import numpy as np
 #
 # Convenience Defs
 #
+def hyphen_range(s):
+    """
+    yield each integer from a complex range string like "1-9,12, 15-20,23"
+
+    Stolen from:
+    http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
+    """
+
+    for x in s.split(','):
+        elem = x.split('-')
+        if len(elem) == 1: # a number
+            yield int(elem[0])
+        elif len(elem) == 2: # a range inclusive
+            start, end = map(int, elem)
+            for i in xrange(start, end+1):
+                yield i
+        else: # more than one hyphen
+            raise ValueError('format error in %s' % x)
 def read_injection_table(filename):
     try:
         sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
@@ -87,8 +105,8 @@ class eventTrigger:
     Stores event characteristics and determines run configuration for this event
     """
     def __init__(self, cp, trigger_time, time_lag=0.0, trigger_frequency=None,
-            rho=None, graceID=None, frequency_threshold=200., min_srate=1024.,
-            max_srate=4096.):
+            rho=None, graceID=None, injevent=None, frequency_threshold=200.,
+            min_srate=1024., max_srate=4096.):
 
         #
         # Get run configuration
@@ -131,6 +149,7 @@ class eventTrigger:
 
         self.rho = rho
         self.graceID = graceID
+        self.injevent = injevent
 
 
 
@@ -163,7 +182,7 @@ class triggerList:
 
         elif injection_file is not None:
             # Create trigger list from sim* LIGOLW-XML table
-            self.triggers = self.parse_injection_file
+            self.triggers = self.parse_injection_file(cp,injection_file)
 
         else:
             # Fail
@@ -174,6 +193,8 @@ class triggerList:
         triggers = list()
         trigger_times = read_injection_table(injection_file)
 
+        print 'getting trigger times from injection file'
+
         # reduce to specified values
         events=cp.get('injections', 'events')
 
@@ -183,7 +204,8 @@ class triggerList:
             injevents=range(len(trigger_times))
 
         for i in injevents:
-            triggers.append(eventTrigger(cp, trigger_time=trigger_times[i]))
+            triggers.append(eventTrigger(cp, trigger_time=trigger_times[i],
+                injevent=i))
 
         return triggers
 

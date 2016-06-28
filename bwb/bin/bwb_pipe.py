@@ -95,24 +95,6 @@ def dump_job_info(job_dir, trigger):
     f.close()
 
 
-def hyphen_range(s):
-    """
-    yield each integer from a complex range string like "1-9,12, 15-20,23"
-
-    Stolen from:
-    http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
-    """
-
-    for x in s.split(','):
-        elem = x.split('-')
-        if len(elem) == 1: # a number
-            yield int(elem[0])
-        elif len(elem) == 2: # a range inclusive
-            start, end = map(int, elem)
-            for i in xrange(start, end+1):
-                yield i
-        else: # more than one hyphen
-            raise ValueError('format error in %s' % x)
 
 def parser():
     """
@@ -574,8 +556,8 @@ for trigger in trigger_list.triggers:
         bayeswave_post_node.set_outputDir(outputDir)
 
         if injfile is not None:
-            bayeswave_node.set_injevent(injevents[t])
-            bayeswave_post_node.set_injevent(injevents[t])
+            bayeswave_node.set_injevent(trigger.injevent)
+            bayeswave_post_node.set_injevent(trigger.injevent)
 
         bayeswave_node.set_L1_timeslide(trigger.time_lag)
         bayeswave_post_node.set_L1_timeslide(trigger.time_lag)
