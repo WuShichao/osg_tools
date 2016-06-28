@@ -264,7 +264,7 @@ class triggerList:
                 trigger_frequency=freq,
                 rho=rho,
                 veto1=veto1,
-                veto2=veto2)
+                veto2=veto2))
 
         return triggers
 
