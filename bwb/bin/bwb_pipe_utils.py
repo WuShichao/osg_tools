@@ -20,15 +20,23 @@
 from glue import pipeline
 import lalinspiral, lalburst
 
+import ConfigParser
 import itertools
 import socket
 import sys,os
 import ast
 import numpy as np
+import random
 
 #
 # Convenience Defs
 #
+def file_len(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
 def hyphen_range(s):
     """
     yield each integer from a complex range string like "1-9,12, 15-20,23"
@@ -107,7 +115,8 @@ class eventTrigger:
     """
     def __init__(self, cp, trigger_time, time_lag=0.0, trigger_frequency=None,
             rho=None, graceID=None, injevent=None, frequency_threshold=200.,
-            min_srate=1024., max_srate=4096., veto1=None, veto2=None):
+            min_srate=1024., max_srate=4096., veto1=None, veto2=None,
+            BW_event=None):
 
         #
         # Get run configuration
@@ -155,6 +164,8 @@ class eventTrigger:
         self.veto1=veto1
         self.veto2=veto2
 
+        self.BW_event=BW_event
+
 
 
 class triggerList:
@@ -169,12 +180,13 @@ class triggerList:
     """
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
-            injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0):
+            injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0,
+            internal_injections=False):
 
         #
         # Assign trigger data
         #
-        if gps_times is not None:
+        if gps_times is not None and not internal_injections:
             # Create trigger list from gps times
             self.triggers=list()
             for gps_time in gps_times:
@@ -192,10 +204,60 @@ class triggerList:
             # Create trigger list from cwb triggers
             self.triggers = self.parse_cwb_trigger_list(cp, cwb_trigger_file)
 
+        elif internal_injections:
+            # Set up || runs to sample from the prior
+            self.triggers = self.build_internal_injections(cp, gps_times)
+
         else:
             # Fail
             print >> sys.stdout, "don't know what to do."
             sys.exit()
+
+    def build_internal_injections(self, cp, gps_time):
+
+        BW_Nsamples = cp.getint('bayeswave_options', 'BW-Nsamples')
+
+        # Determine chain length
+        injtype=cp.get('bayeswave_options', 'BW-inject')
+        injname=cp.get('bayeswave_options', 'BW-injName')
+
+        try:
+            BW_chainLength=cp.getint('bayeswave_options','BW-chainLength')
+        except ConfigParser.NoOptionError:
+
+            print >> sys.stdout, "Reading chainlength from files in %s"%(
+                    cp.get('bayeswave_options','BW-path'))
+
+            # O1 names:
+            if injtype=='glitch':
+                filename=injname+'_'+'glitch_glitchchain_ifo0.dat.0'
+            else: filename=injname+'_'+'signal_wavechain.dat.0' 
+            filename=os.path.join(cp.get('bayeswave_options','BW-path'), filename)
+
+            try:
+                # O1 names
+                o1=os.path.exists(filename)
+                if not o1: raise ValueError(
+                        "o1 style chain-names not found,trying o2-style")
+            except:
+                # O2 names:
+                if injtype=='glitch':
+                    filename=injname+'_'+'glitch_params_ifo0.dat.0'
+                else: filename=injname+'_'+'signal_params.dat.0' 
+                filename=os.path.join(cp.get('bayeswave_options','BW-path'), filename)
+
+            BW_chainLength = file_len(filename)
+
+        BW_events = random.sample(xrange(0,BW_chainLength), BW_Nsamples)
+
+        triggers=[]
+        for BW_event in BW_events:
+            triggers.append(eventTrigger(cp, trigger_time=gps_time,
+                BW_event=BW_event))
+
+        return triggers
+
+
 
     def parse_injection_file(self, cp, injection_file):
         triggers = list()
@@ -749,9 +811,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_options', 'BW-path'):
              self.add_opt('BW-path', cp.get('bayeswave_options', 'BW-path'))
 
-        # BW-event
-        if cp.has_option('bayeswave_options', 'BW-event'):
-             self.add_opt('BW-event', cp.get('bayeswave_options', 'BW-event'))
 
         # XXX: where is this?
         # NC
@@ -812,6 +871,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
         self.__L1_timeslide = L1_timeslide
+
+    def set_BW_event(self, BW_event):
+        self.add_var_opt('BW-event', BW_event)
+        self.__BW_event = BW_event
 
 #
 # Post-processing
@@ -976,6 +1039,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
         self.__L1_timeslide = L1_timeslide
+
+    def set_BW_event(self, BW_event):
+        self.add_var_opt('BW-event', BW_event)
+        self.__BW_event = BW_event
 
 
 #

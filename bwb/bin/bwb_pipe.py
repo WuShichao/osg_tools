@@ -117,6 +117,7 @@ def parser():
     parser.add_option("-I", "--injfile", default=None)
     parser.add_option("-G", "--graceID", default=None)
     parser.add_option("--graceID-list", default=None)
+    parser.add_option("--bw-inject", default=False, action="store_true")
 
     (opts,args) = parser.parse_args()
 
@@ -127,6 +128,9 @@ def parser():
 
     if len(args)==0:
         print >> sys.stderr, "ERROR: require config file"
+        sys.exit()
+    if not os.path.isfile(args[0]):
+        print >> sys.stderr, "ERROR: config file %s does not exist"%args[0]
         sys.exit()
 
 
@@ -206,7 +210,8 @@ if nrdata is not None:
 
 # XXX: Careful, there's nothing here to handle the non-exclusivity of these
 # options other than common sense
-if opts.trigger_time is not None:
+if opts.trigger_time is not None and not\
+    cp.has_option('bayeswave_options','BW-inject'):
     #
     # Read trigger from commandline
     #
@@ -230,6 +235,20 @@ if injfile is not None:
     #
     filename=os.path.join(workdir,injfile)
     trigger_list = pipe_utils.triggerList(cp, injection_file=filename)
+
+if cp.has_option('bayeswave_options','BW-inject'):
+    # Check the option is valid:
+    if cp.get('bayeswave_options','BW-inject') not in ['signal','glitch']:
+        print >> sys.stderr, "Error: BW-inject must be in ", ['signal','glitch']
+        sys.exit()
+    #
+    # Perform internal injections drawn from the signal or glitch model
+    #
+    if opts.trigger_time is None:
+        opts.trigger_time=1126259462.392 
+    print >> sys.stdout, "Setting trigger time to %f"%opts.trigger_time
+    trigger_list = pipe_utils.triggerList(cp, gps_times=opts.trigger_time,
+            internal_injections=True)
     
 
 # XXX: GraceDB support
@@ -252,21 +271,24 @@ padding = cp.getfloat('input','padding')
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
-    seg, _ = job_times(min(trigger_times), seglen, psdlen, padding)
+    trigtime = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
+    seg, _ = job_times(trigtime, seglen, psdlen, padding)
     gps_start_time = seg[0]
-    cp.set('input','gps-start-time',str(int(gps_start_time)))
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
-    seg,_ = job_times(max(trigger_times), seglen, psdlen, padding)
+    trigtime = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
+    seg,_ = job_times(trigtime, seglen, psdlen, padding)
     gps_end_time = seg[1]
-    cp.set('input','gps-end-time',str(int(gps_end_time)))
-
 
 # Timelag adjustment
-gps_start_time = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
-gps_end_time   = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
+#gps_start_time = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
+#gps_end_time   = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
+
+# Update config parser
+cp.set('input','gps-start-time',str(int(gps_start_time)))
+cp.set('input','gps-end-time',str(int(gps_end_time)))
 
 #############################################
 
@@ -320,7 +342,10 @@ if not opts.skip_datafind:
 
         if frtype_list[ifo] == "LALSimAdLIGO": 
             cache_files[ifo] = "LALSimAdLIGO"
-            segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
+            segmentList[ifo] = \
+                    segments.segmentlist([segments.segment(gps_start_time,
+                        gps_end_time)])
+
         else:
 
             #
@@ -427,7 +452,9 @@ else:
         else:
             cache_files[ifo] = os.path.join('datafind','%s.cache'%ifo)
 
-        segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
+        segmentList[ifo] = \
+                segments.segmentlist([segments.segment(gps_start_time,
+                    gps_end_time)])
 
 
 #########################################################################
@@ -441,8 +468,10 @@ else:
 
 if opts.cwb_trigger_list is not None:
     # Don't throw out any triggers due to our segment queries
-    segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
-
+    for ifo in ifo_list:
+        segmentList[ifo] = \
+                segments.segmentlist([segments.segment(gps_start_time,
+                    gps_end_time)])
 
 #########################################################################
 # -----------------------------------------------------------------------
@@ -558,7 +587,9 @@ for t,trigger in enumerate(trigger_list.triggers):
         megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
 
-        # Add options for bayeswave node
+        #
+        # --- Add options for bayeswave node
+        #
         bayeswave_node.set_trigtime(trigger.trigger_time)
         bayeswave_node.set_srate(trigger.srate)
         bayeswave_node.set_PSDstart(psd_start)
@@ -572,7 +603,13 @@ for t,trigger in enumerate(trigger_list.triggers):
             #dataseed+=np.random.randint(1,gpsNow)
             dataseed+=1
 
-        # Add options for bayeswave_post node
+
+        if cp.has_option('bayeswave_options','BW-inject'):
+            bayeswave_node.set_BW_event(trigger.BW_event)
+
+        #
+        # --- Add options for bayeswave_post node
+        #
         bayeswave_post_node.set_trigtime(trigger.trigger_time)
         bayeswave_post_node.set_srate(trigger.srate)
         bayeswave_post_node.set_PSDstart(psd_start)
@@ -585,7 +622,12 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_L1_timeslide(trigger.time_lag)
         bayeswave_post_node.set_L1_timeslide(trigger.time_lag)
 
-        # Add parent/child relationships
+        if cp.has_option('bayeswave_options','BW-inject'):
+            bayeswave_post_node.set_BW_event(trigger.BW_event)
+
+        #
+        # --- Add parent/child relationships
+        #
         bayeswave_post_node.add_parent(bayeswave_node)
         megasky_node.add_parent(bayeswave_post_node)
         megaplot_node.add_parent(bayeswave_post_node) 
