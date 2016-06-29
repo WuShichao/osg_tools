@@ -430,9 +430,21 @@ else:
         segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
 
 
-#############################################
+#########################################################################
+
+# -----------------------------------------------------------------------
+# Special Case: CWB triggers override segment queries
+# -----------------------------------------------------------------------
+
+# Assume CWB triggers lie in analyzeable segments: follow-up all specified
+# triggers
+
+if opts.cwb_trigger_list is not None:
+    # Don't throw out any triggers due to our segment queries
+    segmentList[ifo] = [segments.segment(gps_start_time, gps_end_time)]
 
 
+#########################################################################
 # -----------------------------------------------------------------------
 # DAG Writing
 # -----------------------------------------------------------------------
