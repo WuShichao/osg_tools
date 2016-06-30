@@ -254,12 +254,12 @@ if cp.has_option('bayeswave_options','BW-inject'):
 if opts.graceID is not None:
 
     graceIDs = [opts.graceID]
-    trigger_list = pipe_utils.triggerList(cp, graceIDs)
+    trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
 
 if opts.graceID_list is not None:
 
     graceIDs = np.loadtxt(opts.graceID_list)
-    trigger_list = pipe_utils.triggerList(cp, graceIDs)
+    trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
@@ -338,9 +338,9 @@ frameSegs={}
 # --- Handle special cases for segdb
 #
 
-if (opts.cwb_trigger_list) is not None \
+if (opts.cwb_trigger_list is not None) \
         or (opts.graceID is not None) \
-        or (opts.graceID_list is not None:
+        or (opts.graceID_list is not None):
 
     # Assume CWB triggers lie in analyzeable segments
     cp.set('datafind','ignore-science-segments', True)
@@ -360,32 +360,36 @@ for ifo in ifo_list:
         #
         cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
 
-        if opts.server is not None:
-            ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
--s {gps_start_time} -e {gps_end_time} --lal-cache\
---server={server} -u {url_type} > {cachefile}".format(
-                    o=ifo[0], frtype=frtype_list[ifo],
-                    cachefile=cachefilefmt.format(ifo),
-                    gps_start_time=gps_start_time,
-                    gps_end_time=gps_end_time, server=opts.server,
-                    url_type=cp.get('datafind','url-type'))
-        else:
-            ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
-{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
-{cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
-cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
-gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
-        print >> sys.stdout, "Calling LIGO data find ..."
-        print >> sys.stdout, ldfcmd
-
         if opts.skip_datafind:
+            continue
+        else:
+
+            if opts.server is not None:
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
+    -s {gps_start_time} -e {gps_end_time} --lal-cache\
+    --server={server} -u {url_type} > {cachefile}".format(
+                        o=ifo[0], frtype=frtype_list[ifo],
+                        cachefile=cachefilefmt.format(ifo),
+                        gps_start_time=gps_start_time,
+                        gps_end_time=gps_end_time, server=opts.server,
+                        url_type=cp.get('datafind','url-type'))
+            else:
+                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
+    {gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
+    {cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
+    cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
+    gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
+            print >> sys.stdout, "Calling LIGO data find ..."
+            print >> sys.stdout, ldfcmd
+
             subprocess.call(ldfcmd, shell=True)
 
         cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
         # Record frame segments so we can identify frames for OSG transfers
         if opts.skip_datafind:
-            # XXX: if no datafind, assume frames include jobs
+            # XXX: if no datafind, assume frames include jobs.  But should
+            # change to take cache file locations
             frameSegs[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])
@@ -422,7 +426,7 @@ gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
                 print >> sys.stderr, "No matching segments for %s"%ifo
                 sys.exit()
 
-        os.chdir(curdir)
+            os.chdir(curdir)
 
 
         # --------------------------------------------------------------------

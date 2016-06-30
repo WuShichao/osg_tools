@@ -114,10 +114,10 @@ class eventTrigger:
     """
     Stores event characteristics and determines run configuration for this event
     """
-    def __init__(self, cp, trigger_time, time_lag=0.0, trigger_frequency=None,
-            rho=None, graceID=None, injevent=None, frequency_threshold=200.,
-            min_srate=1024., max_srate=4096., veto1=None, veto2=None,
-            BW_event=None):
+    def __init__(self, cp, trigger_time=None, time_lag=0.0,
+            trigger_frequency=None, rho=None, graceID=None, injevent=None,
+            frequency_threshold=200., min_srate=1024., max_srate=4096.,
+            veto1=None, veto2=None, BW_event=None):
 
         #
         # Get run configuration
@@ -172,40 +172,41 @@ class eventTrigger:
 
         # If graceID is given, override other trigger values
         self.graceID = graceID
-        self.query_gracedb(graceID)
+        if graceID is not None:
+            self.query_graceDB(graceID)
 
-        def query_graceDB(self,graceid):
+    def query_graceDB(self,graceid):
 
-            # Instantiate graceDB event
-            gracedb = GraceDb()
-            event = gracedb.event(graceid)
-            event_info = event.json()
+        # Instantiate graceDB event
+        gracedb = GraceDb()
+        event = gracedb.event(graceid)
+        event_info = event.json()
 
-            # Get loudness (for informational, not analysis, purposes)
-            try:
-                self.rho = event_info['extra_attributes']['MultiBurst']['snr']
-            except KeyError:
-                print >> sys.stderr, \
-                        "graceDB UID %s has no MultiBurst snr attribute"%(graceid)
+        # Get loudness (for informational, not analysis, purposes)
+        try:
+            self.rho = event_info['extra_attributes']['MultiBurst']['snr']
+        except KeyError:
+            print >> sys.stderr, \
+                    "graceDB UID %s has no MultiBurst snr attribute"%(graceid)
 
-            # Set time
-            self.trigger_time = event_info['gpstime']
+        # Set time
+        self.trigger_time = event_info['gpstime']
 
-            # Set frequency
-            try:
-                self.trigger_frequency = \
-                        event_info['extra_attributes']['MultiBurst']['central_freq']
+        # Set frequency
+        try:
+            self.trigger_frequency = \
+                    event_info['extra_attributes']['MultiBurst']['central_freq']
 
-                if trigger_frequency < self.frequency_threshold:
-                   self.srate = self.min_srate
-                else:
-                   self.srate = self.max_srate
+            if self.trigger_frequency < self.frequency_threshold:
+               self.srate = self.min_srate
+            else:
+               self.srate = self.max_srate
 
-            except KeyError:
-                print >> sys.stderr, \
-                        "graceDB UID %s has no MultiBurst central_freq attribute"%(graceid)
-                print >> sys.stderr, "...using default sample rate"
-                self.srate = self.default_srate
+        except KeyError:
+            print >> sys.stderr, \
+                    "graceDB UID %s has no MultiBurst central_freq attribute"%(graceid)
+            print >> sys.stderr, "...using default sample rate"
+            self.srate = self.default_srate
 
 
 
@@ -259,11 +260,13 @@ class triggerList:
             print >> sys.stdout, "don't know what to do."
             sys.exit()
 
-    def parse_graceDB_triggers(self, graceIDs):
+    def parse_graceDB_triggers(self, cp, graceIDs):
 
         triggers=[]
         for graceid in graceIDs:
-            triggers.append(eventTrigger(graceid)
+            triggers.append(eventTrigger(cp, graceID=graceid))
+
+        return triggers
 
     def build_internal_injections(self, cp, gps_time):
 
