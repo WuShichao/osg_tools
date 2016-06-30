@@ -344,7 +344,7 @@ if (opts.cwb_trigger_list is not None) \
         or (opts.graceID is not None) \
         or (opts.graceID_list is not None):
 
-    # Assume CWB triggers lie in analyzeable segments
+    # Assume triggers lie in analyzeable segments
     cp.set('datafind','ignore-science-segments', True)
 
 for ifo in ifo_list:
