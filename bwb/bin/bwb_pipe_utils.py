@@ -19,6 +19,7 @@
 
 from glue import pipeline
 import lalinspiral, lalburst
+from ligo.gracedb.rest import GraceDb
 
 import ConfigParser
 import itertools
@@ -158,13 +159,54 @@ class eventTrigger:
             self.srate = self.default_srate
 
         self.rho = rho
-        self.graceID = graceID
         self.injevent = injevent
 
         self.veto1=veto1
         self.veto2=veto2
 
         self.BW_event=BW_event
+
+        #
+        # GraceDB Support
+        #
+
+        # If graceID is given, override other trigger values
+        self.graceID = graceID
+        self.query_gracedb(graceID)
+
+        def query_graceDB(self,graceid):
+
+            # Instantiate graceDB event
+            gracedb = GraceDb()
+            event = gracedb.event(graceid)
+            event_info = event.json()
+
+            # Get loudness (for informational, not analysis, purposes)
+            try:
+                self.rho = event_info['extra_attributes']['MultiBurst']['snr']
+            except KeyError:
+                print >> sys.stderr, \
+                        "graceDB UID %s has no MultiBurst snr attribute"%(graceid)
+
+            # Set time
+            self.trigger_time = event_info['gpstime']
+
+            # Set frequency
+            try:
+                self.trigger_frequency = \
+                        event_info['extra_attributes']['MultiBurst']['central_freq']
+
+                if trigger_frequency < self.frequency_threshold:
+                   self.srate = self.min_srate
+                else:
+                   self.srate = self.max_srate
+
+            except KeyError:
+                print >> sys.stderr, \
+                        "graceDB UID %s has no MultiBurst central_freq attribute"%(graceid)
+                print >> sys.stderr, "...using default sample rate"
+                self.srate = self.default_srate
+
 
 
 
@@ -181,7 +223,7 @@ class triggerList:
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
             injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0,
-            internal_injections=False):
+            internal_injections=False, graceIDs=None):
 
         #
         # Assign trigger data
@@ -208,10 +250,20 @@ class triggerList:
             # Set up || runs to sample from the prior
             self.triggers = self.build_internal_injections(cp, gps_times)
 
+        elif graceIDs is not None:
+            # Create trigger list from graceDB queries
+            self.triggers = self.parse_graceDB_triggers(cp, graceIDs)
+
         else:
             # Fail
             print >> sys.stdout, "don't know what to do."
             sys.exit()
+
+    def parse_graceDB_triggers(self, graceIDs):
+
+        triggers=[]
+        for graceid in graceIDs:
+            triggers.append(eventTrigger(graceid)
 
     def build_internal_injections(self, cp, gps_time):
 

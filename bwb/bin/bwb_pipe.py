@@ -250,12 +250,16 @@ if cp.has_option('bayeswave_options','BW-inject'):
     trigger_list = pipe_utils.triggerList(cp, gps_times=opts.trigger_time,
             internal_injections=True)
     
-
-# XXX: GraceDB support
+# GraceDB support
 if opts.graceID is not None:
+
     graceIDs = [opts.graceID]
+    trigger_list = pipe_utils.triggerList(cp, graceIDs)
+
 if opts.graceID_list is not None:
+
     graceIDs = np.loadtxt(opts.graceID_list)
+    trigger_list = pipe_utils.triggerList(cp, graceIDs)
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
