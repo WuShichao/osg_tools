@@ -313,10 +313,6 @@ if cp.has_option('injections', 'mdc-cache'):
 segment_dir = 'segments'
 if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
-# XXX: don't think i really need this as file transfer should copy the
-# executable anyway
-#shutil.copy(cp.get('bayeswave_paths','bayeswave_executable'), '.')
-#shutil.copy(cp.get('bayeswave_paths','bayeswave_post_executable'), '.')
 
 
 ################################################
@@ -324,7 +320,6 @@ if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 # ----------------------------------------------
 # Data Acquisition: gw_data_find & segdb queries
 # ----------------------------------------------
-
 
 #
 # --- datafind params from config file
@@ -340,56 +335,67 @@ framePaths={}
 frameSegs={}
 
 
-if not opts.skip_datafind:
+if opts.cwb_trigger_list is not None:
+    # Assume CWB triggers lie in analyzeable segments: 
+    # follow-up all specified triggers
+    cp.set('datafind','ignore-science-segments')
 
-    for ifo in ifo_list:
+for ifo in ifo_list:
 
-        if frtype_list[ifo] == "LALSimAdLIGO": 
-            cache_files[ifo] = "LALSimAdLIGO"
+    if frtype_list[ifo] == "LALSimAdLIGO": 
+        cache_files[ifo] = "LALSimAdLIGO"
+        segmentList[ifo] = \
+                segments.segmentlist([segments.segment(gps_start_time,
+                    gps_end_time)])
+
+    else:
+
+        #
+        # --- Run DataFind query to produce cache files for frames
+        #
+        cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
+
+        if opts.server is not None:
+            ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
+-s {gps_start_time} -e {gps_end_time} --lal-cache\
+--server={server} -u {url_type} > {cachefile}".format(
+                    o=ifo[0], frtype=frtype_list[ifo],
+                    cachefile=cachefilefmt.format(ifo),
+                    gps_start_time=gps_start_time,
+                    gps_end_time=gps_end_time, server=opts.server,
+                    url_type=cp.get('datafind','url-type'))
+        else:
+            ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
+{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
+{cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
+cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
+gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
+        print >> sys.stdout, "Calling LIGO data find ..."
+        print >> sys.stdout, ldfcmd
+
+        if opts.skip_datafind:
+            subprocess.call(ldfcmd, shell=True)
+
+        cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
+
+        # Record frame segments so we can identify frames for OSG transfers
+        if opts.skip_datafind:
+            # XXX: if no datafind, assume frames include jobs
+            frameSegs[ifo] = \
+                    segments.segmentlist([segments.segment(gps_start_time,
+                        gps_end_time)])
+        else:
+            frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
+
+        if cp.has_option('datafind','ignore-science-segments'):
             segmentList[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])
-
         else:
-
-            #
-            # --- Run DataFind query to produce cache files for frames
-            #
-            cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
-
-            if opts.server is not None:
-                ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
-    -s {gps_start_time} -e {gps_end_time} --lal-cache\
-    --server={server} -u {url_type} > {cachefile}".format(
-                        o=ifo[0], frtype=frtype_list[ifo],
-                        cachefile=cachefilefmt.format(ifo),
-                        gps_start_time=gps_start_time,
-                        gps_end_time=gps_end_time, server=opts.server,
-                        url_type=cp.get('datafind','url-type'))
-            else:
-                ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
-{gps_start_time} -e {gps_end_time} --lal-cache -u {url_type}>\
-{cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
-    cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
-    gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
-            print >> sys.stdout, "Calling LIGO data find ..."
-            print >> sys.stdout, ldfcmd
-
-            subprocess.call(ldfcmd, shell=True)
-
-            cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
-
-            #
-            # Record frame segments so we can identify frames for OSG transfers
-            #
-            frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
-
 
             #
             # --- Run segdb query
             #
-            # 1) Find segments \in [gps-start-time, gps-end-time]
-            # 2) Loop over trigger_times and identify analyzeable jobs
 
             if cp.has_option('datafind','veto-categories'):
               veto_categories=ast.literal_eval(cp.get('datafind','veto-categories'))
@@ -411,71 +417,42 @@ if not opts.skip_datafind:
                 print >> sys.stderr, "No matching segments for %s"%ifo
                 sys.exit()
 
-            os.chdir(curdir)
+        os.chdir(curdir)
 
 
-            # --------------------------------------------------------------------
-            # Set up cache files to point to local copies of frames in the working
-            # directory
+        # --------------------------------------------------------------------
+        # Set up cache files to point to local copies of frames in the working
+        # directory
 
-            if opts.copy_frames:
-                print "Setting up frame copying"
+        if opts.copy_frames:
+            print "Setting up frame copying"
 
-                #
-                # Now we need to make a new, local cache file
-                # - do this by manipulating the path string in the cache file to be relative 
-                cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
-                shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
+            #
+            # Now we need to make a new, local cache file
+            # - do this by manipulating the path string in the cache file to be relative 
+            cache_file = 'datafind/{ifo}.cache'.format(ifo=ifo)
+            shutil.copy(cache_file, cache_file.replace('cache','cache.bk'))
 
-                cache_entries = np.loadtxt(cache_file, dtype=str)
-                if cache_entries.ndim==1: cache_entries = [cache_entries]
-                
-                framePaths[ifo]=[]
-                new_cache = open(cache_file, 'w')
-                for c,cache_entry in enumerate(cache_entries):
-                    frame = cache_entry[-1].split('localhost')[-1]
-                    framePaths[ifo].append(frame)
+            cache_entries = np.loadtxt(cache_file, dtype=str)
+            if cache_entries.ndim==1: cache_entries = [cache_entries]
+            
+            framePaths[ifo]=[]
+            new_cache = open(cache_file, 'w')
+            for c,cache_entry in enumerate(cache_entries):
+                frame = cache_entry[-1].split('localhost')[-1]
+                framePaths[ifo].append(frame)
 
-                    #local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
-                    local_path=cache_entry[4].split('/')[-1]
+                #local_path=os.path.join('datafind',cache_entry[4].split('/')[-1])
+                local_path=cache_entry[4].split('/')[-1]
 
-                    new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
-                        ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
-                        length=cache_entry[3], path=local_path))
+                new_cache.writelines('{ifo} {type} {gps} {length} {path}\n'.format(
+                    ifo=ifo, type=cache_entry[1], gps=cache_entry[2],
+                    length=cache_entry[3], path=local_path))
 
-                new_cache.close()
-
-else:
-
-    print "SKIPPING DATAFIND & SEGDB"
-
-    for ifo in ifo_list:
-
-        if  frtype_list[ifo] == "LALSimAdLIGO":
-            cache_files[ifo] = "LALSimAdLIGO"
-        else:
-            cache_files[ifo] = os.path.join('datafind','%s.cache'%ifo)
-
-        segmentList[ifo] = \
-                segments.segmentlist([segments.segment(gps_start_time,
-                    gps_end_time)])
-
+            new_cache.close()
 
 #########################################################################
 
-# -----------------------------------------------------------------------
-# Special Case: CWB triggers override segment queries
-# -----------------------------------------------------------------------
-
-# Assume CWB triggers lie in analyzeable segments: follow-up all specified
-# triggers
-
-if opts.cwb_trigger_list is not None:
-    # Don't throw out any triggers due to our segment queries
-    for ifo in ifo_list:
-        segmentList[ifo] = \
-                segments.segmentlist([segments.segment(gps_start_time,
-                    gps_end_time)])
 
 #########################################################################
 # -----------------------------------------------------------------------
