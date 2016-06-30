@@ -118,6 +118,8 @@ def parser():
     parser.add_option("-G", "--graceID", default=None)
     parser.add_option("--graceID-list", default=None)
     parser.add_option("--bw-inject", default=False, action="store_true")
+    parser.add_option("--condor-submit", default=False, action="store_true")
+
 
     (opts,args) = parser.parse_args()
 
@@ -662,6 +664,21 @@ else:
     print ""
     print "No analyzeable jobs in requested time"
 
+
+if opts.condor_submit:
+    # Auto-submit dag by cd-ing into the work-directory and submitting
+    # chdir is useful with the OSG-friendly relative paths
+
+    print "Submitting DAG..."
+     
+    os.chdir(workdir)
+    x = subprocess.Popen(['condor_submit_dag',dag.get_dag_file()])
+    x.wait()
+    if x.returncode==0:
+        print 'Submitted DAG file: ',dag.get_dag_file()
+    else:
+        print 'Unable to submit DAG file'
+    os.chdir(topdir)
 
 
 
