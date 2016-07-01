@@ -119,6 +119,9 @@ def parser():
     parser.add_option("--graceID-list", default=None)
     parser.add_option("--bw-inject", default=False, action="store_true")
     parser.add_option("--condor-submit", default=False, action="store_true")
+    parser.add_option("--upload-to-gracedb", default=falsee,
+            action="store_true")
+    parser.add_option("--html-root", default=None)
 
 
     (opts,args) = parser.parse_args()
@@ -258,10 +261,17 @@ if opts.graceID is not None:
     graceIDs = [opts.graceID]
     trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
 
+
 if opts.graceID_list is not None:
 
     graceIDs = np.loadtxt(opts.graceID_list)
     trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
+
+    if opts.submit_to_gracedb:
+        if opts.html_root is None:
+            html_root = cp.get('bayeswave_paths', 'html-root')
+        else:
+            html_root = opts.html_root
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
@@ -486,12 +496,16 @@ dag.set_dag_file( os.path.join(opts.workdir, 'bayeswave_{0}'.format(
 #   bayeswave_post: bayeswave_post
 #   megasky: skymap job
 #   megaplot: remaining plots & webpage generation
+#   submitToGraceDB: upload skymap & PE to graceDB (optional)
 bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
 bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
 megasky_job = pipe_utils.megaskyJob(cp)
 megaplot_job = pipe_utils.megaplotJob(cp)
+
+if opts.upload_to_gracedb:
+    submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
 
 #
 # Build Nodes
@@ -573,11 +587,17 @@ for t,trigger in enumerate(trigger_list.triggers):
         #   bayeswave: main bayeswave analysis
         #   bayeswave_post: bayeswave_post
         #   megasky: skymap job
-        #   megaplot: remaining plots & webpage generation
+        #   megaplot: distribution plots & webpage generation
+        #   submitToGraceDB: upload skymap & PE to graceDB (optional)
         bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
         bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
         megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
         megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
+
+        if opts._submit_to_gracedb:
+            htmlDir=os.path.join(html_root, outputDir)
+            gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
+                    outputDir, htmlDir)
 
 
         #
@@ -624,12 +644,17 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.add_parent(bayeswave_node)
         megasky_node.add_parent(bayeswave_post_node)
         megaplot_node.add_parent(bayeswave_post_node) 
+        if opts._submit_to_gracedb:
+            gracedb_node.add_parent(megaplot_node) 
+            gracedb_node.add_parent(megasky_node) 
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
         dag.add_node(bayeswave_post_node)
         dag.add_node(megasky_node)
         dag.add_node(megaplot_node)
+        if opts._submit_to_gracedb:
+            dag.add_node(gracedb_node)
 
         totaltrigs+=1
 
