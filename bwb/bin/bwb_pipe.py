@@ -478,7 +478,7 @@ for ifo in ifo_list:
 dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
-dag.set_dag_file( 'bayeswave_{0}'.format(opts.workdir) )
+dag.set_dag_file( opts.workdir )
 
 # ---- Create DAG jobs
 #   bayeswave: main bayeswave analysis
