@@ -500,6 +500,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).log')
 
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
         #
         # Identify osg vs ldg site
         #
@@ -509,9 +512,6 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
-            # --- Allow desired sites
-            if cp.has_option('condor','desired-sites'):
-                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
             # --- Perform file transfers
             self.add_condor_cmd('should_transfer_files', 'YES')
@@ -961,6 +961,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # Request 4GB of RAM for pp jobs
         #self.add_condor_cmd('request_memory', '4000')
 
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
         #
         # Identify osg vs ldg site
         #
@@ -969,9 +973,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if 'pace.gatech.edu' in hostname:
             print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
-            # --- Allow desired sites
-            if cp.has_option('condor','desired-sites'):
-                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
             # --- Perform file transfers
             self.add_condor_cmd('should_transfer_files', 'YES')
@@ -1132,12 +1133,10 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_sub_file('megasky.sub')
 
         hostname = socket.gethostname()
-        if 'pace.gatech.edu' in hostname:
-            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
-            # --- Allow desired sites
-            if cp.has_option('condor','desired-sites'):
-                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
 
 class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
@@ -1166,12 +1165,10 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         hostname = socket.gethostname()
-        if 'pace.gatech.edu' in hostname:
-            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
 
-            # --- Allow desired sites
-            if cp.has_option('condor','desired-sites'):
-                self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
@@ -1193,5 +1190,51 @@ class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         # Set job initialdir, so python codes know where to expect input files
         self.add_var_condor_cmd('initialdir', rundir)   
         self.__rundir = rundir
+
+#
+# submitGraceDB
+#
+
+class submitToGraceDB(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+
+    def __init__(self, cp, dax=False):
+
+        universe='vanilla'
+
+        # Point this to the src dir
+        gdb_submitter = cp.get('bayeswave_paths','gdb_submitter')
+        pipeline.CondorDAGJob.__init__(self,universe, gdb_submitter)
+        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        hostname = socket.gethostname()
+
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
+        if cp.has_option('condor', 'accounting_group'):
+            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+
+        self.add_condor_cmd('getenv', 'True')
+
+        self.set_stdout_file('gdb_submitter_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('gdb_submitter_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('gdb_submitter_$(cluster)-$(process)-$(node).log')
+        self.set_sub_file('gdb_submitter.sub')
+
+
+class submitToGraceDBNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+
+    def __init__(self, gdb_submitter_job, rundir, htmlDir):
+
+        pipeline.CondorDAGNode.__init__(self, gdb_submitter_job)
+        pipeline.AnalysisNode.__init__(self)
+        # Set job initialdir, so python codes know where to expect input files
+        self.add_var_condor_cmd('initialdir', rundir)   
+        self.__rundir = rundir
+
+        # Set html directory
+        self.add_var_opt('htmlDir', htmlDir)
+        self.__htmlDir = htmlDir
 
 
