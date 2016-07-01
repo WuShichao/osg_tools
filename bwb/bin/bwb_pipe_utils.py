@@ -1203,7 +1203,7 @@ class submitToGraceDB(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        gdb_submitter = cp.get('bayeswave_paths','gdb_submitter')
+        gdb_submitter = cp.get('bayeswave_paths','gdb-submitter')
         pipeline.CondorDAGJob.__init__(self,universe, gdb_submitter)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 

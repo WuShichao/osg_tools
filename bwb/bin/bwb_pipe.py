@@ -119,8 +119,7 @@ def parser():
     parser.add_option("--graceID-list", default=None)
     parser.add_option("--bw-inject", default=False, action="store_true")
     parser.add_option("--condor-submit", default=False, action="store_true")
-    parser.add_option("--upload-to-gracedb", default=falsee,
-            action="store_true")
+    parser.add_option("--submit-to-gracedb", default=False, action="store_true")
     parser.add_option("--html-root", default=None)
 
 
@@ -267,11 +266,17 @@ if opts.graceID_list is not None:
     graceIDs = np.loadtxt(opts.graceID_list)
     trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
 
-    if opts.submit_to_gracedb:
-        if opts.html_root is None:
-            html_root = cp.get('bayeswave_paths', 'html-root')
-        else:
-            html_root = opts.html_root
+if opts.submit_to_gracedb:
+    if opts.html_root is None:
+        html_root = cp.get('bayeswave_paths', 'html-root')
+    else:
+        html_root = opts.html_root
+
+    if not os.path.exists(html_root):
+        os.makedirs(html_root)
+    else:
+        print >> sys.stderr, "Warning: html-root %s exists"%html_root
+
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
@@ -488,8 +493,7 @@ for ifo in ifo_list:
 dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 
 # ---- Set the name of the file that will contain the DAG.
-dag.set_dag_file( os.path.join(opts.workdir, 'bayeswave_{0}'.format(
-    os.path.basename(opts.workdir))) )
+dag.set_dag_file( 'bayeswave_{0}'.format(os.path.basename(opts.workdir)) )
 
 # ---- Create DAG jobs
 #   bayeswave: main bayeswave analysis
@@ -504,7 +508,7 @@ bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfi
 megasky_job = pipe_utils.megaskyJob(cp)
 megaplot_job = pipe_utils.megaplotJob(cp)
 
-if opts.upload_to_gracedb:
+if opts.submit_to_gracedb:
     submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
 
 #
@@ -594,7 +598,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
         megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
-        if opts._submit_to_gracedb:
+        if opts.submit_to_gracedb:
             htmlDir=os.path.join(html_root, outputDir)
             gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
                     outputDir, htmlDir)
@@ -644,7 +648,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.add_parent(bayeswave_node)
         megasky_node.add_parent(bayeswave_post_node)
         megaplot_node.add_parent(bayeswave_post_node) 
-        if opts._submit_to_gracedb:
+        if opts.submit_to_gracedb:
             gracedb_node.add_parent(megaplot_node) 
             gracedb_node.add_parent(megasky_node) 
 
@@ -653,7 +657,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         dag.add_node(bayeswave_post_node)
         dag.add_node(megasky_node)
         dag.add_node(megaplot_node)
-        if opts._submit_to_gracedb:
+        if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
 
         totaltrigs+=1
