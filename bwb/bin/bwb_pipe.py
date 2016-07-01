@@ -600,6 +600,8 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         if opts.submit_to_gracedb:
             htmlDir=os.path.join(html_root, outputDir)
+            if not os.path.exists(htmlDir):
+                os.makedirs(htmlDir)
             gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
                     outputDir, htmlDir)
 
