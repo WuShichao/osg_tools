@@ -274,7 +274,12 @@ class triggerList:
 
         # Determine chain length
         injtype=cp.get('bayeswave_options', 'BW-inject')
-        injname=cp.get('bayeswave_options', 'BW-injName')
+        try:
+            injname=cp.get('bayeswave_options', 'BW-injName')
+            injname+='_'
+        except:
+            injname=''
+
 
         try:
             BW_chainLength=cp.getint('bayeswave_options','BW-chainLength')
@@ -285,8 +290,8 @@ class triggerList:
 
             # O1 names:
             if injtype=='glitch':
-                filename=injname+'_'+'glitch_glitchchain_ifo0.dat.0'
-            else: filename=injname+'_'+'signal_wavechain.dat.0' 
+                filename=injname+'glitch_glitchchain_ifo0.dat.0'
+            else: filename=injname+'signal_wavechain.dat.0' 
             filename=os.path.join(cp.get('bayeswave_options','BW-path'), filename)
 
             try:
@@ -297,8 +302,8 @@ class triggerList:
             except:
                 # O2 names:
                 if injtype=='glitch':
-                    filename=injname+'_'+'glitch_params_ifo0.dat.0'
-                else: filename=injname+'_'+'signal_params.dat.0' 
+                    filename=injname+'glitch_params_ifo0.dat.0'
+                else: filename=injname+'signal_params.dat.0' 
                 filename=os.path.join(cp.get('bayeswave_options','BW-path'), filename)
 
             BW_chainLength = file_len(filename)
