@@ -297,7 +297,8 @@ class triggerList:
             try:
                 # O1 names
                 o1=os.path.exists(filename)
-                if not o1: raise ValueError(
+                if not o1: 
+                    raise ValueError(
                         "o1 style chain-names not found,trying o2-style")
             except:
                 # O2 names:
