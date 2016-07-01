@@ -636,7 +636,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         megasky_node.add_parent(bayeswave_post_node)
         megaplot_node.add_parent(bayeswave_post_node) 
         if opts._submit_to_gracedb:
-            gracedb_node.add_parent(bayeswave_post_node) 
+            gracedb_node.add_parent(megaplot_node) 
+            gracedb_node.add_parent(megasky_node) 
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
