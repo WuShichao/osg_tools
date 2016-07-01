@@ -271,6 +271,11 @@ if opts.submit_to_gracedb:
         html_root = cp.get('bayeswave_paths', 'html-root')
     else:
         html_root = opts.html_root
+    if html_root is None:
+        print >> sys.stder, "demanding submit to gdb but no html-root"
+        sys.exit()
+
+
 
     if not os.path.exists(html_root):
         os.makedirs(html_root)
