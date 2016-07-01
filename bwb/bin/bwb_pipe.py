@@ -121,6 +121,7 @@ def parser():
     parser.add_option("--condor-submit", default=False, action="store_true")
     parser.add_option("--upload-to-gracedb", default=falsee,
             action="store_true")
+    parser.add_option("--html-root", default=None)
 
 
     (opts,args) = parser.parse_args()
@@ -260,10 +261,17 @@ if opts.graceID is not None:
     graceIDs = [opts.graceID]
     trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
 
+
 if opts.graceID_list is not None:
 
     graceIDs = np.loadtxt(opts.graceID_list)
     trigger_list = pipe_utils.triggerList(cp, graceIDs=graceIDs)
+
+    if opts.submit_to_gracedb:
+        if opts.html_root is None:
+            html_root = cp.get('bayeswave_paths', 'html-root')
+        else:
+            html_root = opts.html_root
 
 # Extract trigger times for readability
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
@@ -587,6 +595,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
         if opts._submit_to_gracedb:
+            htmlDir=os.path.join(html_root, outputDir)
             gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
                     outputDir, htmlDir)
 
