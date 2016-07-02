@@ -297,7 +297,8 @@ class triggerList:
             try:
                 # O1 names
                 o1=os.path.exists(filename)
-                if not o1: raise ValueError(
+                if not o1: 
+                    raise ValueError(
                         "o1 style chain-names not found,trying o2-style")
             except:
                 # O2 names:
@@ -1202,7 +1203,7 @@ class submitToGraceDB(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        gdb_submitter = cp.get('bayeswave_paths','gdb_submitter')
+        gdb_submitter = cp.get('bayeswave_paths','gdb-submitter')
         pipeline.CondorDAGJob.__init__(self,universe, gdb_submitter)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 

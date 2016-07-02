@@ -5,4 +5,5 @@
 
 bwb_pipe.py gracedb_G184098-C02.ini \
     --workdir gracedb_G184098-C02 \
-    --graceID G184098
+    --graceID G184098 --submit-to-gracedb #\
+    #--condor-submit
