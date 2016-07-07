@@ -617,6 +617,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         # --- Add options for bayeswave node
         #
         bayeswave_node.set_trigtime(trigger.trigger_time)
+        bayeswave_node.set_segment_start(trigger.trigger_time -
+                trigger.seglen/2.)
         bayeswave_node.set_srate(trigger.srate)
         bayeswave_node.set_seglen(trigger.seglen)
         bayeswave_node.set_PSDstart(psd_start)
@@ -636,6 +638,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         # --- Add options for bayeswave_post node
         #
         bayeswave_post_node.set_trigtime(trigger.trigger_time)
+        bayeswave_post_node.set_segment_start(trigger.trigger_time -
+                trigger.seglen/2.)
         bayeswave_post_node.set_srate(trigger.srate)
         bayeswave_post_node.set_seglen(trigger.seglen)
         bayeswave_post_node.set_PSDstart(psd_start)

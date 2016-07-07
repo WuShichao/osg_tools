@@ -931,6 +931,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('trigtime', trigtime)
         self.__trigtime = trigtime
 
+    def set_segment_start(self, segment_start):
+        self.add_var_opt('segment-start', segment_start)
+        self.__segment_start = segment_start
+
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
         self.__srate = srate
@@ -1118,6 +1122,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_trigtime(self, trigtime):
         self.add_var_opt('trigtime', trigtime)
         self.__trigtime = trigtime
+
+    def set_segment_start(self, segment_start):
+        self.add_var_opt('segment-start', segment_start)
+        self.__segment_start = segment_start
 
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
