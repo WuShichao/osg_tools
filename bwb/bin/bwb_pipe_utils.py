@@ -116,9 +116,10 @@ class eventTrigger:
     """
     def __init__(self, cp, trigger_time=None, time_lag=0.0,
             trigger_frequency=None, rho=None, graceID=None, injevent=None,
-            frequency_threshold=200., min_srate=1024., max_srate=4096.,
-            max_seglen=4., min_seglen=2.,
-            veto1=None, veto2=None, BW_event=None):
+            frequency_threshold=200., default_srate=1024., min_srate=1024.,
+            max_srate=4096., default_seglen=4., max_seglen=4., min_seglen=2.,
+            default_window=1.0, min_window=0.5, max_window=1.0, veto1=None,
+            veto2=None, BW_event=None):
 
         #
         # Get run configuration
@@ -131,14 +132,17 @@ class eventTrigger:
         try:
             self.default_srate = cp.getfloat('input', 'srate')
         except:
-            print >> sys.stderr, "Error: must supply default srate in [input] of config"
-            sys.exit()
+            self.default_srate = default_srate
 
         try:
             self.default_seglen = cp.getfloat('input', 'seglen')
         except:
-            print >> sys.stderr, "Error: must supply default seglen in [input] of config"
-            sys.exit()
+            self.default_seglen = default_seglen
+
+        try:
+            self.default_seglen = cp.getfloat('input', 'window')
+        except:
+            self.default_window = default_window
 
         try:
             self.min_srate = cp.getfloat('input', 'min-srate')
@@ -160,6 +164,16 @@ class eventTrigger:
         except:
             self.min_seglen = min_seglen
 
+        try:
+            self.max_window = cp.getfloat('input', 'max-window')
+        except:
+            self.max_window = max_window
+
+        try:
+            self.min_window = cp.getfloat('input', 'min-window')
+        except:
+            self.min_window = min_window
+
         #
         # Add trigger properties
         #
@@ -169,7 +183,7 @@ class eventTrigger:
 
         # Variable sample rate / window length [fixed TF volume]
 
-        # XXX new variables: seglen, segment-start
+        # XXX new variables: seglen, segment-start, window
 
         if trigger_frequency is not None:
             # Adjust sample rate for this trigger
@@ -178,12 +192,15 @@ class eventTrigger:
             if trigger_frequency < self.frequency_threshold:
                self.srate = self.min_srate
                self.seglen = self.max_seglen
+               self.window = self.max_window
             else:
                self.srate = self.max_srate
                self.seglen = self.min_seglen
+               self.window = self.min_window
         else:
             self.srate = self.default_srate
             self.seglen = self.default_seglen
+            self.window = self.default_window
 
         self.rho = rho
         self.injevent = injevent
@@ -658,8 +675,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('verbose', cp.get('bayeswave_options', 'verbose'))
 
         # window
-        if cp.has_option('bayeswave_options', 'window'):
-            self.add_opt('window', cp.get('bayeswave_options', 'window'))
+        #if cp.has_option('bayeswave_options', 'window'):
+        #    self.add_opt('window', cp.get('bayeswave_options', 'window'))
 
         # self-checkpointing
         if cp.has_option('condor', 'checkpoint'):
@@ -943,6 +960,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('seglen', seglen)
         self.__seglen = seglen
 
+    def set_window(self, window):
+        self.add_var_opt('window', window)
+        self.__window = window
+
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)
         self.__PSDstart = PSDstart
@@ -1055,7 +1076,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('ifo', ifo_list_opt)
 
         #self.add_opt('srate', cp.get('input', 'srate'))
-        self.add_opt('seglen', cp.get('input', 'seglen'))
+        #self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
@@ -1126,6 +1147,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_segment_start(self, segment_start):
         self.add_var_opt('segment-start', segment_start)
         self.__segment_start = segment_start
+
+    def set_window(self, window):
+        self.add_var_opt('window', window)
+        self.__window = window
 
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
