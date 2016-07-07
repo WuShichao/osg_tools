@@ -244,9 +244,11 @@ class eventTrigger:
             if self.trigger_frequency < self.frequency_threshold:
                self.srate = self.min_srate
                self.seglen = self.max_seglen
+               self.window = self.max_window
             else:
                self.srate = self.max_srate
                self.seglen = self.min_seglen
+               self.window = self.min_window
 
         except KeyError:
             print >> sys.stderr, \
