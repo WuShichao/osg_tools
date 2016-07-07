@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build megaplot.spec file
-pyinstaller megaplot.py --strip --onefile
+#pyinstaller megaplot.py --strip --onefile
 
 # EDIT megaplot.spec (if necessary)
 
