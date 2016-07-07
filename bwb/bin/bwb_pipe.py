@@ -519,15 +519,17 @@ if opts.submit_to_gracedb:
 #
 # Build Nodes
 #
-if "LALSimAdLIGO" in cache_files.values():
-    try:
-        dataseed=cp.getint('input', 'dataseed')
-    except ConfigParser.NoOptionError:
-        print >> sys.stderr, "[input] section requires dataseed for sim data"
-        print >> sys.stderr, "...removing %s"%workdir
-        os.chdir(topdir)
-        shutil.rmtree(workdir)
-        sys.exit()
+#if "LALSimAdLIGO" in cache_files.values():
+# XXX: post jobs currently require a data seed for the dummy LALSimAdLIGO data
+try:
+    dataseed=cp.getint('input', 'dataseed')
+except ConfigParser.NoOptionError:
+    print >> sys.stderr, "[input] section requires dataseed for sim data"
+    print >> sys.stderr, " (you need this in bayeswave_post, even if real data"
+    print >> sys.stderr, "...removing %s"%workdir
+    os.chdir(topdir)
+    shutil.rmtree(workdir)
+    sys.exit()
 
 unanalyzeable_jobs = []
 
@@ -616,16 +618,15 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         bayeswave_node.set_trigtime(trigger.trigger_time)
         bayeswave_node.set_srate(trigger.srate)
+        bayeswave_node.set_seglen(trigger.seglen)
         bayeswave_node.set_PSDstart(psd_start)
         bayeswave_node.set_outputDir(outputDir)
         if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 
         if "LALSimAdLIGO" in cache_files.values():
             bayeswave_node.set_dataseed(dataseed)
-            bayeswave_post_node.set_dataseed(dataseed)
-            #gpsNow = int(os.popen('lalapps_tconvert now').readline())
-            #dataseed+=np.random.randint(1,gpsNow)
-            dataseed+=1
+        bayeswave_post_node.set_dataseed(dataseed)
+        dataseed+=1
 
 
         if cp.has_option('bayeswave_options','BW-inject'):
@@ -636,6 +637,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         bayeswave_post_node.set_trigtime(trigger.trigger_time)
         bayeswave_post_node.set_srate(trigger.srate)
+        bayeswave_post_node.set_seglen(trigger.seglen)
         bayeswave_post_node.set_PSDstart(psd_start)
         bayeswave_post_node.set_outputDir(outputDir)
 
