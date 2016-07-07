@@ -1208,9 +1208,18 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('getenv', 'True')
 
-        self.set_stdout_file('megasky_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('megasky_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('megasky_$(cluster)-$(process)-$(node).log')
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Perform file transfers
+            self.add_condor_cmd('should_transfer_files', 'YES')
+            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
+            self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
+            self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+        self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).log')
         self.set_sub_file('megasky.sub')
 
         hostname = socket.gethostname()
@@ -1258,9 +1267,18 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('getenv', 'True')
 
-        self.set_stdout_file('megaplot_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('megaplot_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('megaplot_$(cluster)-$(process)-$(node).log')
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Perform file transfers
+            self.add_condor_cmd('should_transfer_files', 'YES')
+            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
+            self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
+            self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+        self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
         self.set_sub_file('megaplot.sub')
 
 
