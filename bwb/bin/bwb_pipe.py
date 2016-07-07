@@ -658,6 +658,12 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_post_node.set_BW_event(trigger.BW_event)
 
         #
+        # --- Add options for mega-scripts
+        #
+        megasky_node.set_outputDir(outputDir)
+        megaplot_node.set_outputDir(outputDir)
+
+        #
         # --- Add parent/child relationships
         #
         bayeswave_post_node.add_parent(bayeswave_node)

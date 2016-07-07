@@ -1226,9 +1226,11 @@ class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
         pipeline.CondorDAGNode.__init__(self, megasky_job)
         pipeline.AnalysisNode.__init__(self)
-        # Set job initialdir, so python codes know where to expect input files
-        self.add_var_condor_cmd('initialdir', rundir)   
-        self.__rundir = rundir
+
+    # Set work dir
+    def set_outputDir(self, outputDir):
+        self.add_var_arg(outputDir)
+        self.__outputDir = outputDir
 
 #
 # megaplot job
@@ -1268,9 +1270,11 @@ class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
         pipeline.CondorDAGNode.__init__(self, megaplot_job)
         pipeline.AnalysisNode.__init__(self)
-        # Set job initialdir, so python codes know where to expect input files
-        self.add_var_condor_cmd('initialdir', rundir)   
-        self.__rundir = rundir
+
+    # Set work dir
+    def set_outputDir(self, outputDir):
+        self.add_var_arg(outputDir)
+        self.__outputDir = outputDir
 
 #
 # submitGraceDB
