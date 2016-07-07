@@ -117,6 +117,7 @@ class eventTrigger:
     def __init__(self, cp, trigger_time=None, time_lag=0.0,
             trigger_frequency=None, rho=None, graceID=None, injevent=None,
             frequency_threshold=200., min_srate=1024., max_srate=4096.,
+            max_seglen=4., min_seglen=2.,
             veto1=None, veto2=None, BW_event=None):
 
         #
@@ -134,6 +135,12 @@ class eventTrigger:
             sys.exit()
 
         try:
+            self.default_seglen = cp.getfloat('input', 'seglen')
+        except:
+            print >> sys.stderr, "Error: must supply default seglen in [input] of config"
+            sys.exit()
+
+        try:
             self.min_srate = cp.getfloat('input', 'min-srate')
         except:
             self.min_srate = min_srate
@@ -143,20 +150,40 @@ class eventTrigger:
         except:
             self.max_srate = max_srate
 
+        try:
+            self.max_seglen = cp.getfloat('input', 'max-seglen')
+        except:
+            self.max_seglen = max_seglen
+
+        try:
+            self.min_seglen = cp.getfloat('input', 'min-seglen')
+        except:
+            self.min_seglen = min_seglen
+
         #
         # Add trigger properties
         #
         self.trigger_time = trigger_time
         self.time_lag = time_lag
         self.trigger_frequency = trigger_frequency
+
+        # Variable sample rate / window length [fixed TF volume]
+
+        # XXX new variables: seglen, segment-start
+
         if trigger_frequency is not None:
             # Adjust sample rate for this trigger
+            # - min srate => max_seglen
+            # - max srate => min_seglen
             if trigger_frequency < self.frequency_threshold:
                self.srate = self.min_srate
+               self.seglen = self.max_seglen
             else:
                self.srate = self.max_srate
+               self.seglen = self.min_seglen
         else:
             self.srate = self.default_srate
+            self.seglen = self.default_seglen
 
         self.rho = rho
         self.injevent = injevent
@@ -199,8 +226,10 @@ class eventTrigger:
 
             if self.trigger_frequency < self.frequency_threshold:
                self.srate = self.min_srate
+               self.seglen = self.max_seglen
             else:
                self.srate = self.max_srate
+               self.seglen = self.min_seglen
 
         except KeyError:
             print >> sys.stderr, \
@@ -553,7 +582,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('ifo', ifo_list_opt)
 
 #        self.add_opt('srate', cp.get('input', 'srate'))
-        self.add_opt('seglen', cp.get('input', 'seglen'))
+#        self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
@@ -902,6 +931,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('srate', srate)
         self.__srate = srate
 
+    def set_seglen(self, seglen):
+        self.add_var_opt('seglen', seglen)
+        self.__seglen = seglen
+
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)
         self.__PSDstart = PSDstart
@@ -1081,6 +1114,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
         self.__srate = srate
+
+    def set_seglen(self, seglen):
+        self.add_var_opt('seglen', seglen)
+        self.__seglen = seglen
 
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)
