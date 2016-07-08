@@ -121,6 +121,7 @@ def parser():
     parser.add_option("--condor-submit", default=False, action="store_true")
     parser.add_option("--submit-to-gracedb", default=False, action="store_true")
     parser.add_option("--html-root", default=None)
+    parser.add_option("--skip-megapy", default=False, action="store_true")
 
 
     (opts,args) = parser.parse_args()
@@ -676,8 +677,9 @@ for t,trigger in enumerate(trigger_list.triggers):
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
         dag.add_node(bayeswave_post_node)
-        dag.add_node(megasky_node)
-        dag.add_node(megaplot_node)
+        if not opts.skip_megapy:
+            dag.add_node(megasky_node)
+            dag.add_node(megaplot_node)
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
 

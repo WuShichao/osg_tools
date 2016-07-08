@@ -19,7 +19,6 @@
 
 from glue import pipeline
 import lalinspiral, lalburst
-from ligo.gracedb.rest import GraceDb
 
 import ConfigParser
 import itertools
@@ -217,6 +216,7 @@ class eventTrigger:
         # If graceID is given, override other trigger values
         self.graceID = graceID
         if graceID is not None:
+            from ligo.gracedb.rest import GraceDb
             self.query_graceDB(graceID)
 
     def query_graceDB(self,graceid):
