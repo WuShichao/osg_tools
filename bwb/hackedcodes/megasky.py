@@ -277,3 +277,4 @@ if __name__ == "__main__":
 
     # Move back to original dir
     os.chdir(topdir)
+

@@ -383,7 +383,7 @@ def get_axes(jobName, postDir, ifoList, worc, model, time):
     return(axwinner)
 
 
-def get_axes_fdom(jobName, postDir, ifoList, worc, model):
+def get_axes_fdom(jobName, postDir, ifoList, worc, model, time):
     
     ymin = np.zeros(len(ifoList))
     ymax = np.zeros(len(ifoList))
@@ -617,7 +617,7 @@ def plot_power_spectrum(jobName, postDir, ifo, plotsDir, worc, mdc, model, axwin
     
     plt.close()
 
-def plot_full_spectro(jobName, postDir, ifo, plotsDir, worc, mdc, model, axwinner, psd_info, powerspec_info):
+def plot_full_spectro(jobName, postDir, ifo, plotsDir, worc, mdc, model, axwinner, psd_info, powerspec_info, median_waveform):
     
     plt.figure()
 
@@ -647,8 +647,8 @@ def plot_full_spectro(jobName, postDir, ifo, plotsDir, worc, mdc, model, axwinne
     plt.semilogy(psd_info[0],psd_info[1],color='k',ls='-')
 
     # plot powerspec
-    plt.fill_between(powerspec_info[0],powerspec_info[2],powerspec_info[3],where=powerspec_info[3]>0,color=colour,alpha=0.5)
-    plt.fill_between(powerspec_info[0],powerspec_info[4],powerspec_info[5],where=powerspec_info[5]>0,color=colour,alpha=0.3)
+    plt.fill_between(powerspec_info[0],powerspec_info[2],powerspec_info[3],color=colour,alpha=0.5)
+    plt.fill_between(powerspec_info[0],powerspec_info[4],powerspec_info[5],color=colour,alpha=0.3)
     plt.plot(powerspec_info[0],powerspec_info[1],color=colour)
 
     plt.xscale('log')
@@ -1168,8 +1168,6 @@ def plot_model_dims(modelList, ifoList, ifoNames, plotsDir):
     elif mod == 'signal':
       signalChains = chains
 
-    print signalChains
-
   # -- Variation of the model dimension over MCMC iterations. 2 subplots for signal and glitch models
 
   if len(modelList) == 2:
@@ -1260,22 +1258,20 @@ def plot_model_dims(modelList, ifoList, ifoNames, plotsDir):
         ax1.set_title('Model Dimension Histogram')
         if not signalChains == []:
             n,bins,patches = ax1.hist(signalChains[2], bins=range(int(min(signalChains[2])), int(max(signalChains[2]))+1, 1), histtype='bar', color=scolor, log=False)
-        #n,bins,patches = ax1.hist(signalChains[2], histtype='bar', color=scolor, log=False)
         if not glitchChains == []:
             data = np.dstack(glitchChains[3:3+len(ifoList)])[0]
             #ax2.set_prop_cycle(cycler('color',['darkgoldenrod','darkkhaki','dkarsage']))
             n,bins,patches = ax1.hist(data, bins=range(int(data.min()), int(data.max())+1, 1), label=ifoNames, histtype='bar', log=False, color=[lineColors[int(i)] for i in ifoList])
-            # -- Legend placement outside the plot
-            box = ax1.get_position()
-            ax1.set_position([box.x0, box.y0, box.width*0.8, box.height])
-            ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        # -- Legend placement outside the plot
+        box = ax1.get_position()
+        ax1.set_position([box.x0, box.y0, box.width*0.8, box.height])
+        ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         # -- Make subplots close to each other and hide x ticks for all but bottom plot
         plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
         plt.xlabel('Model Dimension')
         ax1.set_ylabel('{0} model'.format(modelList[0]))
         ax1.grid()
         plt.savefig(plotsDir+'model_dimensions_histo.png')
-
 
 
 
@@ -2130,7 +2126,7 @@ for mod in modelList:
         for worc in ['whitened']:
 
             # -- Determine axes for waveform plots
-            axwinner = get_axes(jobName, postDir, ifoList, worc, model,time)
+            axwinner = get_axes(jobName, postDir, ifoList, worc, model, time)
 
             # -- Read in the reconstructed waveform
             try:
@@ -2152,9 +2148,9 @@ for mod in modelList:
             filename = str(jobName)+postDir+'{1}_median_PSD.dat.{0}'.format(ifo,mod)
             psd_info = get_waveform(filename)
             
-            f_axwinner = get_axes_fdom(jobName, postDir, ifoList, worc, model)
+            f_axwinner = get_axes_fdom(jobName, postDir, ifoList, worc, model, time)
             
-            plot_full_spectro(jobName, postDir, ifo, plotsDir, worc, mdc, mod, f_axwinner, psd_info, powerspec_info)
+            plot_full_spectro(jobName, postDir, ifo, plotsDir, worc, mdc, mod, f_axwinner, psd_info, powerspec_info, median_waveform)
             
 
             
