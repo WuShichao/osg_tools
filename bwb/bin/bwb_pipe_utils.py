@@ -357,6 +357,12 @@ class triggerList:
 
             BW_chainLength = file_len(filename)
 
+        try:
+            BW_seed = cp.getint('bayeswave_options', 'BW-seed')
+        except:
+            BW_seed = None
+
+        random.seed(BW_seed)
         BW_events = random.sample(xrange(0,BW_chainLength), BW_Nsamples)
 
         triggers=[]
