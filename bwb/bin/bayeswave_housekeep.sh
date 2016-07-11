@@ -22,3 +22,10 @@ do
     rm -r ${d}
 done
 
+echo "Compressing post directory"
+tar -cjf post.tar.bz2 post
+
+echo "Removing old post directory"
+rm -r post
+
+echo "Housekeeping complete, time for tea"
