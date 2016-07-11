@@ -122,6 +122,7 @@ def parser():
     parser.add_option("--submit-to-gracedb", default=False, action="store_true")
     parser.add_option("--html-root", default=None)
     parser.add_option("--skip-megapy", default=False, action="store_true")
+    parser.add_option("--tidy-up", default=False, action="store_true")
 
 
     (opts,args) = parser.parse_args()
@@ -517,6 +518,9 @@ megaplot_job = pipe_utils.megaplotJob(cp)
 if opts.submit_to_gracedb:
     submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
 
+if opts.tidy_up:
+    housekeeping_job = pipe_utils.housekeeping(cp)
+
 #
 # Build Nodes
 #
@@ -613,6 +617,9 @@ for t,trigger in enumerate(trigger_list.triggers):
             gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
                     outputDir, htmlDir)
 
+        if opts.tidy_up:
+            housekeeping_node = pipe_utils.housekeepingNode(housekeeping_job,
+                    outputDir)
 
         #
         # --- Add options for bayeswave node
@@ -664,6 +671,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         megasky_node.set_outputDir(outputDir)
         megaplot_node.set_outputDir(outputDir)
 
+
         #
         # --- Add parent/child relationships
         #
@@ -673,6 +681,9 @@ for t,trigger in enumerate(trigger_list.triggers):
         if opts.submit_to_gracedb:
             gracedb_node.add_parent(megaplot_node) 
             gracedb_node.add_parent(megasky_node) 
+        if opts.tidy_up:
+            housekeeping_node.add_parent(megaplot_node) 
+            housekeeping_node.add_parent(megasky_node) 
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
@@ -682,6 +693,11 @@ for t,trigger in enumerate(trigger_list.triggers):
             dag.add_node(megaplot_node)
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
+        if opts.tidy_up:
+            dag.add_node(housekeeping_node)
+
+
+        # --- Add
 
         totaltrigs+=1
 

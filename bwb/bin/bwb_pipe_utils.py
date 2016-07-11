@@ -1355,3 +1355,58 @@ class submitToGraceDBNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__htmlDir = htmlDir
 
 
+#
+# Housekeeping
+#
+
+class housekeeping(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+
+    def __init__(self, cp, dax=False):
+
+        universe='vanilla'
+
+        # Point this to the src dir
+        housekeeper = cp.get('bayeswave_paths','housekeeper')
+        pipeline.CondorDAGJob.__init__(self,universe, housekeeper)
+        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
+
+        # --- Allow desired sites
+        if cp.has_option('condor','desired-sites'):
+            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
+        if cp.has_option('condor', 'accounting_group'):
+            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
+        #
+        # Identify osg vs ldg site
+        #
+        # FIXME: currently only associates PACE (GaTech) as an OSG site
+        hostname = socket.gethostname()
+        if 'pace.gatech.edu' in hostname:
+            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+
+            # --- Perform file transfers
+            self.add_condor_cmd('should_transfer_files', 'YES')
+            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
+            self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
+            self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+        self.add_condor_cmd('getenv', 'True')
+
+        self.set_stdout_file('$(macroargument0)/housekeeper_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macroargument0)/housekeeper_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('housekeeper_$(cluster)-$(process)-$(node).log')
+        self.set_sub_file('housekeeper.sub')
+
+
+class housekeepingNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+
+    def __init__(self, housekeeper_job, rundir):
+
+        pipeline.CondorDAGNode.__init__(self, housekeeper_job)
+        pipeline.AnalysisNode.__init__(self)
+
+        # Set run directory
+        self.add_var_arg(rundir)
+        self.__rundir = rundir
+
+

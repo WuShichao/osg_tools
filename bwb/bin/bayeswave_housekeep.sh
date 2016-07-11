@@ -29,3 +29,4 @@ echo "Removing old post directory"
 rm -r post
 
 echo "Housekeeping complete, time for tea"
+popd
