@@ -519,7 +519,7 @@ if opts.submit_to_gracedb:
     submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
 
 if opts.tidy_up:
-    housekeeping_job = pipe_utils.housekeeping(cp)
+    archiver_job = pipe_utils.archiverJob(cp)
 
 #
 # Build Nodes
@@ -618,8 +618,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                     outputDir, htmlDir)
 
         if opts.tidy_up:
-            housekeeping_node = pipe_utils.housekeepingNode(housekeeping_job,
-                    outputDir)
+            archiver_node = pipe_utils.archiverNode(archiver_job, outputDir)
 
         #
         # --- Add options for bayeswave node
@@ -682,8 +681,10 @@ for t,trigger in enumerate(trigger_list.triggers):
             gracedb_node.add_parent(megaplot_node) 
             gracedb_node.add_parent(megasky_node) 
         if opts.tidy_up:
-            housekeeping_node.add_parent(megaplot_node) 
-            housekeeping_node.add_parent(megasky_node) 
+            archiver_node.add_parent(megaplot_node) 
+            archiver_node.add_parent(megasky_node) 
+            archiver_node.set_post_script(cp.get("bayeswave_paths","cleaner"))
+            archiver_node.add_post_script_arg(outputDir)
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
@@ -694,7 +695,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
         if opts.tidy_up:
-            dag.add_node(housekeeping_node)
+            dag.add_node(archiver_node)
 
 
         # --- Add

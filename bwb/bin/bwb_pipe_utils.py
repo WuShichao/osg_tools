@@ -1359,15 +1359,15 @@ class submitToGraceDBNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 # Housekeeping
 #
 
-class housekeeping(pipeline.CondorDAGJob,pipeline.AnalysisJob):
+class archiverJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
     def __init__(self, cp, dax=False):
 
         universe='vanilla'
 
         # Point this to the src dir
-        housekeeper = cp.get('bayeswave_paths','housekeeper')
-        pipeline.CondorDAGJob.__init__(self,universe, housekeeper)
+        archiver = cp.get('bayeswave_paths','archiver')
+        pipeline.CondorDAGJob.__init__(self,universe, archiver)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
         # --- Allow desired sites
@@ -1392,17 +1392,17 @@ class housekeeping(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.add_condor_cmd('getenv', 'True')
 
-        self.set_stdout_file('$(macroargument0)/housekeeper_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('$(macroargument0)/housekeeper_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('housekeeper_$(cluster)-$(process)-$(node).log')
-        self.set_sub_file('housekeeper.sub')
+        self.set_stdout_file('$(macroargument0)/archiver_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macroargument0)/archiver_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('archiver_$(cluster)-$(process)-$(node).log')
+        self.set_sub_file('archiver.sub')
 
 
-class housekeepingNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
+class archiverNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
-    def __init__(self, housekeeper_job, rundir):
+    def __init__(self, archiver_job, rundir):
 
-        pipeline.CondorDAGNode.__init__(self, housekeeper_job)
+        pipeline.CondorDAGNode.__init__(self, archiver_job)
         pipeline.AnalysisNode.__init__(self)
 
         # Set run directory
