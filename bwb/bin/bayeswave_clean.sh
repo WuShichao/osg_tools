@@ -12,4 +12,3 @@ outputDir=${1}
 rm -rf ${outputDir}
 
 echo "Tidying complete, time for tea"
-popd

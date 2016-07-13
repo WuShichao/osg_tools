@@ -1388,7 +1388,8 @@ class archiverJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
             self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
-            self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+            self.add_condor_cmd('transfer_output_files',
+                    '$(macroargument0).tar.bz2')
 
         self.add_condor_cmd('getenv', 'True')
 
