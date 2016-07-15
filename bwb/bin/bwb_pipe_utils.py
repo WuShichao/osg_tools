@@ -1137,6 +1137,17 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('injections', 'mdc-prefactor'):
             self.add_opt('MDC-prefactor', cp.get('injections', 'mdc-prefactor'))
 
+        # BW-inject
+        if cp.has_option('bayeswave_options', 'BW-inject'):
+             self.add_opt('BW-inject', cp.get('bayeswave_options', 'BW-inject'))
+
+        # BW-injName
+        if cp.has_option('bayeswave_options', 'BW-injName'):
+             self.add_opt('BW-injName', cp.get('bayeswave_options', 'BW-injName'))
+
+        # BW-path
+        if cp.has_option('bayeswave_options', 'BW-path'):
+             self.add_opt('BW-path', cp.get('bayeswave_options', 'BW-path'))
 
         self.set_sub_file('bayeswave_post.sub')
 
