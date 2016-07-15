@@ -36,4 +36,3 @@ echo "Compressing results directory ${outputDir}"
 tar -cjf ${outputDir}.tar.bz2 ${outputDir}
 
 echo "Housekeeping complete, time for tea"
-popd
