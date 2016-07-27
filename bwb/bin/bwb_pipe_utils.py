@@ -735,8 +735,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('noPSDfit', cp.get('bayeswave_options', 'noPSDfit'))
 
         # bayesLine
-        if cp.has_option('bayeswave_options', 'BayesLine'):
-            self.add_opt('bayesLine', cp.get('bayeswave_options', 'BayesLine'))
+        if cp.has_option('bayeswave_options', 'bayesLine'):
+            self.add_opt('bayesLine', cp.get('bayeswave_options', 'bayesLine'))
 
         # stochastic
         if cp.has_option('bayeswave_options', 'stochastic'):
@@ -1098,8 +1098,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # --- Optional options
         # bayesLine
-        if cp.has_option('bayeswave_post_options', 'BayesLine'):
-            self.add_opt('bayesLine', cp.get('bayeswave_post_options', 'BayesLine'))
+        if cp.has_option('bayeswave_post_options', 'bayesLine'):
+            self.add_opt('bayesLine', cp.get('bayeswave_post_options', 'bayesLine'))
 
         # 0noise
         if cp.has_option('bayeswave_post_options', '0noise'):
