@@ -676,14 +676,16 @@ for t,trigger in enumerate(trigger_list.triggers):
         # --- Add parent/child relationships
         #
         bayeswave_post_node.add_parent(bayeswave_node)
-        megasky_node.add_parent(bayeswave_post_node)
-        megaplot_node.add_parent(bayeswave_post_node) 
+        if not opts.skip_megapy:
+            megasky_node.add_parent(bayeswave_post_node)
+            megaplot_node.add_parent(bayeswave_post_node) 
         if opts.submit_to_gracedb:
             gracedb_node.add_parent(megaplot_node) 
             gracedb_node.add_parent(megasky_node) 
         if opts.tidy_up:
-            archiver_node.add_parent(megaplot_node) 
-            archiver_node.add_parent(megasky_node) 
+            if not opts.skip_megapy:
+                archiver_node.add_parent(megaplot_node) 
+                archiver_node.add_parent(megasky_node) 
             archiver_node.set_post_script(cp.get("bayeswave_paths","cleaner"))
             archiver_node.add_post_script_arg(outputDir)
 
