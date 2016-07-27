@@ -363,6 +363,7 @@ frameSegs={}
 #
 
 if (opts.cwb_trigger_list is not None) \
+        or (opts.trigger_list is not None) \
         or (opts.graceID is not None) \
         or (opts.graceID_list is not None):
 
