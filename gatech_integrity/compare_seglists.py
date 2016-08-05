@@ -20,12 +20,21 @@ import numpy as np
 from glue import lal
 
 # Get frame lists
-list1 = np.loadtxt(sys.argv[1], dtype=str)
-list2 = np.loadtxt(sys.argv[2], dtype=str)
+cit_list = np.loadtxt(sys.argv[1], dtype=str)
+gatech_list = np.loadtxt(sys.argv[2], dtype=str)
 
 # Convert to cache, then segment lists
-cache1=lal.Cache.from_urls(list1)
-cache2=lal.Cache.from_urls(list2)
+cit_cache=lal.Cache.from_urls(cit_list)
+gatech_cache=lal.Cache.from_urls(gatech_list)
 
-segmentlist1=cache1.to_segmentlistdict()
-segmentlist2=cache2.to_segmentlistdict()
+cit_segmentlist=cit_cache.to_segmentlistdict()
+gatech_segmentlist=gatech_cache.to_segmentlistdict()
+
+
+for segment in cit_segmentlist:
+    if segment not in gatech_segmentlist:
+        print "missing segment ", segment
+
+print "*** Data Set Summary ***"
+print "CIT: Start: {start} {end} [{duration}]".format(
+        start
