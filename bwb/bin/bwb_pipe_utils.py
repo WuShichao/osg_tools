@@ -1088,12 +1088,14 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
-        for ifo in ifo_list:
+
+        for i,ifo in enumerate(ifo_list):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
-            # XXX: Postproc currently expects LALSimAdLIGO
-            self.add_opt('{ifo}-cache'.format(ifo=ifo), "LALSimAdLIGO")
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), "LALSimAdLIGO")
+            # bayeswave_post now uses PSD estimates straight from bayeswave and
+            # no channel name needed
+            self.add_opt('{ifo}-cache'.format(ifo=ifo),
+                    "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
 
 
         # --- Optional options
