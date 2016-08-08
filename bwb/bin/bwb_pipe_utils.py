@@ -618,7 +618,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         for ifo in ifo_list:
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
+
+            if not cp.get('input','sim-data'):
+                # only specify channels for real data
+                self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
 
         # dataseed
@@ -1094,8 +1097,13 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             # bayeswave_post now uses PSD estimates straight from bayeswave and
             # no channel name needed
-            self.add_opt('{ifo}-cache'.format(ifo=ifo),
-                    "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
+            #self.add_opt('{ifo}-cache'.format(ifo=ifo),
+            #        "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
+
+            self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
+            if not cp.get('input','sim-data'):
+                # only specify channels for real data
+                self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
 
         # --- Optional options
