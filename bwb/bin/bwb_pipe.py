@@ -114,7 +114,7 @@ def parser():
     parser.add_option("--server", type=str, default=None)
     parser.add_option("--copy-frames", default=False, action="store_true")
     parser.add_option("--skip-datafind", default=False, action="store_true")
-    parser.add_option("--sim-data", , default=False, action="store_true")
+    parser.add_option("--sim-data", default=False, action="store_true")
     parser.add_option("-I", "--injfile", default=None)
     parser.add_option("-G", "--graceID", default=None)
     parser.add_option("--graceID-list", default=None)
@@ -354,11 +354,15 @@ channel_list=ast.literal_eval(cp.get('datafind', 'channel-list'))
 frtype_list=ast.literal_eval(cp.get('datafind', 'frtype-list'))
 
 # Decide whether simulating data
-if not cp.has_option('input','sim-data'):
-    cp.set('input', 'sim-data', opts.sim_data)
-elif cp.has_option('input','sim-data') and opts.sim_data:
+if cp.has_option('datafind','sim-data'):
+    cp.set('datafind','sim-data',str(True))
+
+if not cp.has_option('datafind','sim-data'):
+    cp.set('datafind', 'sim-data', str(opts.sim_data))
+elif cp.has_option('datafind','sim-data') and opts.sim_data:
     # Override the config file with the command line
-    cp.set('input', 'sim-data', opts.sim_data)
+    cp.set('datafind', 'sim-data', str(opts.sim_data))
+
 
 cache_files = {}
 segmentList = {}
@@ -379,7 +383,7 @@ if (opts.cwb_trigger_list is not None) \
 
 for ifo in ifo_list:
 
-    if cp.get('input','sim-data'):
+    if cp.get('datafind','sim-data'):
         # Get the type of simulated data from the frame type list
         # E.g., to simulate from LALSimAdLIGO put this in the config.ini:
         #   frtype-list={'H1':'LALSimAdLIGO','L1':'LALSimAdLIGO'}
