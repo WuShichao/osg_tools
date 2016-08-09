@@ -1192,7 +1192,6 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         # bayeswave_post now uses PSD estimates straight from bayeswave and
         # no channel name needed.  These estimates lie in the outputDir so add
         # the variable option here
-        ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
         for i,ifo in enumerate(ifo_list):
             self.add_var_opt('{ifo}-cache'.format(ifo=ifo),
                     "interp:{outputDir}/IFO{i}_asd.dat".format(i=i,
