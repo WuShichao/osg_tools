@@ -1099,13 +1099,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             # bayeswave_post now uses PSD estimates straight from bayeswave and
             # no channel name needed
-            #self.add_opt('{ifo}-cache'.format(ifo=ifo),
-            #        "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
-
-            self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            if not cp.get('datafind','sim-data'):
-                # only specify channels for real data
-                self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
+            self.add_opt('{ifo}-cache'.format(ifo=ifo),
+                    "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
 
 
         # --- Optional options
