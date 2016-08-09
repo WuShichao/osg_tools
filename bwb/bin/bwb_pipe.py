@@ -386,7 +386,21 @@ for ifo in ifo_list:
         # To simulate from arbitraray *A*SD:
         #   frtype-list={'H1':'interp:/home/tyson/O2/review/bayesline/IFO0_asd.dat','L1':'interp:/home/tyson/O2/review/bayesline/IFO0_asd.dat'}
 
-        cache_files[ifo] = frtype_list[ifo]
+        sim_spectrum = frtype_list[ifo]
+
+        # If sim-data cache file is a reference PSD file, copy it to the work
+        # directory
+        if sim_spectrum.split(':')[0] == 'interp':
+            asd_file = sim_spectrum.split(':')[1]
+            print >> sys.stdout, \
+                    "Attempting to copy ASD file to datafind directory"
+            asd_file_newpath = os.path.join(datafind_dir,
+                    os.path.basename(asd_file))
+            shutil.copy(asd_file, asd_file_newpath)
+            cache_files[ifo] = asd_file_newpath
+
+        else:
+            cache_files[ifo] = frtype_list[ifo]
 
         segmentList[ifo] = \
                 segments.segmentlist([segments.segment(gps_start_time,
