@@ -393,14 +393,13 @@ for ifo in ifo_list:
 
         # If sim-data cache file is a reference PSD file, copy it to the work
         # directory
-        if sim_spectrum.split(':')[0] == 'interp':
-            asd_file = sim_spectrum.split(':')[1]
+        if os.path.exists(sim_spectrum):
             print >> sys.stdout, \
                     "Attempting to copy ASD file to datafind directory"
-            asd_file_newpath = os.path.join(datafind_dir,
-                    os.path.basename(asd_file))
-            shutil.copy(asd_file, asd_file_newpath)
-            cache_files[ifo] = "interp:{0}".format(asd_file_newpath)
+            asd_path = os.path.join(datafind_dir,
+                    os.path.basename(sim_spectrum))
+            shutil.copy(sim_spectrum, asd_path)
+            cache_files[ifo] = "interp:{0}".format(asd_file)
 
         else:
             cache_files[ifo] = frtype_list[ifo]
