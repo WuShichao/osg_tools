@@ -612,7 +612,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                 len(trigger_times))
 
 
-        if "LALSimAdLIGO" not in cache_files.values():
+        if not cp.get('datafind','sim-data'):
             #
             # Identify frames associated with this job
             if opts.copy_frames:
@@ -664,7 +664,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_outputDir(outputDir)
         if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 
-        if "LALSimAdLIGO" in cache_files.values():
+        if cp.get('datafind','sim-data'):
             bayeswave_node.set_dataseed(dataseed)
         bayeswave_post_node.set_dataseed(dataseed)
         dataseed+=1
@@ -683,7 +683,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.set_seglen(trigger.seglen)
         bayeswave_post_node.set_window(trigger.window)
         bayeswave_post_node.set_PSDstart(psd_start)
-        bayeswave_post_node.set_outputDir(outputDir)
+        bayeswave_post_node.set_outputDir(ifo_list, outputDir)
 
         if injfile is not None:
             bayeswave_node.set_injevent(trigger.injevent)

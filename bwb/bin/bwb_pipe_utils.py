@@ -1185,7 +1185,7 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('PSDstart', PSDstart)
         self.__PSDstart = PSDstart
 
-    def set_outputDir(self, outputDir):
+    def set_outputDir(self, ifo_list, outputDir):
         self.add_var_opt('outputDir', outputDir)
         self.__outputDir = outputDir
 
