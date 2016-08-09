@@ -399,7 +399,7 @@ for ifo in ifo_list:
             asd_path = os.path.join(datafind_dir,
                     os.path.basename(sim_spectrum))
             shutil.copy(sim_spectrum, asd_path)
-            cache_files[ifo] = "interp:{0}".format(asd_file)
+            cache_files[ifo] = "interp:{0}".format(asd_path)
 
         else:
             cache_files[ifo] = frtype_list[ifo]
