@@ -400,7 +400,7 @@ for ifo in ifo_list:
             asd_file_newpath = os.path.join(datafind_dir,
                     os.path.basename(asd_file))
             shutil.copy(asd_file, asd_file_newpath)
-            cache_files[ifo] = asd_file_newpath
+            cache_files[ifo] = "interp:{0}".format(asd_file_newpath)
 
         else:
             cache_files[ifo] = frtype_list[ifo]
