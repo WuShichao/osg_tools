@@ -1097,11 +1097,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         for i,ifo in enumerate(ifo_list):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
-            # bayeswave_post now uses PSD estimates straight from bayeswave and
-            # no channel name needed
-            self.add_opt('{ifo}-cache'.format(ifo=ifo),
-                    "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
-
 
         # --- Optional options
         # bayesLine
@@ -1193,6 +1188,15 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_outputDir(self, outputDir):
         self.add_var_opt('outputDir', outputDir)
         self.__outputDir = outputDir
+
+        # bayeswave_post now uses PSD estimates straight from bayeswave and
+        # no channel name needed.  These estimates lie in the outputDir so add
+        # the variable option here
+        ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
+        for i,ifo in enumerate(ifo_list):
+            self.add_var_opt('{ifo}-cache'.format(ifo=ifo),
+                    "interp:{outputDir}/IFO{i}_asd.dat".format(i=i,
+                        outputDir=outputDir))
 
     def set_injevent(self, event):
         self.add_var_opt('event', event)
