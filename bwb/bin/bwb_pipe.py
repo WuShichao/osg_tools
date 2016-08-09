@@ -350,7 +350,6 @@ if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 # --- datafind params from config file
 #
 ifo_list=ast.literal_eval(cp.get('input','ifo-list'))
-channel_list=ast.literal_eval(cp.get('datafind', 'channel-list'))
 frtype_list=ast.literal_eval(cp.get('datafind', 'frtype-list'))
 
 # Decide whether simulating data
