@@ -619,7 +619,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
 
-            if not cp.get('input','sim-data'):
+            if not cp.get('datafind','sim-data'):
                 # only specify channels for real data
                 self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
@@ -1101,7 +1101,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             #        "interp:$(macrooutputDir)/IFO{i}_asd.dat".format(i=i))
 
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
-            if not cp.get('input','sim-data'):
+            if not cp.get('datafind','sim-data'):
                 # only specify channels for real data
                 self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
