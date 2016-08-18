@@ -18,7 +18,10 @@
 # DAG Class definitions for bayeswave
 
 from glue import pipeline
-import lalinspiral, lalburst
+from glue.ligolw import ligolw
+from glue.ligolw import utils as ligolw_utils
+from glue.ligolw import lsctables
+#import lalinspiral, lalburst
 
 import ConfigParser
 import itertools
@@ -27,6 +30,11 @@ import sys,os
 import ast
 import numpy as np
 import random
+
+# define a content handler
+class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
+    pass
+lsctables.use_in(LIGOLWContentHandler)
 
 #
 # Convenience Defs
@@ -57,57 +65,67 @@ def hyphen_range(s):
             raise ValueError('format error in %s' % x)
 
 def read_injection_table(filename):
-    try:
-        sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
-        if sim_inspiral_table == -1:
-            raise AttributeError("%s has no sim-inspiral table")
-    
-        print >> sys.stdout, "Reading trigger times from sim_inspiral table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_inspiral_table.geocent_end_time))
 
-            if sim_inspiral_table.next is None: break
-            sim_inspiral_table = sim_inspiral_table.next
-    
-        return trigger_times
+    xmldoc = ligolw_utils.load_filename(filename, contenthandler =
+            LIGOLWContentHandler, verbose = True)
 
-    except:
-        pass
+    sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
+
+    return ( sim_inspiral_table.get_column('geocent_end_time') +
+            1e-9*sim_inspiral_table.get_column('geocent_end_time') )
+
+
+
+#    try:
+#       sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
+#       if sim_inspiral_table == -1:
+#           raise AttributeError("%s has no sim-inspiral table")
+#
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_inspiral_table.geocent_end_time))
+#
+#           if sim_inspiral_table.next is None: break
+#           sim_inspiral_table = sim_inspiral_table.next
+#
+#       return trigger_times
+#
+#    except:
+#        pass
     
-    try:
-        sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
-    
-        print >> sys.stdout, "Reading trigger times from sim_burst table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_burst_table.time_geocent_gps))
-    
-            if sim_burst_table.next is None: break
-            sim_burst_table = sim_burst_table.next
-    
-        return trigger_times
-    except:
-        pass
-    
-    try:
-        sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
-        if sim_ringdown_table == -1:
-            raise AttributeError("%s has no sim-ringdown table")
-    
-        print >> sys.stdout, "Reading trigger times from sim_ringdown table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_ringdown_table.geocent_start_time))
-    
-            if sim_ringdown_table.next is None: break
-            sim_ringdown_table = sim_ringdown_table.next
-    
-        return trigger_times
-    
-    except:
-        print >> sys.stderr, "Error: cannot read injection file %s"%injfile
-        sys.exit()
+#   try:
+#       sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
+#   
+#       print >> sys.stdout, "Reading trigger times from sim_burst table"
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_burst_table.time_geocent_gps))
+#   
+#           if sim_burst_table.next is None: break
+#           sim_burst_table = sim_burst_table.next
+#   
+#       return trigger_times
+#   except:
+#       pass
+#   
+#   try:
+#       sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
+#       if sim_ringdown_table == -1:
+#           raise AttributeError("%s has no sim-ringdown table")
+#   
+#       print >> sys.stdout, "Reading trigger times from sim_ringdown table"
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_ringdown_table.geocent_start_time))
+#   
+#           if sim_ringdown_table.next is None: break
+#           sim_ringdown_table = sim_ringdown_table.next
+#   
+#       return trigger_times
+#   
+#   except:
+#       print >> sys.stderr, "Error: cannot read injection file %s"%injfile
+#       sys.exit()
 
 class eventTrigger:
     """
@@ -376,9 +394,12 @@ class triggerList:
 
     def parse_injection_file(self, cp, injection_file):
         triggers = list()
-        trigger_times = read_injection_table(injection_file)
 
-        print 'getting trigger times from injection file'
+        print 'reading all available events'
+        trigger_times = read_injection_table(injection_file)
+        print 'read this many events ', len(trigger_times)
+
+        print 'downsampling to requested events'
 
         # reduce to specified values
         events=cp.get('injections', 'events')
