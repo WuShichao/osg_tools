@@ -23,6 +23,12 @@ from glue.ligolw import utils as ligolw_utils
 from glue.ligolw import lsctables
 #import lalinspiral, lalburst
 
+try:
+    from ligo.gracedb.rest import GraceDb as gracedb
+except:
+    print "failed to import gracedb, continuing without"
+    pass
+
 import ConfigParser
 import itertools
 import socket
