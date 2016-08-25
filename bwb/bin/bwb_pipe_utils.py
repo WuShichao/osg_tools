@@ -473,14 +473,14 @@ class triggerList:
             keep_frac = keep_frac
 
         nall=len(triggers)
-        nkeep=np.ceil(keep_frac*nall)
-        keepidx=np.random.randint(low=0,high=nall,size=nkeep)
-        triggers=[triggers[i] for i in keepidx]
+        nkeep=int(np.ceil(keep_frac*nall))
+        keepidx=random.sample(range(0,len(triggers)), nkeep)
+        triggers_out = [ triggers[i] for i in sorted(keepidx) ]
 
         print >> sys.stdout, "Read %d triggers, following up %d"%(
-                nall, len(triggers))
+                nall, len(triggers_out))
 
-        return triggers
+        return triggers_out
 
 
     def parse_trigger_list(self, cp, trigger_file, rho_threshold=-1.0,
@@ -546,7 +546,7 @@ class triggerList:
         triggers_out = [ triggers[i] for i in sorted(keepidx) ]
 
         print >> sys.stdout, "Read %d triggers, following up %d"%(
-                nrows, len(triggers))
+                nrows, len(triggers_out))
 
         return triggers_out
 
