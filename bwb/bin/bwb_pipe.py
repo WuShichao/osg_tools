@@ -375,11 +375,12 @@ if (opts.cwb_trigger_list is not None) \
         or (opts.graceID_list is not None):
 
     # Assume triggers lie in analyzeable segments
-    cp.set('datafind','ignore-science-segments', True)
+    cp.set('datafind','ignore-science-segments', str(True))
 
 for ifo in ifo_list:
 
-    if cp.get('datafind','sim-data'):
+    if cp.getboolean('datafind','sim-data'):
+
         # Get the type of simulated data from the frame type list
         # E.g., to simulate from LALSimAdLIGO put this in the config.ini:
         #   frtype-list={'H1':'LALSimAdLIGO','L1':'LALSimAdLIGO'}
@@ -406,6 +407,7 @@ for ifo in ifo_list:
                     gps_end_time)])
 
     else:
+
 
         #
         # --- Run DataFind query to produce cache files for frames
@@ -448,7 +450,7 @@ for ifo in ifo_list:
         else:
             frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
 
-        if cp.has_option('datafind','ignore-science-segments'):
+        if cp.getboolean('datafind','ignore-science-segments'):
             segmentList[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])
