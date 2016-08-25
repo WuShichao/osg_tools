@@ -116,6 +116,7 @@ def parser():
     parser.add_option("--skip-datafind", default=False, action="store_true")
     parser.add_option("--sim-data", default=False, action="store_true")
     parser.add_option("-I", "--injfile", default=None)
+    parser.add_option("-F", "--followup-injections", default=None)
     parser.add_option("-G", "--graceID", default=None)
     parser.add_option("--graceID-list", default=None)
     parser.add_option("--bw-inject", default=False, action="store_true")
@@ -214,7 +215,7 @@ try:
     skip_segment_queries = cp.getboolean('datafind','ignore-science-segments')
 except ConfigParser.NoOptionError:
     print >> sys.stdout, \
-            "No ignore-science-segments in [datafind], skipping segdb"
+            "No ignore-science-segments in [datafind], skipping segdb by default"
     cp.set('datafind','ignore-science-segments', str(True))
     skip_segment_queries=True
 
@@ -248,8 +249,16 @@ if injfile is not None:
     #
     # Read injection file
     #
-    filename=os.path.join(workdir,injfile)
-    trigger_list = pipe_utils.triggerList(cp, injection_file=filename)
+    injfilename=os.path.join(workdir,injfile)
+
+    if opts.followup_injections is not None:
+        # Create trigger list from union of injections and those in
+        # followup_injections (overrides events= field)
+        trigger_list = pipe_utils.triggerList(cp, injection_file=injfilename,
+                followup_injections=opts.followup_injections)
+    else:
+        # Create trigger list from sim-inspiral table and events= field
+        trigger_list = pipe_utils.triggerList(cp, injection_file=injfilename)
 
 if cp.has_option('bayeswave_options','BW-inject'):
     # Check the option is valid:
@@ -295,6 +304,9 @@ if opts.submit_to_gracedb:
 
 
 # Extract trigger times for readability
+print trigger_list
+print trigger_list.triggers
+
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
 lag_times = [trig.time_lag for trig in trigger_list.triggers]
 

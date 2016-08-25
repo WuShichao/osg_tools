@@ -71,7 +71,7 @@ def read_injection_table(filename):
 
     sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
 
-    return ( sim_inspiral_table.get_column('geocent_end_time') +
+    return ( sim_inspiral_table.get_column('geocent_end_time') + \
             1e-9*sim_inspiral_table.get_column('geocent_end_time') )
 
 
@@ -237,6 +237,13 @@ class eventTrigger:
         if graceID is not None:
             self.query_graceDB(graceID)
 
+    #
+    # Update trigger properties
+    #
+    def set_injevent(self, injevent):
+        self.injevent = injevent
+
+
     def query_graceDB(self,graceid):
 
         from ligo.gracedb.rest import GraceDb 
@@ -291,7 +298,8 @@ class triggerList:
     """
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
-            injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0,
+            injection_file=None, followup_injections=None,
+            cwb_trigger_file=None, rho_threshold=-1.0,
             internal_injections=False, graceIDs=None):
 
         #
@@ -309,7 +317,8 @@ class triggerList:
 
         elif injection_file is not None:
             # Create trigger list from sim* LIGOLW-XML table
-            self.triggers = self.parse_injection_file(cp, injection_file)
+            self.triggers = self.parse_injection_file(cp, injection_file,
+                    followup_injections=followup_injections)
 
         elif cwb_trigger_file is not None:
             # Create trigger list from cwb triggers
@@ -394,26 +403,55 @@ class triggerList:
 
 
 
-    def parse_injection_file(self, cp, injection_file):
-        triggers = list()
+    def parse_injection_file(self, cp, injection_file, followup_injections=None,
+            injwindow=2.0):
 
-        print 'reading all available events'
-        trigger_times = read_injection_table(injection_file)
-        print 'read this many events ', len(trigger_times)
 
-        print 'downsampling to requested events'
+        xmldoc = ligolw_utils.load_filename(injection_file, contenthandler =
+                LIGOLWContentHandler, verbose = True)
+        sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
 
-        # reduce to specified values
-        events=cp.get('injections', 'events')
+        #trigger_times = read_injection_table(injection_file)
+        injection_times = sim_inspiral_table.get_column('geocent_end_time') + \
+                1e-9*sim_inspiral_table.get_column('geocent_end_time')
 
-        if events!='all':
-            injevents=list(hyphen_range(events))
+        print "..read %d injections"%len(injection_times)
+
+        triggers=[]
+        if followup_injections is None:
+
+            print 'downsampling to requested injections using events= in config'
+
+            # reduce to specified values
+            events=cp.get('injections', 'events')
+
+            if events!='all':
+                injevents=list(hyphen_range(events))
+            else:
+                injevents=range(len(injection_times))
+
+            for i in injevents:
+                triggers.append(eventTrigger(cp, trigger_time=injection_times[i],
+                    injevent=i))
+
         else:
-            injevents=range(len(trigger_times))
 
-        for i in injevents:
-            triggers.append(eventTrigger(cp, trigger_time=trigger_times[i],
-                injevent=i))
+            # Parse the detected injections
+
+            print "downsampling to events listed in %s"%followup_injections
+            trigger_list_from_file = triggerList(cp,
+                    trigger_file=followup_injections)
+
+            # Find corresponding injection events
+            for trigger in trigger_list_from_file.triggers:
+
+                injevent = np.concatenate(np.argwhere(
+                    abs(trigger.trigger_time - injection_times) < injwindow))[0]
+
+                trigger.set_injevent(injevent)
+
+                triggers.append(trigger)
+
 
         return triggers
 
