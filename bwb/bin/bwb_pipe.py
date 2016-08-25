@@ -622,7 +622,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
 
         outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
-                str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
+                str(float(trigger.time_lag)) #+ '_' + str(uuid.uuid4())
 
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
