@@ -326,14 +326,14 @@ topdir=os.getcwd()
 os.chdir(workdir)
 
 datafind_dir = 'datafind'
-if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
+os.makedirs(datafind_dir)
 if cp.has_option('injections', 'mdc-cache'):
     shutil.copy(cp.get('injections', 'mdc-cache'),
             os.path.join('datafind','MDC.cache'))
 
 
 segment_dir = 'segments'
-if not os.path.exists(segment_dir): os.makedirs(segment_dir)
+os.makedirs(segment_dir)
 
 
 
@@ -571,6 +571,10 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
+#for trigger in trigger_list.triggers[:5]:
+#    print trigger.trigger_time
+
+#sys.exit()
 for t,trigger in enumerate(trigger_list.triggers):
 
     print >> sys.stdout, "---------------------------------------"
