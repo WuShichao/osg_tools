@@ -624,7 +624,7 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # Make output directory for this trigger
         outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
-                str(float(trigger.time_lag)) #+ '_' + str(uuid.uuid4())
+                str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
 
         os.makedirs(outputDir)
 
