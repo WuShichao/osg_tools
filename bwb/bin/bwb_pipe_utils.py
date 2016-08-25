@@ -23,12 +23,6 @@ from glue.ligolw import utils as ligolw_utils
 from glue.ligolw import lsctables
 #import lalinspiral, lalburst
 
-try:
-    from ligo.gracedb.rest import GraceDb as gracedb
-except:
-    print "failed to import gracedb, continuing without"
-    pass
-
 import ConfigParser
 import itertools
 import socket
@@ -239,11 +233,11 @@ class eventTrigger:
 
         # If graceID is given, override other trigger values
         self.graceID = graceID
-        if graceID is not None:
-            from ligo.gracedb.rest import GraceDb
-            self.query_graceDB(graceID)
+        self.query_graceDB(graceID)
 
     def query_graceDB(self,graceid):
+
+        from ligo.gracedb.rest import GraceDb 
 
         # Instantiate graceDB event
         gracedb = GraceDb()
