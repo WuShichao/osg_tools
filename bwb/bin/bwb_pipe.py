@@ -158,11 +158,8 @@ opts, args, cp = parser()
 cp.set('condor','copy-frames',str(opts.copy_frames))
 
 workdir = opts.workdir 
-if not os.path.exists(workdir): 
-    print >> sys.stdout, "making work-directory: %s"%workdir
-    os.makedirs(workdir)
-else:
-    print >> sys.stderr, "WARNING: work-directory %s exists"%workdir
+print >> sys.stdout, "making work-directory: %s"%workdir
+os.makedirs(workdir)
 
 
 # --- Make local copies of necessary input files
@@ -621,10 +618,11 @@ for t,trigger in enumerate(trigger_list.triggers):
                     transferFrames[ifo] = [frame for f,frame in
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
 
+        # Make output directory for this trigger
         outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
                 str(float(trigger.time_lag)) #+ '_' + str(uuid.uuid4())
 
-        if not os.path.exists(outputDir): os.makedirs(outputDir)
+        os.makedirs(outputDir)
 
         # XXX Dump job info file
         #GPS time, lag or GraceID, frequency, and cWB’s rho
