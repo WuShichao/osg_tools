@@ -541,16 +541,14 @@ class triggerList:
         except:
             keep_frac = keep_frac
 
-        nkeep=np.ceil(keep_frac*len(triggers))
-        keepidx=np.random.randint(low=0,high=len(triggers),size=nkeep)
-        #triggers=[triggers[i] for i in keepidx]
-        triggers_out = [ triggers[i] for i in
-                sorted(keepidx) ]
+        nkeep=int(np.ceil(keep_frac*len(triggers)))
+        keepidx=random.sample(range(0,len(triggers)), nkeep)
+        triggers_out = [ triggers[i] for i in sorted(keepidx) ]
 
         print >> sys.stdout, "Read %d triggers, following up %d"%(
                 nrows, len(triggers))
 
-        return triggers
+        return triggers_out
 
 
 
