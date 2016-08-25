@@ -621,7 +621,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                     transferFrames[ifo] = [frame for f,frame in
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
 
-        outputDir  = 'bayeswave_' + str(int(trigger.trigger_time)) + '_' + \
+        outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
                 str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
 
         if not os.path.exists(outputDir): os.makedirs(outputDir)
