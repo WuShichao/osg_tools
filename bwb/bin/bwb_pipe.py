@@ -207,6 +207,17 @@ if nrdata is not None:
     # Modify xml IN WORKDIR to point to local hdf5
     localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
 
+
+# Skip segment queries?
+print >> sys.stdout, "Determining whether to do segment queries"
+try:
+    skip_segment_queries = cp.getboolean('datafind','ignore-science-segments')
+except ConfigParser.NoOptionError:
+    print >> sys.stdout, \
+            "No ignore-science-segments in [datafind], skipping segdb"
+    cp.set('datafind','ignore-science-segments', str(True))
+    skip_segment_queries=True
+
 #############################################
 #
 # Get Trigger Info
@@ -375,7 +386,7 @@ if (opts.cwb_trigger_list is not None) \
         or (opts.graceID_list is not None):
 
     # Assume triggers lie in analyzeable segments
-    cp.set('datafind','ignore-science-segments', str(True))
+    skip_segment_queries=True
 
 for ifo in ifo_list:
 
@@ -450,7 +461,7 @@ for ifo in ifo_list:
         else:
             frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
 
-        if cp.getboolean('datafind','ignore-science-segments'):
+        if skip_segment_queries:
             segmentList[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])

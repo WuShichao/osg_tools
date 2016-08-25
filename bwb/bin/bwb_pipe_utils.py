@@ -626,7 +626,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Required options  ------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
-        if not cp.get('datafind','sim-data'):
+        if not cp.getboolean('datafind','sim-data'):
             channel_list = ast.literal_eval(cp.get('datafind', 'channel-list'))
 
         # XXX: hack to repeat option for --ifo H1 --ifo L1 etc
@@ -643,7 +643,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
 
-            if not cp.get('datafind','sim-data'):
+            if not cp.getboolean('datafind','sim-data'):
                 # only specify channels for real data
                 self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
