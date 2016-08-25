@@ -138,6 +138,7 @@ class eventTrigger:
             default_window=1.0, min_window=0.5, max_window=1.0, veto1=None,
             veto2=None, BW_event=None):
 
+
         #
         # Get run configuration
         #
@@ -233,7 +234,8 @@ class eventTrigger:
 
         # If graceID is given, override other trigger values
         self.graceID = graceID
-        self.query_graceDB(graceID)
+        if graceID is not None:
+            self.query_graceDB(graceID)
 
     def query_graceDB(self,graceid):
 
