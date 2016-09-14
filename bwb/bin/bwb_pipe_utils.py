@@ -18,7 +18,10 @@
 # DAG Class definitions for bayeswave
 
 from glue import pipeline
-import lalinspiral, lalburst
+from glue.ligolw import ligolw
+from glue.ligolw import utils as ligolw_utils
+from glue.ligolw import lsctables
+#import lalinspiral, lalburst
 
 import ConfigParser
 import itertools
@@ -27,6 +30,11 @@ import sys,os
 import ast
 import numpy as np
 import random
+
+# define a content handler
+class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
+    pass
+lsctables.use_in(LIGOLWContentHandler)
 
 #
 # Convenience Defs
@@ -57,57 +65,67 @@ def hyphen_range(s):
             raise ValueError('format error in %s' % x)
 
 def read_injection_table(filename):
-    try:
-        sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
-        if sim_inspiral_table == -1:
-            raise AttributeError("%s has no sim-inspiral table")
-    
-        print >> sys.stdout, "Reading trigger times from sim_inspiral table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_inspiral_table.geocent_end_time))
 
-            if sim_inspiral_table.next is None: break
-            sim_inspiral_table = sim_inspiral_table.next
-    
-        return trigger_times
+    xmldoc = ligolw_utils.load_filename(filename, contenthandler =
+            LIGOLWContentHandler, verbose = True)
 
-    except:
-        pass
+    sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
+
+    return ( sim_inspiral_table.get_column('geocent_end_time') + \
+            1e-9*sim_inspiral_table.get_column('geocent_end_time') )
+
+
+
+#    try:
+#       sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
+#       if sim_inspiral_table == -1:
+#           raise AttributeError("%s has no sim-inspiral table")
+#
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_inspiral_table.geocent_end_time))
+#
+#           if sim_inspiral_table.next is None: break
+#           sim_inspiral_table = sim_inspiral_table.next
+#
+#       return trigger_times
+#
+#    except:
+#        pass
     
-    try:
-        sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
-    
-        print >> sys.stdout, "Reading trigger times from sim_burst table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_burst_table.time_geocent_gps))
-    
-            if sim_burst_table.next is None: break
-            sim_burst_table = sim_burst_table.next
-    
-        return trigger_times
-    except:
-        pass
-    
-    try:
-        sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
-        if sim_ringdown_table == -1:
-            raise AttributeError("%s has no sim-ringdown table")
-    
-        print >> sys.stdout, "Reading trigger times from sim_ringdown table"
-        trigger_times=[]
-        while True:
-            trigger_times.append(float(sim_ringdown_table.geocent_start_time))
-    
-            if sim_ringdown_table.next is None: break
-            sim_ringdown_table = sim_ringdown_table.next
-    
-        return trigger_times
-    
-    except:
-        print >> sys.stderr, "Error: cannot read injection file %s"%injfile
-        sys.exit()
+#   try:
+#       sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
+#   
+#       print >> sys.stdout, "Reading trigger times from sim_burst table"
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_burst_table.time_geocent_gps))
+#   
+#           if sim_burst_table.next is None: break
+#           sim_burst_table = sim_burst_table.next
+#   
+#       return trigger_times
+#   except:
+#       pass
+#   
+#   try:
+#       sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
+#       if sim_ringdown_table == -1:
+#           raise AttributeError("%s has no sim-ringdown table")
+#   
+#       print >> sys.stdout, "Reading trigger times from sim_ringdown table"
+#       trigger_times=[]
+#       while True:
+#           trigger_times.append(float(sim_ringdown_table.geocent_start_time))
+#   
+#           if sim_ringdown_table.next is None: break
+#           sim_ringdown_table = sim_ringdown_table.next
+#   
+#       return trigger_times
+#   
+#   except:
+#       print >> sys.stderr, "Error: cannot read injection file %s"%injfile
+#       sys.exit()
 
 class eventTrigger:
     """
@@ -119,6 +137,7 @@ class eventTrigger:
             max_srate=4096., default_seglen=4., max_seglen=4., min_seglen=2.,
             default_window=1.0, min_window=0.5, max_window=1.0, veto1=None,
             veto2=None, BW_event=None):
+
 
         #
         # Get run configuration
@@ -216,10 +235,18 @@ class eventTrigger:
         # If graceID is given, override other trigger values
         self.graceID = graceID
         if graceID is not None:
-            from ligo.gracedb.rest import GraceDb
             self.query_graceDB(graceID)
 
+    #
+    # Update trigger properties
+    #
+    def set_injevent(self, injevent):
+        self.injevent = injevent
+
+
     def query_graceDB(self,graceid):
+
+        from ligo.gracedb.rest import GraceDb 
 
         # Instantiate graceDB event
         gracedb = GraceDb()
@@ -271,7 +298,8 @@ class triggerList:
     """
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
-            injection_file=None, cwb_trigger_file=None, rho_threshold=-1.0,
+            injection_file=None, followup_injections=None,
+            cwb_trigger_file=None, rho_threshold=-1.0,
             internal_injections=False, graceIDs=None):
 
         #
@@ -289,7 +317,8 @@ class triggerList:
 
         elif injection_file is not None:
             # Create trigger list from sim* LIGOLW-XML table
-            self.triggers = self.parse_injection_file(cp, injection_file)
+            self.triggers = self.parse_injection_file(cp, injection_file,
+                    followup_injections=followup_injections)
 
         elif cwb_trigger_file is not None:
             # Create trigger list from cwb triggers
@@ -374,23 +403,55 @@ class triggerList:
 
 
 
-    def parse_injection_file(self, cp, injection_file):
-        triggers = list()
-        trigger_times = read_injection_table(injection_file)
+    def parse_injection_file(self, cp, injection_file, followup_injections=None,
+            injwindow=2.0):
 
-        print 'getting trigger times from injection file'
 
-        # reduce to specified values
-        events=cp.get('injections', 'events')
+        xmldoc = ligolw_utils.load_filename(injection_file, contenthandler =
+                LIGOLWContentHandler, verbose = True)
+        sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
 
-        if events!='all':
-            injevents=list(hyphen_range(events))
+        #trigger_times = read_injection_table(injection_file)
+        injection_times = sim_inspiral_table.get_column('geocent_end_time') + \
+                1e-9*sim_inspiral_table.get_column('geocent_end_time')
+
+        print "..read %d injections"%len(injection_times)
+
+        triggers=[]
+        if followup_injections is None:
+
+            print 'downsampling to requested injections using events= in config'
+
+            # reduce to specified values
+            events=cp.get('injections', 'events')
+
+            if events!='all':
+                injevents=list(hyphen_range(events))
+            else:
+                injevents=range(len(injection_times))
+
+            for i in injevents:
+                triggers.append(eventTrigger(cp, trigger_time=injection_times[i],
+                    injevent=i))
+
         else:
-            injevents=range(len(trigger_times))
 
-        for i in injevents:
-            triggers.append(eventTrigger(cp, trigger_time=trigger_times[i],
-                injevent=i))
+            # Parse the detected injections
+
+            print "downsampling to events listed in %s"%followup_injections
+            trigger_list_from_file = triggerList(cp,
+                    trigger_file=followup_injections)
+
+            # Find corresponding injection events
+            for trigger in trigger_list_from_file.triggers:
+
+                injevent = np.concatenate(np.argwhere(
+                    abs(trigger.trigger_time - injection_times) < injwindow))[0]
+
+                trigger.set_injevent(injevent)
+
+                triggers.append(trigger)
+
 
         return triggers
 
@@ -450,14 +511,14 @@ class triggerList:
             keep_frac = keep_frac
 
         nall=len(triggers)
-        nkeep=np.ceil(keep_frac*nall)
-        keepidx=np.random.randint(low=0,high=nall,size=nkeep)
-        triggers=[triggers[i] for i in keepidx]
+        nkeep=int(np.ceil(keep_frac*nall))
+        keepidx=random.sample(range(0,len(triggers)), nkeep)
+        triggers_out = [ triggers[i] for i in sorted(keepidx) ]
 
         print >> sys.stdout, "Read %d triggers, following up %d"%(
-                nall, len(triggers))
+                nall, len(triggers_out))
 
-        return triggers
+        return triggers_out
 
 
     def parse_trigger_list(self, cp, trigger_file, rho_threshold=-1.0,
@@ -518,14 +579,14 @@ class triggerList:
         except:
             keep_frac = keep_frac
 
-        nkeep=np.ceil(keep_frac*len(triggers))
-        keepidx=np.random.randint(low=0,high=len(triggers),size=nkeep)
-        triggers=[triggers[i] for i in keepidx]
+        nkeep=int(np.ceil(keep_frac*len(triggers)))
+        keepidx=random.sample(range(0,len(triggers)), nkeep)
+        triggers_out = [ triggers[i] for i in sorted(keepidx) ]
 
         print >> sys.stdout, "Read %d triggers, following up %d"%(
-                nrows, len(triggers))
+                nrows, len(triggers_out))
 
-        return triggers
+        return triggers_out
 
 
 
@@ -603,7 +664,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Required options  ------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
-        if not cp.get('datafind','sim-data'):
+        if not cp.getboolean('datafind','sim-data'):
             channel_list = ast.literal_eval(cp.get('datafind', 'channel-list'))
 
         # XXX: hack to repeat option for --ifo H1 --ifo L1 etc
@@ -620,7 +681,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
 
-            if not cp.get('datafind','sim-data'):
+            if not cp.getboolean('datafind','sim-data'):
                 # only specify channels for real data
                 self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
