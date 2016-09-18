@@ -107,3 +107,6 @@ echo "************* ER9 H1_HOFT_C00 *****************"
 # H1 ER9 h(t) H1_HOFT_C00 1151848448 1152167936
 gw_data_find --observatory H --type H1_HOFT_C00 -s 1151848448 -e 1152167936 \
     --show-times --server=ligo-gftp.pace.gatech.edu:80
+
+gw_data_find --observatory H --type H1_HOFT_C00 -s 1151848448 -e 1152167936 \
+    --show-times --server=ligo-gftp.pace.gatech.edu:80 | awk '{ sum+=$4} END {print sum}'
