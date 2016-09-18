@@ -311,22 +311,22 @@ lag_times = [trig.time_lag for trig in trigger_list.triggers]
 #
 # --- Determine min/max times for data coverage
 #
-seglen = cp.getfloat('input','seglen')
 psdlen = cp.getfloat('input','PSDlength')
 padding = cp.getfloat('input','padding')
+seglens = [trigger.seglen for trigger in trigger_list.triggers]
 
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
     trigtime = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
-    seg, _ = job_times(trigtime, seglen, psdlen, padding)
+    seg, _ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_start_time = seg[0]
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
     trigtime = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
-    seg,_ = job_times(trigtime, seglen, psdlen, padding)
+    seg,_ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_end_time = seg[1]
 
 # Timelag adjustment
@@ -604,7 +604,7 @@ for t,trigger in enumerate(trigger_list.triggers):
 
     # -------------------------------------------
     # Check job times fall within available data
-    job_segment, psd_start = job_times(trigger.trigger_time, seglen, psdlen, padding)
+    job_segment, psd_start = job_times(trigger.trigger_time, trigger.seglen, psdlen, padding)
 
     for ifo in ifo_list:
 
@@ -616,7 +616,7 @@ for t,trigger in enumerate(trigger_list.triggers):
             bad_job={}
             bad_job['ifo']=ifo
             bad_job['trigger_time']=trigger.trigger_time
-            bad_job['seglen']=seglen
+            bad_job['seglen']=trigger.seglen
             bad_job['psdlen']=psdlen
             bad_job['padding']=padding
             bad_job['job_segment']=job_segment
