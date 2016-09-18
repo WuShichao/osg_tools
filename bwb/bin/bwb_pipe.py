@@ -304,8 +304,6 @@ if opts.submit_to_gracedb:
 
 
 # Extract trigger times for readability
-print trigger_list
-print trigger_list.triggers
 
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
 lag_times = [trig.time_lag for trig in trigger_list.triggers]
