@@ -401,6 +401,7 @@ if (opts.cwb_trigger_list is not None) \
 for ifo in ifo_list:
 
     if cp.getboolean('datafind','sim-data'):
+        print >> sys.stdout, "Simulating noise"
 
         # Get the type of simulated data from the frame type list
         # E.g., to simulate from LALSimAdLIGO put this in the config.ini:
