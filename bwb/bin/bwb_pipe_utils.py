@@ -565,11 +565,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # Identify osg vs ldg site
         #
-        # FIXME: currently only associates PACE (GaTech) as an OSG site
-        hostname = socket.gethostname()
-        #hostname = 'pace.gatech.edu'
-        if 'pace.gatech.edu' in hostname:
-            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+        if cp.get('condor', 'osg-jobs'):
+            print >> sys.stdout, "Configuring file transfers for OSG deployment"
 
 
             # --- Perform file transfers
@@ -1047,10 +1044,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         #
         # Identify osg vs ldg site
         #
-        # FIXME: currently only associates PACE (GaTech) as an OSG site
-        hostname = socket.gethostname()
-        if 'pace.gatech.edu' in hostname:
-            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
+        if cp.get('condor', 'osg-jobs'):
+            print >> sys.stdout, "Configuring file transfers for OSG deployment"
 
 
             # --- Perform file transfers

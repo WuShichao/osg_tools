@@ -124,6 +124,7 @@ def parser():
     parser.add_option("--html-root", default=None)
     parser.add_option("--skip-megapy", default=False, action="store_true")
     parser.add_option("--tidy-up", default=False, action="store_true")
+    parser.add_option("--osg-jobs", default=False, action="store_true")
 
 
     (opts,args) = parser.parse_args()
@@ -164,6 +165,12 @@ if not os.path.exists(workdir):
 else:
     print >> sys.stderr, "WARNING: work-directory %s exists"%workdir
 
+# Decide whether OSG-submitting
+if not cp.has_option('condor','osg-jobs'):
+    cp.set('condor', 'osg-jobs', str(opts.osg_jobs))
+elif cp.has_option('condor','osg-jobs') and opts.osg_jobs:
+    # Override the config file with the command line
+    cp.set('condor', 'osg-jobs', str(opts.osg_jobs))
 
 # --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
