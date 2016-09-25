@@ -116,6 +116,7 @@ def parser():
     parser.add_option("--skip-datafind", default=False, action="store_true")
     parser.add_option("--sim-data", default=False, action="store_true")
     parser.add_option("-I", "--injfile", default=None)
+    parser.add_option("-F", "--followup-injections", default=None)
     parser.add_option("-G", "--graceID", default=None)
     parser.add_option("--graceID-list", default=None)
     parser.add_option("--bw-inject", default=False, action="store_true")
@@ -159,11 +160,8 @@ opts, args, cp = parser()
 cp.set('condor','copy-frames',str(opts.copy_frames))
 
 workdir = opts.workdir 
-if not os.path.exists(workdir): 
-    print >> sys.stdout, "making work-directory: %s"%workdir
-    os.makedirs(workdir)
-else:
-    print >> sys.stderr, "WARNING: work-directory %s exists"%workdir
+print >> sys.stdout, "making work-directory: %s"%workdir
+os.makedirs(workdir)
 
 # Decide whether OSG-submitting
 if not cp.has_option('condor','osg-jobs'):
@@ -217,6 +215,17 @@ if nrdata is not None:
     # Modify xml IN WORKDIR to point to local hdf5
     localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
 
+
+# Skip segment queries?
+print >> sys.stdout, "Determining whether to do segment queries"
+try:
+    skip_segment_queries = cp.getboolean('datafind','ignore-science-segments')
+except ConfigParser.NoOptionError:
+    print >> sys.stdout, \
+            "No ignore-science-segments in [datafind], skipping segdb by default"
+    cp.set('datafind','ignore-science-segments', str(True))
+    skip_segment_queries=True
+
 #############################################
 #
 # Get Trigger Info
@@ -247,8 +256,16 @@ if injfile is not None:
     #
     # Read injection file
     #
-    filename=os.path.join(workdir,injfile)
-    trigger_list = pipe_utils.triggerList(cp, injection_file=filename)
+    injfilename=os.path.join(workdir,injfile)
+
+    if opts.followup_injections is not None:
+        # Create trigger list from union of injections and those in
+        # followup_injections (overrides events= field)
+        trigger_list = pipe_utils.triggerList(cp, injection_file=injfilename,
+                followup_injections=opts.followup_injections)
+    else:
+        # Create trigger list from sim-inspiral table and events= field
+        trigger_list = pipe_utils.triggerList(cp, injection_file=injfilename)
 
 if cp.has_option('bayeswave_options','BW-inject'):
     # Check the option is valid:
@@ -294,28 +311,29 @@ if opts.submit_to_gracedb:
 
 
 # Extract trigger times for readability
+
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
 lag_times = [trig.time_lag for trig in trigger_list.triggers]
 
 #
 # --- Determine min/max times for data coverage
 #
-seglen = cp.getfloat('input','seglen')
 psdlen = cp.getfloat('input','PSDlength')
 padding = cp.getfloat('input','padding')
+seglens = [trigger.seglen for trigger in trigger_list.triggers]
 
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
     trigtime = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
-    seg, _ = job_times(trigtime, seglen, psdlen, padding)
+    seg, _ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_start_time = seg[0]
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
     trigtime = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
-    seg,_ = job_times(trigtime, seglen, psdlen, padding)
+    seg,_ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_end_time = seg[1]
 
 # Timelag adjustment
@@ -336,14 +354,14 @@ topdir=os.getcwd()
 os.chdir(workdir)
 
 datafind_dir = 'datafind'
-if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
+os.makedirs(datafind_dir)
 if cp.has_option('injections', 'mdc-cache'):
     shutil.copy(cp.get('injections', 'mdc-cache'),
             os.path.join('datafind','MDC.cache'))
 
 
 segment_dir = 'segments'
-if not os.path.exists(segment_dir): os.makedirs(segment_dir)
+os.makedirs(segment_dir)
 
 
 
@@ -385,11 +403,13 @@ if (opts.cwb_trigger_list is not None) \
         or (opts.graceID_list is not None):
 
     # Assume triggers lie in analyzeable segments
-    cp.set('datafind','ignore-science-segments', True)
+    skip_segment_queries=True
 
 for ifo in ifo_list:
 
-    if cp.get('datafind','sim-data'):
+    if cp.getboolean('datafind','sim-data'):
+        print >> sys.stdout, "Simulating noise"
+
         # Get the type of simulated data from the frame type list
         # E.g., to simulate from LALSimAdLIGO put this in the config.ini:
         #   frtype-list={'H1':'LALSimAdLIGO','L1':'LALSimAdLIGO'}
@@ -416,6 +436,7 @@ for ifo in ifo_list:
                     gps_end_time)])
 
     else:
+
 
         #
         # --- Run DataFind query to produce cache files for frames
@@ -458,7 +479,7 @@ for ifo in ifo_list:
         else:
             frameSegs[ifo] = segmentsUtils.fromlalcache(open(cache_files[ifo]))
 
-        if cp.has_option('datafind','ignore-science-segments'):
+        if skip_segment_queries:
             segmentList[ifo] = \
                     segments.segmentlist([segments.segment(gps_start_time,
                         gps_end_time)])
@@ -581,13 +602,17 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
+#for trigger in trigger_list.triggers[:5]:
+#    print trigger.trigger_time
+
+#sys.exit()
 for t,trigger in enumerate(trigger_list.triggers):
 
     print >> sys.stdout, "---------------------------------------"
 
     # -------------------------------------------
     # Check job times fall within available data
-    job_segment, psd_start = job_times(trigger.trigger_time, seglen, psdlen, padding)
+    job_segment, psd_start = job_times(trigger.trigger_time, trigger.seglen, psdlen, padding)
 
     for ifo in ifo_list:
 
@@ -599,7 +624,7 @@ for t,trigger in enumerate(trigger_list.triggers):
             bad_job={}
             bad_job['ifo']=ifo
             bad_job['trigger_time']=trigger.trigger_time
-            bad_job['seglen']=seglen
+            bad_job['seglen']=trigger.seglen
             bad_job['psdlen']=psdlen
             bad_job['padding']=padding
             bad_job['job_segment']=job_segment
@@ -628,10 +653,11 @@ for t,trigger in enumerate(trigger_list.triggers):
                     transferFrames[ifo] = [frame for f,frame in
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
 
-        outputDir  = 'bayeswave_' + str(int(trigger.trigger_time)) + '_' + \
+        # Make output directory for this trigger
+        outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
                 str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
 
-        if not os.path.exists(outputDir): os.makedirs(outputDir)
+        os.makedirs(outputDir)
 
         # XXX Dump job info file
         #GPS time, lag or GraceID, frequency, and cWB’s rho

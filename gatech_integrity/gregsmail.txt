@@ -1,0 +1,78 @@
+The times above do not seem to account for gaps in the data.
+
+1. The monitor times seems to be the entire ER8 time:
+
+-bash-4.2$ expr 1126621184 - 1123856384
+2764800
+
+2. The CIT/GATech times seem to just include the times up to the first
+gap in the data.
+
+If I run gw_data_find with the --show-times option (at LHO, since CIT is
+under maintenance) I get:
+
+-bash-4.2$ gw_data_find -o H -t H1_HOFT_C00 -s 1123856384 -e 1126621184
+--show-times
+# seg   start           stop            duration
+0       1123856384      1123949676      93292
+1       1123963232      1124831232      868000
+2       1124835328      1125777244      941916
+3       1125779196      1125779348      152
+4       1125779584      1126621184      841600
+
+Thus, there is more data than just the first segment in the first rwo above.
+
+The actual total time H1_HOFT_C00 exists is:
+
+-bash-4.2$ expr 93292 + 868000 + 941916 + 152 + 841600
+2744960
+
+Note that the missing times correspond to times we could not aggregate
+the hoft data (either the DAQ or DMT were down, or something was bad
+with the input data).
+
+The times the H1_HOFT_C00  data are missing are flagged in the segment
+database using:
+
+H1:DCH-MISSING_H1_HOFT_C00:2
+
+And you can query the times by running:
+
+$ ligolw_segment_query_dqsegdb
+--segment-url=https://dqsegdb5.phy.syr.edu --query-segments
+--include-segments H1:DCH-MISSING_H1_HOFT_C00:2 --gps-start-time
+1123856384 --gps-end-time 1126621184 | /usr/bin/ligolw_print -t
+segment:table -c start_time -c end_time -d " "
+1123949676 1123963232
+1124831232 1124835328
+1125777244 1125779196
+1125779348 1125779584
+
+The segments above correspond to the times between the segments returned
+by gw_data_find.
+
+I've also counted up the actual files on disk,
+
+-bash-4.2$ find /archive/frames/ER8/hoft/H1/ | grep "\.gwf$" | grep 4096
+| cat -n | tail -1
+   667
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11266/H-H1_HOFT_C00-1126617088-4096.gwf
+-bash-4.2$ find /archive/frames/ER8/hoft/H1/ | grep "\.gwf$" | grep -v 4096
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11239/H-H1_HOFT_C00-1123946496-3180.gwf
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11239/H-H1_HOFT_C00-1123963232-3744.gwf
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11257/H-H1_HOFT_C00-1125773312-3932.gwf
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11257/H-H1_HOFT_C00-1125779196-152.gwf
+/archive/frames/ER8/hoft/H1/H-H1_HOFT_C00-11257/H-H1_HOFT_C00-1125779584-1920.gwf
+
+and the times add to the same as gw_data_find returns:
+
+-bash-4.2$ expr 667 \* 4096 + 3180 + 3744 + 3932 + 152 + 1920
+2744960
+
+The above were run at LHO. However, I run checks on the data at CIT, and
+CIT has the same data as at LHO, with some lag due to transfers and
+maintenance in the past 24 hrs, as seen on the lag plot here:
+
+http://www.ldas-cit.ligo.caltech.edu/lag.html
+
+I hope this helps.
