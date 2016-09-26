@@ -158,7 +158,7 @@ class eventTrigger:
             self.default_seglen = default_seglen
 
         try:
-            self.default_seglen = cp.getfloat('input', 'window')
+            self.default_window = cp.getfloat('input', 'window')
         except:
             self.default_window = default_window
 
