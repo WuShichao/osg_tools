@@ -1034,6 +1034,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('window', window)
         self.__window = window
 
+    def set_rolloff(self, rolloff):
+        self.add_var_opt('padding', rolloff)
+        self.__rolloff = rolloff
+
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('PSDstart', PSDstart)
         self.__PSDstart = PSDstart
@@ -1228,6 +1232,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_window(self, window):
         self.add_var_opt('window', window)
         self.__window = window
+
+    def set_rolloff(self, rolloff):
+        self.add_var_opt('padding', rolloff)
+        self.__rolloff = rolloff
 
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)

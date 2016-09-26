@@ -694,6 +694,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_seglen(trigger.seglen)
         bayeswave_node.set_window(trigger.window)
         bayeswave_node.set_PSDstart(psd_start)
+        if cp.has_option('input','rolloff'):
+            bayeswave_node.set_rolloff(cp.getfloat('input','rolloff'))
         bayeswave_node.set_outputDir(outputDir)
         if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 
@@ -716,6 +718,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.set_seglen(trigger.seglen)
         bayeswave_post_node.set_window(trigger.window)
         bayeswave_post_node.set_PSDstart(psd_start)
+        if cp.has_option('input','rolloff'):
+            bayeswave_post_node.set_rolloff(cp.getfloat('input','rolloff'))
         bayeswave_post_node.set_outputDir(ifo_list, outputDir)
 
         if injfile is not None:
