@@ -411,9 +411,8 @@ class triggerList:
                 LIGOLWContentHandler, verbose = True)
         sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
 
-        #trigger_times = read_injection_table(injection_file)
         injection_times = sim_inspiral_table.get_column('geocent_end_time') + \
-                1e-9*sim_inspiral_table.get_column('geocent_end_time')
+                1e-9*sim_inspiral_table.get_column('geocent_end_time_ns')
 
         print "..read %d injections"%len(injection_times)
 
@@ -1015,11 +1014,11 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         pipeline.AnalysisNode.__init__(self)
 
     def set_trigtime(self, trigtime):
-        self.add_var_opt('trigtime', trigtime)
+        self.add_var_opt('trigtime', '%.9f'%trigtime)
         self.__trigtime = trigtime
 
     def set_segment_start(self, segment_start):
-        self.add_var_opt('segment-start', segment_start)
+        self.add_var_opt('segment-start', '%.9f'%segment_start)
         self.__segment_start = segment_start
 
     def set_srate(self, srate):
@@ -1039,7 +1038,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__rolloff = rolloff
 
     def set_PSDstart(self, PSDstart):
-        self.add_var_opt('PSDstart', PSDstart)
+        self.add_var_opt('PSDstart', '%.9f'%PSDstart)
         self.__PSDstart = PSDstart
 
     def set_outputDir(self, outputDir):
@@ -1222,11 +1221,11 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         pipeline.AnalysisNode.__init__(self)
 
     def set_trigtime(self, trigtime):
-        self.add_var_opt('trigtime', trigtime)
+        self.add_var_opt('trigtime', '%.9f'%trigtime)
         self.__trigtime = trigtime
 
     def set_segment_start(self, segment_start):
-        self.add_var_opt('segment-start', segment_start)
+        self.add_var_opt('segment-start', '%.9f'%segment_start)
         self.__segment_start = segment_start
 
     def set_window(self, window):
@@ -1246,7 +1245,7 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__seglen = seglen
 
     def set_PSDstart(self, PSDstart):
-        self.add_var_opt('PSDstart', PSDstart)
+        self.add_var_opt('PSDstart', '%.9f'%PSDstart)
         self.__PSDstart = PSDstart
 
     def set_outputDir(self, ifo_list, outputDir):

@@ -654,7 +654,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                             enumerate(framePaths[ifo]) if frame_idx[f]] 
 
         # Make output directory for this trigger
-        outputDir  = 'bayeswave_' + str(float(trigger.trigger_time)) + '_' + \
+        outputDir  = 'bayeswave_' + str('%.9f'%trigger.trigger_time) + '_' + \
                 str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
 
         os.makedirs(outputDir)
