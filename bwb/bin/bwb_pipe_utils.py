@@ -619,9 +619,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor','desired-sites'):
             self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
-        if cp.has_option('bayeswave_options', 'request-memory'):
+        if cp.has_option('condor', 'bayeswave-request-memory'):
             self.add_condor_cmd('request_memory',
-                    cp.get('bayeswave_options', 'request-memory'))   
+                    cp.get('condor', 'bayeswave-request-memory'))   
         #
         # Identify osg vs ldg site
         #
@@ -1090,9 +1090,9 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        if cp.has_option('bayeswave_post_options', 'request-memory'):
+        if cp.has_option('condor', 'bayeswave_post-request-memory'):
             self.add_condor_cmd('request_memory',
-                    cp.get('bayeswave_post_options', 'request-memory'))   
+                    cp.get('condor', 'bayeswave_post-request-memory'))   
 
         self.set_stdout_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).err')
