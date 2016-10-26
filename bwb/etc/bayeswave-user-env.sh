@@ -36,6 +36,7 @@ export PYTHONPATH=${PYTHONPATH}:${HOME}/Projects/osg_tools/bwb/bin
 # Python
 export PATH=${LIGO_LIBS}/non-lsc/Python-2.7.5/bin:${PATH}
 export LD_LIBRARY_PATH=${LIGO_LIBS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
+export LIBRARY_PATH=${LIGO_LIBS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
 export PKG_CONFIG_PATH=${LIGO_LIBS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
 
 # Numpy
