@@ -1,0 +1,71 @@
+BUILDING lalsuite-6.38
+
+0) using configure command (swig wrappings are required for bayeswave pipeline):
+--prefix=${LALSUITE_PREFIX} CFLAGS=-O3 --enable-swig-python
+
+
+1) https://www.lsc-group.phys.uwm.edu/daswg/docs/howto/lscsoft-install.html
+is hopelessly outdated:
+
+a) The pkg-config install makes lalsuite think there's no zlib
+b) the minimum required version of gsl is 1.13; those instructions use 1.12 [for
+bayeswave on /cvmfs, i'm using gsl-1.15 as per LDG]
+c) note that the instructions also use fftw-3.2.1.tar.gz.  Seems to work but
+maybe non-optimal??
+
+I'm using 3.3.5 as per LDG
+
+BUILDING lalsuite dependencies
+
+USEFUL NOTE:  to figure out library versions on LDG (these from CIT):
+
+From FFTW website
+pkg-config --print-provides fftw3
+fftw3 = 3.3.5
+
+From GSL website https://ftp.gnu.org/gnu/gsl/
+pkg-config --print-provides gsl
+gsl = 1.15
+
+From http://software.ligo.org/lscsoft/source/libframe-8.30.tar.gz
+pkg-config --print-provides libframe
+libframe = 8.30
+
+From https://www.lsc-group.phys.uwm.edu/daswg/projects/metaio.html
+pkg-config --print-provides libmetaio
+libmetaio = 8.4.0
+
+
+FFTW
+
+Remember you need BOTH float and non-float versions.  So configure and build twice, but install to the same location
+
+./configure --prefix=$LSCSOFT_PREFIX/non-lsc --enable-shared --enable-float
+--disable-fortran 
+make  # note: ignore fail... the build fails on MacOSX, but not seriously
+make install # note: ignore fail
+make distclean 
+./configure --prefix=$LSCSOFT_PREFIX/non-lsc --enable-shared --disable-fortran 
+make # note: ignore fail
+make install # note: ignore fail
+
+LIBFRAME
+./configure --prefix=$LSCSOFT_PREFIX/libframe --disable-octave --disable-python --with-matlab=no
+
+HEALPIX
+
+You have to edit the pkg-config file to have the correct prefix, since the build does not offer a --prefix:
+
+E.g.,:
+prefix=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline/bayeswave/non-lsc/Healpix_3.31
+
+SWIG
+
+Don't create an environment variable called $SWIG; this interferes with version checking and you will fail
+
+CFITSIO
+use:
+make shared
+- to build .so so that LD_LIBRARY_PATH works.  If you don't do this (and you don't set LIBRARY_PATH), the gslcblas link fails.
+
+
