@@ -6,8 +6,8 @@ lscsoft="${LIGO_LIBS}/lscsoft/"
 lalsuite="${lscsoft}lalsuite-6.38"
 
 source ${lalsuite}/etc/lalsuiterc
-#source ${lalsuite}/pylal/etc/pylal-user-env.sh
-#source ${lalsuite}/glue/etc/glue-user-env.sh
+source ${lalsuite}/pylal/etc/pylal-user-env.sh
+source ${lalsuite}/glue/etc/glue-user-env.sh
 
 export LAL_DATA_PATH=${HOME}/data/ROM_data
 
@@ -50,8 +50,11 @@ export PYTHONPATH=${LIGO_LIBS}/non-lsc/scipy-0.12.1/lib/python2.7/site-packages:
 # Matplotlib
 export PATH=${LIGO_LIBS}/non-lsc/matplotlib-1.2.0/bin:${PATH}
 export PYTHONPATH=${LIGO_LIBS}/non-lsc/matplotlib-1.2.0/lib/python2.7/site-packages:${PYTHONPATH}
-export GEOS_DIR=${LIGO_LIBS}/non-lsc/geos-3.5.0
 export PYTHONPATH=${LIGO_LIBS}/non-lsc/basemap-1.0.7/lib/python2.7/site-packages:${PYTHONPATH}
+
+# GEOS
+export GEOS_DIR=${LIGO_LIBS}/non-lsc/geos-3.5.0
+export LD_LIBRARY_PATH=${GEOS_DIR}/lib:${LD_LIBRARY_PATH}
 
 # Misc dependencies
 export PYTHONPATH=${LIGO_LIBS}/non-lsc/setuptools-28.6.1/lib/python2.7/site-packages:${PYTHONPATH}
