@@ -48,18 +48,33 @@ fi
 #                 BAYESWAVE                 #
 # ----------------------------------------- #
 
+if [ -z ${BAYESWAVE_ROOT} ]
+then
+    echo "BAYESWAVE_ROOT is unset"
+    echo "set e.g., BAYESWAVE_ROOT=${HOME}/data/src/lscsoft/bayeswave/trunk"
+    return
+else
+    echo "BAYESWAVE_ROOT=${BAYESWAVE_ROOT}"
+fi
+
 # BayesWave
-export PATH=${PATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/src
-export PATH=${PATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess
-export PATH=${PATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess/dist
-export PATH=${PATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess/skymap
-export PATH=${PATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess/skymap/dist
-export PYTHONPATH=${PYTHONPATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess
-export PYTHONPATH=${PYTHONPATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/postprocess/skymap
-export PYTHONPATH=${PYTHONPATH}:${HOME}/data/src/lscsoft/bayeswave/trunk/utils
+export PATH=${BAYESWAVE_PREFIX}/src:${PATH}
+export PATH=${BAYESWAVE_PREFIX}/postprocess:${PATH}
+export PATH=${BAYESWAVE_PREFIX}/postprocess/dist:${PATH}
+export PATH=${BAYESWAVE_PREFIX}/postprocess/skymap:${PATH}
+export PATH=${BAYESWAVE_PREFIX}/postprocess/skymap/dist:${PATH}
+export PYTHONPATH=${BAYESWAVE_PREFIX}/postprocess:${PYTHONPATH}
+export PYTHONPATH=${BAYESWAVE_PREFIX}/postprocess/skymap:${PYTHONPATH}
+export PYTHONPATH=${BAYESWAVE_PREFIX}/utils:${PYTHONPATH}
 
 # BayesWave Pipeline
 export BWB_PIPE_PATH=${HOME}/Projects/osg_tools/bwb
-export PATH=${PATH}:${BWB_PIPE_PATH}/bin
-export PYTHONPATH=${PYTHONPATH}:${BWB_PIPE_PATH}/bin
+export PATH=${BWB_PIPE_PATH}/bin:${PATH}
+export PYTHONPATH=${BWB_PIPE_PATH}/bin:${PYTHONPATH}
+
+
+
+
+
+
 
