@@ -1,21 +1,22 @@
 #!/bin/bash
 
-if [ -z ${CVMFS_PIPEDIR}/bayeswave ]
+if [ -d ${CVMFS_PIPEDIR}/bayeswave ]
 then
-    BAYESWAVE_DEPS=${CVMFS_PIPEDIR}/bayeswave
+    export BAYESWAVE_DEPS=${CVMFS_PIPEDIR}/bayeswave
     echo "Setting BAYESWAVE_DEPS=${BAYESWAVE_DEPS}"
 else
     echo "CVMFS_PIPEDIR is unset, exiting"
-    exit
+    return
 fi
 
 # Default lalsuite version for BayesWave
 # You can override this by setting LALSUITE_PREFIX manually
 if [ ! -z ${LALSUITE_PREFIX} ]
 then
-    echo "LALSUITE_PREFIX is unset"
+    echo "LALSUITE_PREFIX=${LALSUITE_PREFIX}"
+else
     export LALSUITE_PREFIX=${BAYESWAVE_DEPS}/lscsoft/lalsuite-6.38
-    echo "Setting LALSUTIE_PREFIX=${LALSUITE_PREFIX}"
+    echo "Setting LALSUITE_PREFIX=${LALSUITE_PREFIX}"
 fi
 
 # -------------------------------------------
