@@ -4,10 +4,13 @@
 #                   LAL                     #
 # ----------------------------------------- #
 
-if [ -d /cvmfs/oasis.opensciencegrid.org/ligo/pipeline ]
+
+# User should set OSG_DEPLOY=true if desired
+if [ ${OSG_DEPLOY} ]
 then
 
-    echo "CVMFS detected: OSG deployment"
+    echo "OSG_DEPLOY=${OSG_DEPLOY}"
+    return
     export CVMFS_PIPEDIR=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline
 
     # Set up BayesWave dependencies
@@ -25,6 +28,7 @@ fi
 
 if [ ! -z ${LALSUITE_PREFIX} ]
 then
+    echo "Using LALSUITE_PREFIX=${LALSUITE_PREFIX}"
     source ${LALSUITE_PREFIX}/etc/lalsuiterc
     source ${LALSUITE_PREFIX}/pylal/etc/pylal-user-env.sh
     source ${LALSUITE_PREFIX}/glue/etc/glue-user-env.sh
@@ -48,13 +52,13 @@ fi
 #                 BAYESWAVE                 #
 # ----------------------------------------- #
 
-if [ -z ${BAYESWAVE_ROOT} ]
+if [ -z ${BAYESWAVE_PREFIX} ]
 then
-    echo "BAYESWAVE_ROOT is unset"
-    echo "set e.g., BAYESWAVE_ROOT=${HOME}/data/src/lscsoft/bayeswave/trunk"
+    echo "BAYESWAVE_PREFIX is unset"
+    echo "set e.g., BAYESWAVE_PREFIX=${HOME}/data/src/lscsoft/bayeswave/trunk"
     return
 else
-    echo "BAYESWAVE_ROOT=${BAYESWAVE_ROOT}"
+    echo "BAYESWAVE_PREFIX=${BAYESWAVE_PREFIX}"
 fi
 
 # BayesWave
