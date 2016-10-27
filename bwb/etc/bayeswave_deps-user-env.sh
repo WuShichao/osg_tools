@@ -3,13 +3,6 @@
 LIGO_LIBS="/cvmfs/oasis.opensciencegrid.org/ligo/pipeline/bayeswave"
 
 
-lscsoft="${LIGO_LIBS}/lscsoft/"
-lalsuite="${lscsoft}lalsuite-6.38"
-
-source ${lalsuite}/etc/lalsuiterc
-source ${lalsuite}/pylal/etc/pylal-user-env.sh
-source ${lalsuite}/glue/etc/glue-user-env.sh
-
 # -------------------------------------------
 #               PYTHON & FRIENDS            #
 # -------------------------------------------
