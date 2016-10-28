@@ -187,17 +187,6 @@ if injfile is not None:
     shutil.copy(injfile, workdir)
     injfile=os.path.basename(injfile)
 
-    # Also locate and copy rom chirp time data
-    try:
-        rom_data_path = os.path.join(os.environ['LAL_DATA_PATH'],
-                'SEOBNRv2ChirpTimeSS.dat')
-        shutil.copy(rom_data_path, workdir)
-    except KeyError:
-        print >> sys.stderr, "Warning: LAL_DATA_PATH not set"
-        print >> sys.stderr, \
-                "CBC injections require SEOBNRv2ChirpTimeSS.dat in \
-LAL_DATA_PATH"
-
 
 # NR HDF5 data
 try:

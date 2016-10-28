@@ -643,15 +643,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             if cp.getboolean('condor','copy-frames'): transferstring+=',$(macroframes)'
 
-            # XXX FIXME: better handling of ROM data
-            if injfile is not None:
-                transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
-            if nrdata is not None: transferstring+=','+nrdata
             self.add_condor_cmd('transfer_input_files', transferstring)
-
-            # --- Point to ROM data (which should have been copied
-            if injfile is not None:
-                self.add_condor_cmd("environment", "LAL_DATA_PATH=./")
 
         self.add_condor_cmd('getenv', 'True')
 
@@ -855,14 +847,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # backgroundPrior
         if cp.has_option('bayeswave_options', 'backgroundPrior'):
-             
             if cp.get('bayeswave_options', 'backgroundPrior') == None:
-                print >> sys.stderr, "must specifiy name of 2-column bkg frequency\
-    distribution file"
+                print >> sys.stderr, "must specifiy name of 2-column bkg frequency distribution file"
                 sys.exit()
-
-                self.add_opt('backgroundPrior', cp.get('bayeswave_options',
-                    'backgroundPrior'))
+            self.add_opt('backgroundPrior', cp.get('bayeswave_options','backgroundPrior'))
 
 
         # noOrientationProposal
@@ -1125,14 +1113,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
                 # allow specification of additional files to transfer
                 transferstring+=',%s'%cp.get('condor','transfer-files')
 
-            if injfile is not None:
-                transferstring+=','+'SEOBNRv2ChirpTimeSS.dat,'+injfile
-            if nrdata is not None: transferstring+=','+nrdata
             self.add_condor_cmd('transfer_input_files', transferstring)
-
-            # --- Point to ROM data (which should have been copied
-            if injfile is not None:
-                self.add_condor_cmd("environment", 'LAL_DATA_PATH="./"')
 
         self.add_condor_cmd('getenv', 'True')
 

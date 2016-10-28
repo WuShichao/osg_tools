@@ -10,7 +10,6 @@ if [ ${OSG_DEPLOY} ]
 then
 
     echo "OSG_DEPLOY=${OSG_DEPLOY}"
-    return
     export CVMFS_PIPEDIR=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline
 
     # Set up BayesWave dependencies
