@@ -9,8 +9,8 @@ accounting_group = ligo.dev.o2.burst.paramest.bayeswave
 error = $(macrooutputDir)/megasky_$(macrooutputDir).err
 output = $(macrooutputDir)/megasky_$(macrooutputDir).out
 should_transfer_files = YES
-transfer_input_files $(macrooutputDir)
-transfer_output_files $(macrooutputDir)
+transfer_input_files = $(macrooutputDir)
+transfer_output_files = $(macrooutputDir)
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = never
 queue 1
@@ -25,8 +25,8 @@ accounting_group = ligo.dev.o2.burst.paramest.bayeswave
 error = $(macrooutputDir)/megaplot_$(macrooutputDir).err
 output = $(macrooutputDir)/megaplot_$(macrooutputDir).out
 should_transfer_files = YES
-transfer_input_files $(macrooutputDir)
-transfer_output_files $(macrooutputDir)
+transfer_input_files = $(macrooutputDir)
+transfer_output_files = $(macrooutputDir)
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = never
 queue 1
