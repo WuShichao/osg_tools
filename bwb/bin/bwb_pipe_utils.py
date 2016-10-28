@@ -17,6 +17,14 @@
 
 # DAG Class definitions for bayeswave
 
+import sys,os,subprocess
+# Test BAYESWAVE_PREFIX
+try:
+    BAYESWAVE_PREFIX = os.environ['BAYESWAVE_PREFIX']
+except KeyError:
+    print >> sys.stdout, "BAYESWAVE_PREFIX is unset"
+    sys.exit()
+
 from glue import pipeline
 from glue.ligolw import ligolw
 from glue.ligolw import utils as ligolw_utils
@@ -26,7 +34,6 @@ from glue.ligolw import lsctables
 import ConfigParser
 import itertools
 import socket
-import sys,os
 import ast
 import numpy as np
 import random
@@ -603,7 +610,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave = cp.get('bayeswave_paths','bayeswave')
+        bayeswave=os.path.join(os.environ['BAYESWAVE_PREFIX','src/bayeswave')
 
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -1070,7 +1077,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave_post = cp.get('bayeswave_paths','bayeswave_post')
+        bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX','src/bayeswave_post')
 
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave_post)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -1270,7 +1277,8 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        megasky = cp.get('bayeswave_paths','megasky')
+        megasky = os.path.join(os.environ['BAYESWAVE_PREFIX','postprocess/skymap/megasky.py')
+
         pipeline.CondorDAGJob.__init__(self,universe,megasky)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
@@ -1326,7 +1334,8 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        megaplot = cp.get('bayeswave_paths','megaplot')
+        megaplot = os.path.join(os.environ['BAYESWAVE_PREFIX','postprocess/megaplot.py')
+
         pipeline.CondorDAGJob.__init__(self,universe, megaplot)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
@@ -1345,10 +1354,15 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.getboolean('condor', 'osg-jobs'):
             print >> sys.stdout, "Configuring file transfers for OSG deployment"
 
+            css=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'postprocess', 'BWBweb.css')
+            ajax=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'postprocess', 'secure_ajax.js')
+            nav=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'postprocess', 'navigate.js')
+
             # --- Perform file transfers
             self.add_condor_cmd('should_transfer_files', 'YES')
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
-            self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
+            self.add_condor_cmd('transfer_input_files',
+                '$(macroargument0),{css},{ajax},{nav}'.format(css=css,ajax=ajax,nav=nav))
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
 
         self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
