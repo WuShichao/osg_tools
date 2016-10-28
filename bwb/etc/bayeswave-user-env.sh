@@ -10,7 +10,6 @@ if [ ${OSG_DEPLOY} ]
 then
 
     echo "OSG_DEPLOY=${OSG_DEPLOY}"
-    return
     export CVMFS_PIPEDIR=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline
 
     # Set up BayesWave dependencies
@@ -72,9 +71,16 @@ export PYTHONPATH=${BAYESWAVE_PREFIX}/postprocess/skymap:${PYTHONPATH}
 export PYTHONPATH=${BAYESWAVE_PREFIX}/utils:${PYTHONPATH}
 
 # BayesWave Pipeline
-export BWB_PIPE_PATH=${HOME}/Projects/osg_tools/bwb
-export PATH=${BWB_PIPE_PATH}/bin:${PATH}
-export PYTHONPATH=${BWB_PIPE_PATH}/bin:${PYTHONPATH}
+if [ -z ${BAYESWAVE_PIPE_PREFIX} ]
+then
+    echo "BAYESWAVE_PIPE_PREFIX is unset"
+    echo "set e.g., BAYESWAVE_PIPE_PREFIX=${HOME}/Projects/osg_tools/bwb"
+    return
+else
+    echo BAYESWAVE_PIPE_PREFIX=${BAYESWAVE_PIPE_PREFIX}
+fi
+export PATH=${BAYESWAVE_PIPE_PREFIX}/bin:${PATH}
+export PYTHONPATH=${BAYESWAVE_PIPE_PREFIX}/bin:${PYTHONPATH}
 
 
 

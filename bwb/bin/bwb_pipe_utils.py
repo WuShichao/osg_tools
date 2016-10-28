@@ -847,14 +847,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         # backgroundPrior
         if cp.has_option('bayeswave_options', 'backgroundPrior'):
-             
             if cp.get('bayeswave_options', 'backgroundPrior') == None:
-                print >> sys.stderr, "must specifiy name of 2-column bkg frequency\
-    distribution file"
+                print >> sys.stderr, "must specifiy name of 2-column bkg frequency distribution file"
                 sys.exit()
-
-                self.add_opt('backgroundPrior', cp.get('bayeswave_options',
-                    'backgroundPrior'))
+            self.add_opt('backgroundPrior', cp.get('bayeswave_options','backgroundPrior'))
 
 
         # noOrientationProposal
