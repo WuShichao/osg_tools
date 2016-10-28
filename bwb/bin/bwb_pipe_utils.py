@@ -610,7 +610,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave=os.path.join(os.environ['BAYESWAVE_PREFIX','src/bayeswave'])
+        bayeswave=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave')
 
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -1077,7 +1077,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX','src/bayeswave_post'])
+        bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_post')
 
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave_post)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -1277,7 +1277,7 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        megasky = os.path.join(os.environ['BAYESWAVE_PREFIX'],'postprocess/skymap/megasky.py')
+        megasky = os.path.join(os.environ['BAYESWAVE_PREFIX'],'postprocess','skymap','megasky.py')
 
         pipeline.CondorDAGJob.__init__(self,universe,megasky)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
@@ -1334,7 +1334,7 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         universe='vanilla'
 
         # Point this to the src dir
-        megaplot = os.path.join(os.environ['BAYESWAVE_PREFIX'],'postprocess/megaplot.py')
+        megaplot = os.path.join(os.environ['BAYESWAVE_PREFIX'],'postprocess','megaplot.py')
 
         pipeline.CondorDAGJob.__init__(self,universe, megaplot)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
