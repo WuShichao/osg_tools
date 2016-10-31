@@ -124,6 +124,7 @@ def parser():
     parser.add_option("--submit-to-gracedb", default=False, action="store_true")
     parser.add_option("--html-root", default=None)
     parser.add_option("--skip-megapy", default=False, action="store_true")
+    parser.add_option("--skip-post", default=False, action="store_true")
     parser.add_option("--tidy-up", default=False, action="store_true")
     parser.add_option("--osg-jobs", default=False, action="store_true")
 
@@ -731,7 +732,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         # --- Add parent/child relationships
         #
-        bayeswave_post_node.add_parent(bayeswave_node)
+        if not opts.skip_post:
+            bayeswave_post_node.add_parent(bayeswave_node)
         if not opts.skip_megapy:
             megasky_node.add_parent(bayeswave_post_node)
             megaplot_node.add_parent(bayeswave_post_node) 
