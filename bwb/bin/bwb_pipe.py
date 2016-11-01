@@ -639,7 +639,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                 len(trigger_times))
 
 
-        if not cp.get('datafind','sim-data'):
+        if not cp.getboolean('datafind','sim-data'):
             #
             # Identify frames associated with this job
             if opts.copy_frames:
