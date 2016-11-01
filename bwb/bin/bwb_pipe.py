@@ -378,6 +378,7 @@ elif cp.has_option('datafind','sim-data') and opts.sim_data:
     cp.set('datafind', 'sim-data', str(opts.sim_data))
 
 
+
 cache_files = {}
 segmentList = {}
 framePaths={}
@@ -456,6 +457,10 @@ for ifo in ifo_list:
             print >> sys.stdout, ldfcmd
 
             subprocess.call(ldfcmd, shell=True)
+
+        ldfcmd_file = open('datafind_cmd.sh','w')
+        ldfcmd_file.writelines(ldfcmd+'\n')
+        ldfcmd_file.close()
 
         cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
@@ -753,7 +758,8 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
-        dag.add_node(bayeswave_post_node)
+        if not opts.skip_post:
+            dag.add_node(bayeswave_post_node)
         if not opts.skip_megapy:
             dag.add_node(megasky_node)
             dag.add_node(megaplot_node)
