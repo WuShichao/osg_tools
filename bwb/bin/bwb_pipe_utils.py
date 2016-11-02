@@ -134,6 +134,32 @@ def read_injection_table(filename):
 #       print >> sys.stderr, "Error: cannot read injection file %s"%injfile
 #       sys.exit()
 
+class cvmfsEnv:
+    """
+    Retrieve some variables to set environment to use /cvmfs
+    """
+
+    def __init__(self):
+
+        # --- Setup python from cvmfs
+        try:
+            CVMFS_PYTHON = os.path.join(os.environ['BAYESWAVE_DEPS'],
+                    'non-lsc/Python-2.7.5')
+        except KeyError:
+            print >> sys.stdout, "BAYESWAVE_DEPS is unset"
+            sys.exit()
+
+        self.CVMFS_PATH=os.path.join(CVMFS_PYTHON,
+                os.path.expandvars('bin:${PYTHONPATH}'))
+        self.CVMFS_LD_LIBRARY_PATH=os.path.join(CVMFS_PYTHON,
+                os.path.expandvars('lib:${LD_LIBRARY_PATH}'))
+        self.CVMFS_LIBRARY_PATH=os.path.join(CVMFS_PYTHON,
+                os.path.expandvars('lib:${LIBRARY_PATH}'))
+        self.CVMFS_PKG_CONFIG_PATH=os.path.join(CVMFS_PYTHON,
+                os.path.expandvars('lib:${PKG_CONFIG_PATH}'))
+        self.CVMFS_PYTHONPATH=os.path.join(CVMFS_PYTHON,
+                os.path.expandvars('lib/python2.7/site-packages:${PYTHONPATH}'))
+
 class eventTrigger:
     """
     Stores event characteristics and determines run configuration for this event
@@ -1299,6 +1325,18 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
 
+
+            # --- Set up environment from CVMFS
+            cvmfs_env=cvmfsEnv()
+
+            self.add_condor_cmd('environment',
+                    '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
+                        cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
+                        cvmfs_env.CVMFS_LIBRARY_PATH,
+                        cvmfs_env.CVMFS_PKG_CONFIG_PATH,
+                        cvmfs_env.CVMFS_PYTHONPATH))
+
+
         self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).log')
@@ -1364,6 +1402,16 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files',
                 '$(macroargument0),{css},{ajax},{nav}'.format(css=css,ajax=ajax,nav=nav))
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+            # --- Set up environment from CVMFS
+            cvmfs_env=cvmfsEnv()
+
+            self.add_condor_cmd('environment',
+                    '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
+                        cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
+                        cvmfs_env.CVMFS_LIBRARY_PATH,
+                        cvmfs_env.CVMFS_PKG_CONFIG_PATH,
+                        cvmfs_env.CVMFS_PYTHONPATH))
 
         self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')

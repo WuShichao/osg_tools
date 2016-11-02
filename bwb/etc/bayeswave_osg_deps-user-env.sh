@@ -24,11 +24,26 @@ fi
 # -------------------------------------------
 
 # Python
-export PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/bin:${PATH}
-export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
-export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
-export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
-export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
+case "$(python --version 2>&1)" in
+    *" 2.7"*)
+        echo "Local:"
+        echo "python --version"
+        python --version
+        continue
+        ;;
+    *)
+        echo "Local:"
+        echo "python --version"
+        python --version
+        echo "using ${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5"
+
+		export PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/bin:${PATH}
+		export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
+		export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
+		export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
+		export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
+        ;;
+esac
 
 # Numpy
 export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
