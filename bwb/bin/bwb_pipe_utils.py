@@ -160,6 +160,25 @@ class cvmfsEnv:
         self.CVMFS_PYTHONPATH=os.path.join(CVMFS_PYTHON,
                 os.path.expandvars('lib/python2.7/site-packages:${PYTHONPATH}'))
 
+        # --- Setup numpy from cvmfs
+        try:
+            CVMFS_NUMPY = os.path.join(os.environ['BAYESWAVE_DEPS'],
+                    'non-lsc/numpy-1.9.1')
+        except KeyError:
+            print >> sys.stdout, "BAYESWAVE_DEPS is unset"
+            sys.exit()
+
+        self.CVMFS_PATH=os.path.join(CVMFS_NUMPY,
+                os.path.expandvars('bin:{0}'.format(self.CVMFS_PATH)))
+        self.CVMFS_LD_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
+                os.path.expandvars('lib:{1}'.format(self.CVMFS_LD_LIBRARY_PATH)))
+        self.CVMFS_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
+                os.path.expandvars('lib:{2}'.format(self.CVMFS_LIBRARY_PATH)))
+        self.CVMFS_PKG_CONFIG_PATH=os.path.join(CVMFS_NUMPY,
+                os.path.expandvars('lib:{3}'.format(self.CVMFS_PKG_CONFIG_PATH)))
+        self.CVMFS_PYTHONPATH=os.path.join(CVMFS_NUMPY,
+                os.path.expandvars('lib/python2.7/site-packages:{4}'.format(self.CVMFS_PYTHONPATH)))
+
 class eventTrigger:
     """
     Stores event characteristics and determines run configuration for this event

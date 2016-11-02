@@ -42,21 +42,23 @@ case "$(python --version 2>&1)" in
 		export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
 		export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
 		export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
+
+
+        # Numpy
+        export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
+        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/lib/python2.7/site-packages:${PYTHONPATH}
+
+        # Scipy
+        export PATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/bin:${PATH}
+        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/lib/python2.7/site-packages:${PYTHONPATH}
+
+        # Matplotlib
+        export PATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/bin:${PATH}
+        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/lib/python2.7/site-packages:${PYTHONPATH}
+        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/basemap-1.0.7/lib/python2.7/site-packages:${PYTHONPATH}
+
         ;;
 esac
-
-# Numpy
-export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
-export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/lib/python2.7/site-packages:${PYTHONPATH}
-
-# Scipy
-export PATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/bin:${PATH}
-export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/lib/python2.7/site-packages:${PYTHONPATH}
-
-# Matplotlib
-export PATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/bin:${PATH}
-export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/lib/python2.7/site-packages:${PYTHONPATH}
-export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/basemap-1.0.7/lib/python2.7/site-packages:${PYTHONPATH}
 
 # GEOS
 export GEOS_DIR=${BAYESWAVE_DEPS}/non-lsc/geos-3.5.0
