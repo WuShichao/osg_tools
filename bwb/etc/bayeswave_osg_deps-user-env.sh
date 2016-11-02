@@ -29,7 +29,6 @@ case "$(python --version 2>&1)" in
         echo "Local:"
         echo "python --version"
         python --version
-        continue
         ;;
     *)
         echo "Local:"
