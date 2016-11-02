@@ -13,8 +13,7 @@ then
     export CVMFS_PIPEDIR=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline
 
     # Set up BayesWave dependencies
-    #source ${CVMFS_PIPEDIR}/bayeswave/bayeswave_osg_deps-user-env.sh
-    source ${BAYESWAVE_PIPE_PREFIX}/etc/bayeswave_osg_deps-user-env.sh
+    source ${CVMFS_PIPEDIR}/bayeswave/bayeswave_osg_deps-user-env.sh
 
     if [ -z ${BAYESWAVE_PIPE_PREFIX} ]
     then
