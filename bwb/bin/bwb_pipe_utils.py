@@ -171,13 +171,13 @@ class cvmfsEnv:
         self.CVMFS_PATH=os.path.join(CVMFS_NUMPY,
                 os.path.expandvars('bin:{0}'.format(self.CVMFS_PATH)))
         self.CVMFS_LD_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{1}'.format(self.CVMFS_LD_LIBRARY_PATH)))
+                os.path.expandvars('lib:{0}'.format(self.CVMFS_LD_LIBRARY_PATH)))
         self.CVMFS_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{2}'.format(self.CVMFS_LIBRARY_PATH)))
+                os.path.expandvars('lib:{0}'.format(self.CVMFS_LIBRARY_PATH)))
         self.CVMFS_PKG_CONFIG_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{3}'.format(self.CVMFS_PKG_CONFIG_PATH)))
+                os.path.expandvars('lib:{0}'.format(self.CVMFS_PKG_CONFIG_PATH)))
         self.CVMFS_PYTHONPATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib/python2.7/site-packages:{4}'.format(self.CVMFS_PYTHONPATH)))
+                os.path.expandvars('lib/python2.7/site-packages:{0}'.format(self.CVMFS_PYTHONPATH)))
 
 class eventTrigger:
     """
@@ -1345,16 +1345,16 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
 
 
-            # --- Set up environment from CVMFS
-            cvmfs_env=cvmfsEnv()
-
-            self.add_condor_cmd('environment',
-                    '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
-                        cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
-                        cvmfs_env.CVMFS_LIBRARY_PATH,
-                        cvmfs_env.CVMFS_PKG_CONFIG_PATH,
-                        cvmfs_env.CVMFS_PYTHONPATH))
-
+#           # --- Set up environment from CVMFS
+#           cvmfs_env=cvmfsEnv()
+#
+#           self.add_condor_cmd('environment',
+#                   '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
+#                       cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
+#                       cvmfs_env.CVMFS_LIBRARY_PATH,
+#                       cvmfs_env.CVMFS_PKG_CONFIG_PATH,
+#                       cvmfs_env.CVMFS_PYTHONPATH))
+#
 
         self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).err')
@@ -1422,21 +1422,21 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
                 '$(macroargument0),{css},{ajax},{nav}'.format(css=css,ajax=ajax,nav=nav))
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
 
-            # --- Set up environment from CVMFS
-            cvmfs_env=cvmfsEnv()
-
-            self.add_condor_cmd('environment',
-                    '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
-                        cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
-                        cvmfs_env.CVMFS_LIBRARY_PATH,
-                        cvmfs_env.CVMFS_PKG_CONFIG_PATH,
-                        cvmfs_env.CVMFS_PYTHONPATH))
-
-        self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
-        self.set_sub_file('megaplot.sub')
-
+#           # --- Set up environment from CVMFS
+#           cvmfs_env=cvmfsEnv()
+#
+#           self.add_condor_cmd('environment',
+#                   '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
+#                       cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
+#                       cvmfs_env.CVMFS_LIBRARY_PATH,
+#                       cvmfs_env.CVMFS_PKG_CONFIG_PATH,
+#                       cvmfs_env.CVMFS_PYTHONPATH))
+#
+#       self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
+#       self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
+#       self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
+#       self.set_sub_file('megaplot.sub')
+#
 
 class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
