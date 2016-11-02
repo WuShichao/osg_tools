@@ -28,6 +28,7 @@ export PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/bin:${PATH}
 export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
 export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
 export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
 
 # Numpy
 export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
@@ -52,6 +53,7 @@ export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/healpy-1.9.1/lib/python2.7/site-pack
 export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/acor-1.1.1/lib/python2.7/site-packages:${PYTHONPATH}
 export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/h5py-2.6.0/lib/python2.7/site-packages:${PYTHONPATH}
 export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/skyarea-0.1/lib/python2.7/site-packages:${PYTHONPATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/M2Crypto-0.25.1/lib/python2.7/site-packages/:${PYTHONPATH}
 
 # -------------------------------------------
 #           LALSUITE DEPENDENCIES           #
