@@ -83,101 +83,7 @@ def read_injection_table(filename):
 
 
 
-#    try:
-#       sim_inspiral_table = lalinspiral.SimInspiralTableFromLIGOLw(filename,0,0)
-#       if sim_inspiral_table == -1:
-#           raise AttributeError("%s has no sim-inspiral table")
-#
-#       trigger_times=[]
-#       while True:
-#           trigger_times.append(float(sim_inspiral_table.geocent_end_time))
-#
-#           if sim_inspiral_table.next is None: break
-#           sim_inspiral_table = sim_inspiral_table.next
-#
-#       return trigger_times
-#
-#    except:
-#        pass
-    
-#   try:
-#       sim_burst_table = lalburst.SimBurstTableFromLIGOLw(filename,None,None)
-#   
-#       print >> sys.stdout, "Reading trigger times from sim_burst table"
-#       trigger_times=[]
-#       while True:
-#           trigger_times.append(float(sim_burst_table.time_geocent_gps))
-#   
-#           if sim_burst_table.next is None: break
-#           sim_burst_table = sim_burst_table.next
-#   
-#       return trigger_times
-#   except:
-#       pass
-#   
-#   try:
-#       sim_ringdown_table = lalinspiral.SimRingdownTableFromLIGOLw(filename,0,0)
-#       if sim_ringdown_table == -1:
-#           raise AttributeError("%s has no sim-ringdown table")
-#   
-#       print >> sys.stdout, "Reading trigger times from sim_ringdown table"
-#       trigger_times=[]
-#       while True:
-#           trigger_times.append(float(sim_ringdown_table.geocent_start_time))
-#   
-#           if sim_ringdown_table.next is None: break
-#           sim_ringdown_table = sim_ringdown_table.next
-#   
-#       return trigger_times
-#   
-#   except:
-#       print >> sys.stderr, "Error: cannot read injection file %s"%injfile
-#       sys.exit()
 
-class cvmfsEnv:
-    """
-    Retrieve some variables to set environment to use /cvmfs
-    """
-
-    def __init__(self):
-
-        # --- Setup python from cvmfs
-        try:
-            CVMFS_PYTHON = os.path.join(os.environ['BAYESWAVE_DEPS'],
-                    'non-lsc/Python-2.7.5')
-        except KeyError:
-            print >> sys.stdout, "BAYESWAVE_DEPS is unset"
-            sys.exit()
-
-        self.CVMFS_PATH=os.path.join(CVMFS_PYTHON,
-                os.path.expandvars('bin:${PYTHONPATH}'))
-        self.CVMFS_LD_LIBRARY_PATH=os.path.join(CVMFS_PYTHON,
-                os.path.expandvars('lib:${LD_LIBRARY_PATH}'))
-        self.CVMFS_LIBRARY_PATH=os.path.join(CVMFS_PYTHON,
-                os.path.expandvars('lib:${LIBRARY_PATH}'))
-        self.CVMFS_PKG_CONFIG_PATH=os.path.join(CVMFS_PYTHON,
-                os.path.expandvars('lib:${PKG_CONFIG_PATH}'))
-        self.CVMFS_PYTHONPATH=os.path.join(CVMFS_PYTHON,
-                os.path.expandvars('lib/python2.7/site-packages:${PYTHONPATH}'))
-
-        # --- Setup numpy from cvmfs
-        try:
-            CVMFS_NUMPY = os.path.join(os.environ['BAYESWAVE_DEPS'],
-                    'non-lsc/numpy-1.9.1')
-        except KeyError:
-            print >> sys.stdout, "BAYESWAVE_DEPS is unset"
-            sys.exit()
-
-        self.CVMFS_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('bin:{0}'.format(self.CVMFS_PATH)))
-        self.CVMFS_LD_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{0}'.format(self.CVMFS_LD_LIBRARY_PATH)))
-        self.CVMFS_LIBRARY_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{0}'.format(self.CVMFS_LIBRARY_PATH)))
-        self.CVMFS_PKG_CONFIG_PATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib:{0}'.format(self.CVMFS_PKG_CONFIG_PATH)))
-        self.CVMFS_PYTHONPATH=os.path.join(CVMFS_NUMPY,
-                os.path.expandvars('lib/python2.7/site-packages:{0}'.format(self.CVMFS_PYTHONPATH)))
 
 class eventTrigger:
     """
@@ -697,7 +603,18 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             self.add_condor_cmd('transfer_input_files', transferstring)
 
-        self.add_condor_cmd('getenv', 'True')
+
+        # --- Set environment explicitly
+        self.add_condor_cmd('environment', ('"PATH={PATH} '
+            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+            'PYTHONPATH={PYTHONPATH} '
+            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                PATH=os.environ['PATH'],
+                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                PYTHONPATH=os.environ['PYTHONPATH'],
+                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+
 
 
         # ----------------------------------------------------------------------------------
@@ -1167,7 +1084,16 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             self.add_condor_cmd('transfer_input_files', transferstring)
 
-        self.add_condor_cmd('getenv', 'True')
+        # --- Set environment explicitly
+        self.add_condor_cmd('environment', ('"PATH={PATH} '
+            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+            'PYTHONPATH={PYTHONPATH} '
+            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                PATH=os.environ['PATH'],
+                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                PYTHONPATH=os.environ['PYTHONPATH'],
+                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         # --- Required options
         ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
@@ -1330,7 +1256,16 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.add_condor_cmd('getenv', 'True')
+        # --- Set environment explicitly
+        self.add_condor_cmd('environment', ('"PATH={PATH} '
+            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+            'PYTHONPATH={PYTHONPATH} '
+            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                PATH=os.environ['PATH'],
+                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                PYTHONPATH=os.environ['PYTHONPATH'],
+                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         #
         # Identify osg vs ldg site
@@ -1344,17 +1279,6 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
 
-
-#           # --- Set up environment from CVMFS
-#           cvmfs_env=cvmfsEnv()
-#
-#           self.add_condor_cmd('environment',
-#                   '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
-#                       cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
-#                       cvmfs_env.CVMFS_LIBRARY_PATH,
-#                       cvmfs_env.CVMFS_PKG_CONFIG_PATH,
-#                       cvmfs_env.CVMFS_PYTHONPATH))
-#
 
         self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).err')
@@ -1403,7 +1327,16 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        self.add_condor_cmd('getenv', 'True')
+        # --- Set environment explicitly
+        self.add_condor_cmd('environment', ('"PATH={PATH} '
+            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+            'PYTHONPATH={PYTHONPATH} '
+            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                PATH=os.environ['PATH'],
+                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                PYTHONPATH=os.environ['PYTHONPATH'],
+                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         #
         # Identify osg vs ldg site
@@ -1421,22 +1354,6 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files',
                 '$(macroargument0),{css},{ajax},{nav}'.format(css=css,ajax=ajax,nav=nav))
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
-
-#           # --- Set up environment from CVMFS
-#           cvmfs_env=cvmfsEnv()
-#
-#           self.add_condor_cmd('environment',
-#                   '"PATH={0}" "LD_LIBRARY_PATH={1}" "LIBRARY_PATH={2}" "PKG_CONFIG_PATH={3}" "PYTHONPATH={4}" '.format(
-#                       cvmfs_env.CVMFS_PATH, cvmfs_env.CVMFS_LD_LIBRARY_PATH,
-#                       cvmfs_env.CVMFS_LIBRARY_PATH,
-#                       cvmfs_env.CVMFS_PKG_CONFIG_PATH,
-#                       cvmfs_env.CVMFS_PYTHONPATH))
-#
-#       self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
-#       self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
-#       self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
-#       self.set_sub_file('megaplot.sub')
-#
 
 class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
