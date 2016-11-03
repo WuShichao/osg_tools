@@ -607,12 +607,13 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Set environment explicitly
         self.add_condor_cmd('environment', ('"PATH={PATH} '
             '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} '
+            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
             'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
                 PATH=os.environ['PATH'],
                 LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                 LIBRARY_PATH=os.environ['LIBRARY_PATH'],
                 PYTHONPATH=os.environ['PYTHONPATH'],
+                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
                 PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
 
@@ -1087,12 +1088,13 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Set environment explicitly
         self.add_condor_cmd('environment', ('"PATH={PATH} '
             '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} '
+            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
             'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
                 PATH=os.environ['PATH'],
                 LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                 LIBRARY_PATH=os.environ['LIBRARY_PATH'],
                 PYTHONPATH=os.environ['PYTHONPATH'],
+                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
                 PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         # --- Required options
@@ -1259,12 +1261,13 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Set environment explicitly
         self.add_condor_cmd('environment', ('"PATH={PATH} '
             '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} '
+            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
             'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
                 PATH=os.environ['PATH'],
                 LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                 LIBRARY_PATH=os.environ['LIBRARY_PATH'],
                 PYTHONPATH=os.environ['PYTHONPATH'],
+                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
                 PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         #
@@ -1330,12 +1333,13 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Set environment explicitly
         self.add_condor_cmd('environment', ('"PATH={PATH} '
             '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} '
+            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH} '
             'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
                 PATH=os.environ['PATH'],
                 LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                 LIBRARY_PATH=os.environ['LIBRARY_PATH'],
                 PYTHONPATH=os.environ['PYTHONPATH'],
+                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
                 PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         #
