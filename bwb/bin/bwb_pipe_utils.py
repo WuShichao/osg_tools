@@ -1340,6 +1340,10 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
+        self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
+        self.set_sub_file('megaplot.sub')
 
         #
         # Identify osg vs ldg site
