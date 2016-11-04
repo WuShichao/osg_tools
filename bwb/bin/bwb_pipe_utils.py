@@ -1015,11 +1015,11 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         """
         Add a list of frames to transfer
         """
-        self.__frames=""
+        self.__frames=[]
         for ifo in framedict.keys():
             for frame in framedict[ifo]:
-                self.__frames += frame + ','
-        self.__frames.strip(',')
+                self.__frames.append(frame)
+        self.__frames = ",".join(self.__frames)
         self.add_macro('macroframes', self.__frames)
   
     def set_L1_timeslide(self, L1_timeslide):
