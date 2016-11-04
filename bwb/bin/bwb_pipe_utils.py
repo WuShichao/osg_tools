@@ -1340,20 +1340,6 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-            # --- Set environment explicitly
-            self.add_condor_cmd('environment', ('"PATH={PATH} '
-                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
-                    PATH=os.environ['PATH'],
-                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
-                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
-                    PYTHONPATH=os.environ['PYTHONPATH'],
-                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
-                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
-        else:
-            # --- Get environment from user-space
-            self.add_condor_cmd('getenv','True')
 
         #
         # Identify osg vs ldg site
@@ -1371,6 +1357,21 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files',
                 '$(macroargument0),{css},{ajax},{nav}'.format(css=css,ajax=ajax,nav=nav))
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+            # --- Set environment explicitly
+            self.add_condor_cmd('environment', ('"PATH={PATH} '
+                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
+                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                    PATH=os.environ['PATH'],
+                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                    PYTHONPATH=os.environ['PYTHONPATH'],
+                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
+                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+        else:
+            # --- Get environment from user-space
+            self.add_condor_cmd('getenv','True')
 
 class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
