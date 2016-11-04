@@ -1020,7 +1020,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
             for frame in framedict[ifo]:
                 self.__frames += frame + ','
         self.__frames.strip(',')
-        self.add_macro('frames', self.__frames)
+        self.add_macro('macroframes', self.__frames)
   
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
