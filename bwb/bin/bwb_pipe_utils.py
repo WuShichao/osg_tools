@@ -604,17 +604,20 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('transfer_input_files', transferstring)
 
 
-        # --- Set environment explicitly
-        self.add_condor_cmd('environment', ('"PATH={PATH} '
-            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
-                PATH=os.environ['PATH'],
-                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
-                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
-                PYTHONPATH=os.environ['PYTHONPATH'],
-                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
-                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+            # --- Set environment explicitly
+            self.add_condor_cmd('environment', ('"PATH={PATH} '
+                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
+                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                    PATH=os.environ['PATH'],
+                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                    PYTHONPATH=os.environ['PYTHONPATH'],
+                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
+                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+        else:
+            # --- Get environment from user-space
+            self.add_condor_cmd('getenv','True')
 
 
 
@@ -1085,17 +1088,20 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             self.add_condor_cmd('transfer_input_files', transferstring)
 
-        # --- Set environment explicitly
-        self.add_condor_cmd('environment', ('"PATH={PATH} '
-            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
-                PATH=os.environ['PATH'],
-                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
-                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
-                PYTHONPATH=os.environ['PYTHONPATH'],
-                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
-                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+            # --- Set environment explicitly
+            self.add_condor_cmd('environment', ('"PATH={PATH} '
+                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
+                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                    PATH=os.environ['PATH'],
+                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                    PYTHONPATH=os.environ['PYTHONPATH'],
+                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
+                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+        else:
+            # --- Get environment from user-space
+            self.add_condor_cmd('getenv','True')
 
         # --- Required options
         ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
@@ -1258,17 +1264,6 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        # --- Set environment explicitly
-        self.add_condor_cmd('environment', ('"PATH={PATH} '
-            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
-                PATH=os.environ['PATH'],
-                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
-                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
-                PYTHONPATH=os.environ['PYTHONPATH'],
-                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
-                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
 
         #
         # Identify osg vs ldg site
@@ -1281,6 +1276,21 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
             self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
             self.add_condor_cmd('transfer_output_files', '$(macroargument0)')
+
+            # --- Set environment explicitly
+            self.add_condor_cmd('environment', ('"PATH={PATH} '
+                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
+                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                    PATH=os.environ['PATH'],
+                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                    PYTHONPATH=os.environ['PYTHONPATH'],
+                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
+                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+        else:
+            # --- Get environment from user-space
+            self.add_condor_cmd('getenv','True')
 
 
         self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
@@ -1330,17 +1340,20 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'accounting_group'):
             self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
 
-        # --- Set environment explicitly
-        self.add_condor_cmd('environment', ('"PATH={PATH} '
-            '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
-            'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH} '
-            'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
-                PATH=os.environ['PATH'],
-                LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
-                LIBRARY_PATH=os.environ['LIBRARY_PATH'],
-                PYTHONPATH=os.environ['PYTHONPATH'],
-                LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
-                PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+            # --- Set environment explicitly
+            self.add_condor_cmd('environment', ('"PATH={PATH} '
+                '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
+                'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
+                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                    PATH=os.environ['PATH'],
+                    LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
+                    LIBRARY_PATH=os.environ['LIBRARY_PATH'],
+                    PYTHONPATH=os.environ['PYTHONPATH'],
+                    LAL_DATA_PATH=os.environ['LAL_DATA_PATH'],
+                    PKG_CONFIG_PATH=os.environ['PKG_CONFIG_PATH']))
+        else:
+            # --- Get environment from user-space
+            self.add_condor_cmd('getenv','True')
 
         #
         # Identify osg vs ldg site
