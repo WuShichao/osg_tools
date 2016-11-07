@@ -601,6 +601,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
             if cp.getboolean('condor','copy-frames'): transferstring+=',$(macroframes)'
 
+            if injfile is not None: transferstring+=','+injfile
             if nrdata is not None: transferstring+=','+nrdata
 
             self.add_condor_cmd('transfer_input_files', transferstring)
@@ -1088,6 +1089,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
                 # allow specification of additional files to transfer
                 transferstring+=',%s'%cp.get('condor','transfer-files')
 
+            if injfile is not None: transferstring+=','+injfile
             if nrdata is not None: transferstring+=','+nrdata
 
             self.add_condor_cmd('transfer_input_files', transferstring)
