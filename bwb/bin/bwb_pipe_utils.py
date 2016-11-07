@@ -608,7 +608,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('environment', ('"PATH={PATH} '
                 '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
                 'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                'PKG_CONFIG_PATH={PKG_CONFIG_PATH}"').format(
                     PATH=os.environ['PATH'],
                     LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                     LIBRARY_PATH=os.environ['LIBRARY_PATH'],
@@ -1092,7 +1092,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('environment', ('"PATH={PATH} '
                 '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
                 'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                'PKG_CONFIG_PATH={PKG_CONFIG_PATH}"').format(
                     PATH=os.environ['PATH'],
                     LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                     LIBRARY_PATH=os.environ['LIBRARY_PATH'],
@@ -1281,7 +1281,7 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('environment', ('"PATH={PATH} '
                 '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
                 'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                'PKG_CONFIG_PATH={PKG_CONFIG_PATH}"').format(
                     PATH=os.environ['PATH'],
                     LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                     LIBRARY_PATH=os.environ['LIBRARY_PATH'],
@@ -1366,7 +1366,7 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('environment', ('"PATH={PATH} '
                 '"LD_LIBRARY_PATH={LD_LIBRARY_PATH} LIBRARY_PATH={LIBRARY_PATH} '
                 'PYTHONPATH={PYTHONPATH} LAL_DATA_PATH={LAL_DATA_PATH}  '
-                'PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"').format(
+                'PKG_CONFIG_PATH={PKG_CONFIG_PATH}"').format(
                     PATH=os.environ['PATH'],
                     LD_LIBRARY_PATH=os.environ['LD_LIBRARY_PATH'],
                     LIBRARY_PATH=os.environ['LIBRARY_PATH'],
