@@ -573,8 +573,8 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_$(cluster)-$(process)-$(node).log')
 
-        self.add_condor_cmd('stream_error','True')
-        self.add_condor_cmd('stream_output','True')
+#       self.add_condor_cmd('stream_error','True')
+#       self.add_condor_cmd('stream_output','True')
 
         # --- Allow desired sites
         if cp.has_option('condor','desired-sites'):
@@ -1065,8 +1065,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
-        self.add_condor_cmd('stream_error','True')
-        self.add_condor_cmd('stream_output','True')
+#        self.add_condor_cmd('stream_error','True')
+#        self.add_condor_cmd('stream_output','True')
 
         # Request 4GB of RAM for pp jobs
         #self.add_condor_cmd('request_memory', '4000')
@@ -1308,8 +1308,8 @@ class megaskyJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stdout_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macroargument0)/megasky_$(cluster)-$(process)-$(node).log')
-        self.add_condor_cmd('stream_error','True')
-        self.add_condor_cmd('stream_output','True')
+#       self.add_condor_cmd('stream_error','True')
+#       self.add_condor_cmd('stream_output','True')
         self.set_sub_file('megasky.sub')
 
         hostname = socket.gethostname()
@@ -1357,8 +1357,8 @@ class megaplotJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stdout_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macroargument0)/megaplot_$(cluster)-$(process)-$(node).log')
-        self.add_condor_cmd('stream_error','True')
-        self.add_condor_cmd('stream_output','True')
+#       self.add_condor_cmd('stream_error','True')
+#       self.add_condor_cmd('stream_output','True')
         self.set_sub_file('megaplot.sub')
 
         #
