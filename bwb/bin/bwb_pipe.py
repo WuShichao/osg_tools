@@ -441,7 +441,7 @@ for ifo in ifo_list:
             if opts.server is not None:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} \
     -s {gps_start_time} -e {gps_end_time} --lal-cache\
-    --server={server} -u {url_type} --latest > {cachefile}".format(
+    --server={server} -u {url_type} > {cachefile}".format(
                         o=ifo[0], frtype=frtype_list[ifo],
                         cachefile=cachefilefmt.format(ifo),
                         gps_start_time=gps_start_time,
@@ -449,7 +449,7 @@ for ifo in ifo_list:
                         url_type=cp.get('datafind','url-type'))
             else:
                 ldfcmd = "gw_data_find --observatory {o} --type {frtype} -s \
-    {gps_start_time} -e {gps_end_time} --lal-cache -u {url_type} --latest>\
+    {gps_start_time} -e {gps_end_time} --lal-cache -u {url_type} >\
     {cachefile}".format( o=ifo[0], frtype=frtype_list[ifo],
     cachefile=cachefilefmt.format(ifo), gps_start_time=gps_start_time,
     gps_end_time=gps_end_time, url_type=cp.get('datafind','url-type'))
