@@ -583,6 +583,12 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'bayeswave-request-memory'):
             self.add_condor_cmd('request_memory',
                     cp.get('condor', 'bayeswave-request-memory'))   
+
+        if cp.has_option('condor', 'bayeswave-cit-nodes'):
+            self.add_condor_cmd('+BayesWaveCgroup', 'True')
+            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
+
+
         #
         # Identify osg vs ldg site
         #
@@ -1079,6 +1085,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # --- Allow desired sites
         if cp.has_option('condor','desired-sites'):
             self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
+
+        if cp.has_option('condor', 'bayeswave_post-cit-nodes'):
+            self.add_condor_cmd('+BayesWaveCgroup', 'True')
+            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
 
         #
         # Identify osg vs ldg site
