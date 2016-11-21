@@ -1,5 +1,5 @@
 universe = vanilla
-executable = frdump.sh
+executable = /cvmfs/oasis.opensciencegrid.org/ligo/pipeline/bayeswave/lscsoft/libframe-8.30/bin/FrDump
 arguments = "-i /cvmfs/oasis.opensciencegrid.org/ligo/frames/O1/H1_HOFT_C01/H/1130/H-H1_HOFT_C01-1130532864-4096.gwf"
 should_transfer_files = YES
 use_x509userproxy = true
