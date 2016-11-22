@@ -583,6 +583,12 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'bayeswave-request-memory'):
             self.add_condor_cmd('request_memory',
                     cp.get('condor', 'bayeswave-request-memory'))   
+
+        if cp.has_option('condor', 'bayeswave-cit-nodes'):
+            self.add_condor_cmd('+BayesWaveCgroup', 'True')
+            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
+
+
         #
         # Identify osg vs ldg site
         #
@@ -641,7 +647,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
 #        self.add_opt('srate', cp.get('input', 'srate'))
 #        self.add_opt('seglen', cp.get('input', 'seglen'))
-        self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
+        self.add_opt('psdlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
         for ifo in ifo_list:
@@ -823,6 +829,11 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_options', 'clusterGamma'):
              self.add_opt('clusterGamma', cp.get('bayeswave_options',
                  'clusterGamma'))
+       
+        # updateGeocenterPSD
+        if cp.has_option('bayeswave_options', 'updateGeocenterPSD'):
+             self.add_opt('updateGeocenterPSD', cp.get('bayeswave_options',
+                 'updateGeocenterPSD'))
 
         # backgroundPrior
         if cp.has_option('bayeswave_options', 'backgroundPrior'):
@@ -1005,7 +1016,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__rolloff = rolloff
 
     def set_PSDstart(self, PSDstart):
-        self.add_var_opt('PSDstart', '%.9f'%PSDstart)
+        self.add_var_opt('psdstart', '%.9f'%PSDstart)
         self.__PSDstart = PSDstart
 
     def set_outputDir(self, outputDir):
@@ -1075,6 +1086,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor','desired-sites'):
             self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
 
+        if cp.has_option('condor', 'bayeswave_post-cit-nodes'):
+            self.add_condor_cmd('+BayesWaveCgroup', 'True')
+            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
+
         #
         # Identify osg vs ldg site
         #
@@ -1128,7 +1143,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         #self.add_opt('srate', cp.get('input', 'srate'))
         #self.add_opt('seglen', cp.get('input', 'seglen'))
-        self.add_opt('PSDlength', cp.get('input', 'PSDlength'))
+        self.add_opt('psdlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
 
@@ -1224,7 +1239,7 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__seglen = seglen
 
     def set_PSDstart(self, PSDstart):
-        self.add_var_opt('PSDstart', '%.9f'%PSDstart)
+        self.add_var_opt('psdstart', '%.9f'%PSDstart)
         self.__PSDstart = PSDstart
 
     def set_outputDir(self, ifo_list, outputDir):
