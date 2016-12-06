@@ -1028,7 +1028,7 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def set_flow(self, ifo_list, flow):
         for i,ifo in enumerate(ifo_list):
-            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow))
+            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow)
         self.__flow = flow
 
     def set_window(self, window):
@@ -1264,7 +1264,7 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def set_flow(self, ifo_list, flow):
         for i,ifo in enumerate(ifo_list):
-            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow))
+            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow)
         self.__flow = flow
 
     def set_PSDstart(self, PSDstart):
