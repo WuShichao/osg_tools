@@ -93,8 +93,9 @@ class eventTrigger:
             trigger_frequency=None, rho=None, graceID=None, injevent=None,
             frequency_threshold=200., default_srate=1024., min_srate=1024.,
             max_srate=4096., default_seglen=4., max_seglen=4., min_seglen=2.,
-            default_window=1.0, min_window=0.5, max_window=1.0, veto1=None,
-            veto2=None, BW_event=None):
+            default_flow=16., max_flow=64., min_flow=16., default_window=1.0,
+            min_window=0.5, max_window=1.0, veto1=None, veto2=None,
+            BW_event=None):
 
 
         #
@@ -114,6 +115,11 @@ class eventTrigger:
             self.default_seglen = cp.getfloat('input', 'seglen')
         except:
             self.default_seglen = default_seglen
+
+        try:
+            self.default_flow = cp.getfloat('input', 'flow')
+        except:
+            self.default_flow = default_flow
 
         try:
             self.default_window = cp.getfloat('input', 'window')
@@ -141,6 +147,16 @@ class eventTrigger:
             self.min_seglen = min_seglen
 
         try:
+            self.max_flow = cp.getfloat('input', 'max-flow')
+        except:
+            self.max_flow = max_flow
+
+        try:
+            self.min_flow = cp.getfloat('input', 'min-flow')
+        except:
+            self.min_flow = min_flow
+
+        try:
             self.max_window = cp.getfloat('input', 'max-window')
         except:
             self.max_window = max_window
@@ -159,8 +175,6 @@ class eventTrigger:
 
         # Variable sample rate / window length [fixed TF volume]
 
-        # XXX new variables: seglen, segment-start, window
-
         if trigger_frequency is not None:
             # Adjust sample rate for this trigger
             # - min srate => max_seglen
@@ -169,14 +183,17 @@ class eventTrigger:
                self.srate = self.min_srate
                self.seglen = self.max_seglen
                self.window = self.max_window
+               self.flow = self.min_flow
             else:
                self.srate = self.max_srate
                self.seglen = self.min_seglen
                self.window = self.min_window
+               self.flow = self.max_flow
         else:
             self.srate = self.default_srate
             self.seglen = self.default_seglen
             self.window = self.default_window
+            self.flow = self.default_flow
 
         self.rho = rho
         self.injevent = injevent
@@ -230,10 +247,12 @@ class eventTrigger:
                self.srate = self.min_srate
                self.seglen = self.max_seglen
                self.window = self.max_window
+               self.flow = self.min_flow
             else:
                self.srate = self.max_srate
                self.seglen = self.min_seglen
                self.window = self.min_window
+               self.flow = self.max_flow
 
         except KeyError:
             print >> sys.stderr, \
@@ -649,9 +668,9 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 #        self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('psdlength', cp.get('input', 'PSDlength'))
  
-        flow = ast.literal_eval(cp.get('input','flow'))
+#        flow = ast.literal_eval(cp.get('input','flow'))
         for ifo in ifo_list:
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
+#            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
             self.add_opt('{ifo}-cache'.format(ifo=ifo), cacheFiles[ifo])
 
             if not cp.getboolean('datafind','sim-data'):
@@ -1007,6 +1026,11 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('seglen', seglen)
         self.__seglen = seglen
 
+    def set_flow(self, ifo_list, flow):
+        for i,ifo in enumerate(ifo_list):
+            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow))
+        self.__flow = flow
+
     def set_window(self, window):
         self.add_var_opt('window', window)
         self.__window = window
@@ -1147,8 +1171,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
  
         flow = ast.literal_eval(cp.get('input','flow'))
 
-        for i,ifo in enumerate(ifo_list):
-            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
+#        for i,ifo in enumerate(ifo_list):
+#            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
 
         # --- Optional options
@@ -1237,6 +1261,11 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_seglen(self, seglen):
         self.add_var_opt('seglen', seglen)
         self.__seglen = seglen
+
+    def set_flow(self, ifo_list, flow):
+        for i,ifo in enumerate(ifo_list):
+            self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow))
+        self.__flow = flow
 
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('psdstart', '%.9f'%PSDstart)
