@@ -586,7 +586,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         if cp.has_option('condor', 'bayeswave-cit-nodes'):
             self.add_condor_cmd('+BayesWaveCgroup', 'True')
-            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
+            self.add_condor_cmd('Rank', '(TARGET.BayesWaveCgroup =?= True)')
 
 
         #
@@ -1088,7 +1088,7 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         if cp.has_option('condor', 'bayeswave_post-cit-nodes'):
             self.add_condor_cmd('+BayesWaveCgroup', 'True')
-            self.add_condor_cmd('Requirements', '(TARGET.BayesWaveCgroup =?= True)')
+            self.add_condor_cmd('Rank', '(TARGET.BayesWaveCgroup =?= True)')
 
         #
         # Identify osg vs ldg site
