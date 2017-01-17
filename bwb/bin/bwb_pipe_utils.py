@@ -802,6 +802,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_options', 'stochastic'):
             self.add_opt('stochastic', cp.get('bayeswave_options', 'stochastic'))
 
+        # chirplets
+        if cp.has_option('bayeswave_options', 'chirplets'):
+            self.add_opt('chirplets', cp.get('bayeswave_options', 'chirplets'))
+
         # ----------------------------------------------------------------------------------
         # --- Priors & Proposasl  ----------------------------------------------------------
         # ----------------------------------------------------------------------------------
@@ -1189,6 +1193,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # 0noise
         if cp.has_option('bayeswave_post_options', '0noise'):
             self.add_opt('0noise', cp.get('bayeswave_post_options', '0noise'))
+
+        # chirplets
+        if cp.has_option('bayeswave_post_options', 'chirplets'):
+            self.add_opt('chirplets', cp.get('bayeswave_post_options', 'chirplets'))
 
         #
         # Injection file
