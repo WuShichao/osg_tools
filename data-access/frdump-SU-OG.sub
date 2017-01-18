@@ -10,5 +10,5 @@ error = frdump_SU-OG_$(cluster)-$(process)-$(node).err
 output = frdump_SU-OG_$(cluster)-$(process)-$(node).out
 notification = never
 +DESIRED_Sites="SU-OG"
-+IsSUGWGNode = undefined
+Requirements = (HAS_CVMFS_LIGO_STORAGE=?=True)
 queue 1
