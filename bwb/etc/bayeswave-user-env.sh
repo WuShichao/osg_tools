@@ -10,10 +10,10 @@ if [ ${OSG_DEPLOY} ]
 then
 
     echo "OSG_DEPLOY=${OSG_DEPLOY}"
-    export CVMFS_PIPEDIR=/cvmfs/oasis.opensciencegrid.org/ligo/pipeline
+    export CVMFS_PATH=/cvmfs/oasis.opensciencegrid.org/ligo
 
     # Set up BayesWave dependencies
-    source ${CVMFS_PIPEDIR}/bayeswave/bayeswave_osg_deps-user-env.sh
+    source ${CVMFS_PATH}/pipeline/bayeswave/bayeswave_osg_deps-user-env.sh
 
     if [ -z ${BAYESWAVE_PIPE_PREFIX} ]
     then
@@ -24,10 +24,11 @@ then
     fi
 
     # Set LAL_DATA_PATH
-    if [ -d ${CVMFS_PIPEDIR}/pycbc/pycbc/ROM/lal-data/lalsimulation ]
+    if [ -z ${LAL_DATA_PATH} ]
     then
-        echo "Setting LAL_DATA_PATH=${CVMFS_PIPEDIR}/pycbc/pycbc/ROM/lal-data/lalsimulation"
-        export LAL_DATA_PATH=${CVMFS_PIPEDIR}/pycbc/pycbc/ROM/lal-data/lalsimulation
+        echo "LAL_DATA_PATH is unset, using ${CVMFS_PATH}/sw/pycbc/lalsuite-extra/current/share/lalsimulation"
+    else
+        echo "LAL_DATA_PATH=${LAL_DATA_PATH}"
     fi
 
 fi
@@ -36,7 +37,7 @@ fi
 if [ ! -z ${LALSUITE_PREFIX} ]
 then
     echo "Using LALSUITE_PREFIX=${LALSUITE_PREFIX}"
-    source ${LALSUITE_PREFIX}/etc/lalsuiterc
+    source ${LALSUITE_PREFIX}/etc/lalsuite-user-env.sh
     source ${LALSUITE_PREFIX}/pylal/etc/pylal-user-env.sh
     source ${LALSUITE_PREFIX}/glue/etc/glue-user-env.sh
 else

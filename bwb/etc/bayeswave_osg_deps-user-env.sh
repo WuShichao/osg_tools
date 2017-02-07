@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if [ -d ${CVMFS_PIPEDIR}/bayeswave ]
+if [ -d ${CVMFS_PATH}/pipeline/bayeswave ]
 then
-    export BAYESWAVE_DEPS=${CVMFS_PIPEDIR}/bayeswave
+    export BAYESWAVE_DEPS=${CVMFS_PATH}/pipeline/bayeswave
     echo "Setting BAYESWAVE_DEPS=${BAYESWAVE_DEPS}"
 else
-    echo "CVMFS_PIPEDIR is unset, exiting"
+    echo "CVMFS_PATH is unset, exiting"
     return
 fi
 
@@ -15,7 +15,7 @@ if [ ! -z ${LALSUITE_PREFIX} ]
 then
     echo "LALSUITE_PREFIX=${LALSUITE_PREFIX}"
 else
-    export LALSUITE_PREFIX=${BAYESWAVE_DEPS}/lscsoft/lalsuite-6.38
+    export LALSUITE_PREFIX=${BAYESWAVE_DEPS}/lscsoft/lalsuite-6.41
     echo "Setting LALSUITE_PREFIX=${LALSUITE_PREFIX}"
 fi
 
@@ -24,40 +24,26 @@ fi
 # -------------------------------------------
 
 # Python
-case "$(python --version 2>&1)" in
-    *" 2.7"*)
-        echo "Local:"
-        echo "python --version"
-        python --version
-        ;;
-    *)
-        echo "Local:"
-        echo "python --version"
-        python --version
-        echo "using ${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5"
+export PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/bin:${PATH}
+export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
+export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
+export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
 
-		export PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/bin:${PATH}
-		export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
-		export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib:${LD_LIBRARY_PATH}
-		export PKG_CONFIG_PATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/pkgconfig:${PKG_CONFIG_PATH}
-		export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/Python-2.7.5/lib/python2.7/site-packages:${PYTHONPATH}
+# Numpy
+export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/lib/python2.7/site-packages:${PYTHONPATH}
 
+# Scipy
+export PATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/bin:${PATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/lib/python2.7/site-packages:${PYTHONPATH}
+export LD_LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/atlas-3.8.0/lib:${LD_LIBRARY_PATH}
+export LIBRARY_PATH=${BAYESWAVE_DEPS}/non-lsc/atlas-3.8.0/lib:${LIBRARY_PATH}
 
-        # Numpy
-        export PATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/bin:${PATH}
-        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/numpy-1.9.1/lib/python2.7/site-packages:${PYTHONPATH}
-
-        # Scipy
-        export PATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/bin:${PATH}
-        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/scipy-0.12.1/lib/python2.7/site-packages:${PYTHONPATH}
-
-        # Matplotlib
-        export PATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/bin:${PATH}
-        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/lib/python2.7/site-packages:${PYTHONPATH}
-        export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/basemap-1.0.7/lib/python2.7/site-packages:${PYTHONPATH}
-
-        ;;
-esac
+# Matplotlib
+export PATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/bin:${PATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/matplotlib-1.2.0/lib/python2.7/site-packages:${PYTHONPATH}
+export PYTHONPATH=${BAYESWAVE_DEPS}/non-lsc/basemap-1.0.7/lib/python2.7/site-packages:${PYTHONPATH}
 
 # GEOS
 export GEOS_DIR=${BAYESWAVE_DEPS}/non-lsc/geos-3.5.0
@@ -107,7 +93,7 @@ export PKG_CONFIG_PATH=${LIBMETAIO}/lib/pkgconfig:${PKG_CONFIG_PATH}
 export LD_LIBRARY_PATH=${LIBMETAIO}/lib:${LD_LIBRARY_PATH}
 
 # HDF5
-export HDF5=$BAYESWAVE_DEPS/non-lsc/hdf5-1.8.16
+export HDF5=$BAYESWAVE_DEPS/non-lsc/hdf5-1.8.18
 export PATH=${HDF5}/bin:${PATH}
 export LD_LIBRARY_PATH=${HDF5}/lib:${LD_LIBRARY_PATH}
 export C_INCLUDE_PATH=${HDF5}/include:${C_INCLUDE_PATH} # for building
