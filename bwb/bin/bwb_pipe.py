@@ -693,7 +693,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_window(trigger.window)
         bayeswave_node.set_flow(ifo_list,trigger.flow)
         if cp.has_option('input','PSDstart'):
-            psd_start=cp.get_float('input','PSDstart')
+            psd_start=cp.getfloat('input','PSDstart')
         bayeswave_node.set_PSDstart(psd_start)
         if cp.has_option('input','rolloff'):
             bayeswave_node.set_rolloff(cp.getfloat('input','rolloff'))
@@ -720,7 +720,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.set_window(trigger.window)
         bayeswave_post_node.set_flow(ifo_list,trigger.flow)
         if cp.has_option('input','PSDstart'):
-            psd_start=cp.get_float('input','PSDstart')
+            psd_start=cp.getfloat('input','PSDstart')
         bayeswave_post_node.set_PSDstart(psd_start)
         if cp.has_option('input','rolloff'):
             bayeswave_post_node.set_rolloff(cp.getfloat('input','rolloff'))
