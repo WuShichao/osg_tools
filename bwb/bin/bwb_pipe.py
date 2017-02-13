@@ -127,6 +127,7 @@ def parser():
     parser.add_option("--skip-post", default=False, action="store_true")
     parser.add_option("--tidy-up", default=False, action="store_true")
     parser.add_option("--osg-jobs", default=False, action="store_true")
+    parser.add_option("--abs-paths", default=False, action="store_true")
 
 
     (opts,args) = parser.parse_args()
@@ -539,6 +540,12 @@ for ifo in ifo_list:
             new_cache.close()
 
 #########################################################################
+# Setup paths if necessary
+if opts.abs_paths: 
+    # FIXME: needs to handle HDF5
+    for ifo in ifo_list: cache_files[ifo] = os.path.abspath(cache_files[ifo])
+    if injfile is not None: injfile=os.path.abspath(injfile)
+
 
 
 #########################################################################
@@ -692,6 +699,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_PSDstart(psd_start)
         if cp.has_option('input','rolloff'):
             bayeswave_node.set_rolloff(cp.getfloat('input','rolloff'))
+        if opts.abs_paths: outputDir=os.path.abspath(outputDir)
         bayeswave_node.set_outputDir(outputDir)
         if transferFrames: bayeswave_node.add_frame_transfer(transferFrames)
 

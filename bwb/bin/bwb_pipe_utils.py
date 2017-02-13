@@ -610,6 +610,11 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_condor_cmd('+BayesWaveCgroup', 'True')
             self.add_condor_cmd('Rank', '(TARGET.BayesWaveCgroup =?= True)')
 
+        if cp.has_option('condor', 'bayeswave-request-disk'):
+            self.add_condor_cmd('request_disk',
+                    cp.get('condor', 'bayeswave-request-disk'))
+
+
 
         #
         # Identify osg vs ldg site
@@ -1102,6 +1107,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('condor', 'bayeswave_post-request-memory'):
             self.add_condor_cmd('request_memory',
                     cp.get('condor', 'bayeswave_post-request-memory'))   
+
+        if cp.has_option('condor', 'bayeswave_post-request-disk'):
+            self.add_condor_cmd('request_disk',
+                    cp.get('condor', 'bayeswave_post-request-disk'))
 
         self.set_stdout_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).out')
         self.set_stderr_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).err')
