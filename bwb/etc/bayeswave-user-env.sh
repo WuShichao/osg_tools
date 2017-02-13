@@ -27,6 +27,7 @@ then
     if [ -z ${LAL_DATA_PATH} ]
     then
         echo "LAL_DATA_PATH is unset, using ${CVMFS_PATH}/sw/pycbc/lalsuite-extra/current/share/lalsimulation"
+        export LAL_DATA_PATH=${CVMFS_PATH}/sw/pycbc/lalsuite-extra/current/share/lalsimulation
     else
         echo "LAL_DATA_PATH=${LAL_DATA_PATH}"
     fi

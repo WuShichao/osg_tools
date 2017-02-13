@@ -1,11 +1,17 @@
 #!/bin/bash
 
-if [ -d ${CVMFS_PIPEDIR}/bayeswave ]
+if [ -z ${CVMFS_PATH} ]
 then
-    export BAYESWAVE_DEPS=${CVMFS_PIPEDIR}/bayeswave
+    echo "CVMFS_PATH is unset, exiting"
+    exit
+fi
+
+if [ -d ${CVMFS_PATH} ]
+then
+    export BAYESWAVE_DEPS=${CVMFS_PATH}/pipeline/bayeswave
     echo "Setting BAYESWAVE_DEPS=${BAYESWAVE_DEPS}"
 else
-    echo "CVMFS_PIPEDIR is unset, exiting"
+    echo "${CVMFS_PATH} does not exist, exiting"
     return
 fi
 
