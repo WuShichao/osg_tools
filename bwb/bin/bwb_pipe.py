@@ -434,9 +434,14 @@ for ifo in ifo_list:
         # --- Run DataFind query to produce cache files for frames
         #
         cachefilefmt = os.path.join(datafind_dir, '{0}.cache')
+        cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
 
         if opts.skip_datafind:
-            continue
+            print >> sys.stdout, \
+                    "Copying cache files from [datafind], cache-files"
+            manual_cache_files=ast.literal_eval(cp.get('datafind','cache-files'))
+            shutil.copy(manual_cache_files[ifo], cache_files[ifo])
+            
         else:
 
             if opts.server is not None:
@@ -459,11 +464,9 @@ for ifo in ifo_list:
 
             subprocess.call(ldfcmd, shell=True)
 
-        ldfcmd_file = open('datafind_cmd.sh','w')
-        ldfcmd_file.writelines(ldfcmd+'\n')
-        ldfcmd_file.close()
-
-        cache_files[ifo]=os.path.join('datafind', '{0}.cache'.format(ifo))
+            ldfcmd_file = open('datafind_cmd.sh','w')
+            ldfcmd_file.writelines(ldfcmd+'\n')
+            ldfcmd_file.close()
 
         # Record frame segments so we can identify frames for OSG transfers
         if opts.skip_datafind:
@@ -696,6 +699,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_node.set_seglen(trigger.seglen)
         bayeswave_node.set_window(trigger.window)
         bayeswave_node.set_flow(ifo_list,trigger.flow)
+        if cp.has_option('input','PSDstart'):
+            psd_start=cp.getfloat('input','PSDstart')
         bayeswave_node.set_PSDstart(psd_start)
         if cp.has_option('input','rolloff'):
             bayeswave_node.set_rolloff(cp.getfloat('input','rolloff'))
@@ -722,6 +727,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         bayeswave_post_node.set_seglen(trigger.seglen)
         bayeswave_post_node.set_window(trigger.window)
         bayeswave_post_node.set_flow(ifo_list,trigger.flow)
+        if cp.has_option('input','PSDstart'):
+            psd_start=cp.getfloat('input','PSDstart')
         bayeswave_post_node.set_PSDstart(psd_start)
         if cp.has_option('input','rolloff'):
             bayeswave_post_node.set_rolloff(cp.getfloat('input','rolloff'))
