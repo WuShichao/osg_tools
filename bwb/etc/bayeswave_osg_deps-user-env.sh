@@ -21,7 +21,7 @@ if [ ! -z ${LALSUITE_PREFIX} ]
 then
     echo "LALSUITE_PREFIX=${LALSUITE_PREFIX}"
 else
-    export LALSUITE_PREFIX=${BAYESWAVE_DEPS}/lscsoft/lalsuite-6.41
+    export LALSUITE_PREFIX=${BAYESWAVE_DEPS}/lscsoft/lalsuite-v6.46
     echo "Setting LALSUITE_PREFIX=${LALSUITE_PREFIX}"
 fi
 
