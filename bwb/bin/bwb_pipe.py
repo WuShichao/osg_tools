@@ -71,7 +71,7 @@ def job_times(trigtime, seglen, psdlen, padding):
     so that start can be used easily as a psd start
     """
 
-    psdstart=trigtime - (psdlen + padding)
+    psdstart=trigtime - (0.5*psdlen + padding)
     start = np.floor(min(psdstart, trigtime-0.5*seglen))
     stop = np.ceil(max(start+psdlen, trigtime+0.5*seglen))
 
