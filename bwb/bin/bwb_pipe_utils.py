@@ -693,6 +693,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # ----------------------------------------------------------------------------------
         # --- Run parameters   -------------------------------------------------------------
         # ----------------------------------------------------------------------------------
+        if cp.has_option('datafind','psd-files'):
+            psdFiles=ast.literal_eval(cp.get('datafind','psd-files'))
+            for ifo in ifo_list:
+                self.add_opt('{ifo}-psd'.format(ifo=ifo), psdFiles[ifo])
 
         # segment-start
         if cp.has_option('bayeswave_options', 'segment-start'):
