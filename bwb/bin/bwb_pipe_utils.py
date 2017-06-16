@@ -450,7 +450,8 @@ class triggerList:
         elif 'H1' in ifo_list and 'L1' in ifo_list and 'V1' in ifo_list:
             network='HLV'
         else:
-            print >> sys.stderr, "Only HL and HLV networks currently supported"
+            print >> sys.stderr, \
+                    "Only HL and HLV networks currently supported for timeslides"
 
         print >> sys.stdout, "Network: {}".format(network)
 
