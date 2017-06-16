@@ -89,7 +89,7 @@ class eventTrigger:
     """
     Stores event characteristics and determines run configuration for this event
     """
-    def __init__(self, cp, trigger_time=None, time_lag=0.0,
+    def __init__(self, cp, trigger_time=None, hl_time_lag=0.0, hv_time_lag=0.0,
             trigger_frequency=None, rho=None, graceID=None, injevent=None,
             frequency_threshold=200., default_srate=1024., min_srate=1024.,
             max_srate=4096., default_seglen=4., max_seglen=4., min_seglen=2.,
@@ -170,7 +170,8 @@ class eventTrigger:
         # Add trigger properties
         #
         self.trigger_time = trigger_time
-        self.time_lag = time_lag
+        self.hl_time_lag = hl_time_lag
+        self.hv_time_lag = hv_time_lag
         self.trigger_frequency = trigger_frequency
 
         # Variable sample rate / window length [fixed TF volume]
@@ -269,9 +270,9 @@ class triggerList:
 
     Allowed formats:
         trigger_gps 
-        trigger_gps | time_lag
-        trigger_gps | time_lag | trigger_frequency
-        trigger_gps | time_lag | trigger_frequency | rho
+        trigger_gps | hl_time_lag
+        trigger_gps | hl_time_lag | trigger_frequency
+        trigger_gps | hl_time_lag | trigger_frequency | rho
     """
 
     def __init__(self, cp, gps_times=None, trigger_file=None,
@@ -435,46 +436,85 @@ class triggerList:
     def parse_cwb_trigger_list(self, cp, cwb_trigger_file, rho_threshold=-1.0,
             keep_frac=1.0):
 
+
         # Get rho threshold
         try:
             rho_threshold = cp.getfloat('input', 'rho-threshold')
         except:
             rho_threshold = rho_threshold
 
+        # Determine network
+        ifo_list = ast.literal_eval(cp.get('input', 'ifo-list'))
+        if 'H1' in ifo_list and 'L1' in ifo_list and 'V1' not in ifo_list:
+            network='HL'
+        elif 'H1' in ifo_list and 'L1' in ifo_list and 'V1' in ifo_list:
+            network='HLV'
+        else:
+            print >> sys.stderr, "Only HL and HLV networks currently supported"
+
+        print >> sys.stdout, "Network: {}".format(network)
+
         print >> sys.stdout, "Discarding rho<=%f"%rho_threshold
         
-        names = ['veto1', 'veto2', 'rho', 'cc1', 'cc2', 'cc3', 'amp', 'tshift',
-                'tsupershift', 'like', 'penalty', 'disbalance', 'f',
-                'bandwidth', 'duration', 'pixels', 'resolution', 'runnumber',
-                'Lgps', 'Hgps', 'sSNRL', 'sSNRH', 'hrssL', 'hrssH', 'phi',
-                'theta', 'psi']
+
+        if network=='HL':
+
+            names = ['veto1', 'veto2', 'rho', 'cc1', 'cc2', 'cc3', 'amp', 'tshift',
+                    'tsupershift', 'like', 'penalty', 'disbalance', 'f',
+                    'bandwidth', 'duration', 'pixels', 'resolution', 'runnumber',
+                    'Lgps', 'Hgps', 'sSNRL', 'sSNRH', 'hrssL', 'hrssH', 'phi',
+                    'theta', 'psi']
+
+        elif network=='HLV':
+
+            names = ['veto1', 'veto2', 'rho', 'cc1', 'cc2', 'cc3', 'amp', 'tshift',
+                    'tsupershift', 'like', 'penalty', 'disbalance', 'f',
+                    'bandwidth', 'duration', 'pixels', 'resolution', 'runnumber',
+                    'Lgps', 'Hgps', 'Vgps', 'sSNRL', 'sSNRH', 'sSNRV', 'hrssL',
+                    'hrssH', 'hrssV', 'phi', 'theta', 'psi']
+
 
         data = np.recfromtxt(cwb_trigger_file,names=names)
 
+
         Hgps = data['Hgps']
         Lgps = data['Lgps']
+
+        HLlagList = []
+        for h,l in zip(Hgps,Lgps):
+           HLlagList.append(round(h-l))
+
+        if network=='HLV':
+            Vgps = data['Vgps']
+            HVlagList = []
+            for h,v in zip(Hgps,Vgps):
+               HVlagList.append(round(h-v))
+
+        if network=='HL':
+            # Dummy list of nan
+            HVlagList = [0]*len(HLlagList)
+
         rhoList = data['rho']
         freqList = data['f']
 
         plusveto = data['veto1']
         minusveto = data['veto2']
 
-        lagList = []
-
-        for h,l in zip(Hgps,Lgps):
-           lagList.append(round(h-l))
-
+        # Trigger time given by H1 time
         gpsList = Hgps
 
         triggers=[]
-        for gps, lag, freq, rho, veto1, veto2 in zip(gpsList, lagList, freqList,
-                rhoList, plusveto, minusveto):
+
+        for gps, hl_lag, hv_lag, freq, rho, veto1, veto2 in zip(gpsList,
+                HLlagList, HVlagList, freqList, rhoList, plusveto, minusveto):
+
             # Apply rho threshold
             if rho < rho_threshold: continue
 
             triggers.append(eventTrigger(cp,
                 trigger_time=gps,
-                time_lag=lag,
+                hl_time_lag=hl_lag,
+                hv_time_lag=hv_lag,
                 trigger_frequency=freq,
                 rho=rho,
                 veto1=veto1,
@@ -516,22 +556,25 @@ class triggerList:
                     trigger_time=trigger_data[i]))
 
         elif ncols==2:
-            # Trigger time, lag
+            # Trigger time, hl_lag
             for i in xrange(nrows):
                 triggers.append(eventTrigger(cp,
                     trigger_time=trigger_data[i,0],
-                    time_lag=trigger_data[i,1]))
+                    hl_time_lag=trigger_data[i,1]))
 
         elif ncols==3:
-            # Trigger time, lag, frequency
+            # Trigger time, hl_lag, frequency
             for i in xrange(nrows):
                 triggers.append(eventTrigger(cp,
                     trigger_time=trigger_data[i,0],
-                    time_lag=trigger_data[i,1],
+                    hl_time_lag=trigger_data[i,1],
                     trigger_frequency=trigger_data[i,2]))
 
         elif ncols==4:
-            # Trigger time, lag, frequency, rho
+            print >> sys.stderr, \
+                    """WARNING: Looks like you're using an old style cwb trigger
+                    list.  Success is not guarenteed"""
+            # Trigger time, hl_lag, frequency, rho
             try:
                 rho_threshold = cp.getfloat('input', 'rho-threshold')
             except:
@@ -544,7 +587,7 @@ class triggerList:
                 if trigger_data[i,3] < rho_threshold: continue
                 triggers.append(eventTrigger(cp,
                     trigger_time=trigger_data[i,0],
-                    time_lag=trigger_data[i,1],
+                    hl_time_lag=trigger_data[i,1],
                     trigger_frequency=trigger_data[i,2],
                     rho=trigger_data[i,3]))
 
@@ -1086,6 +1129,10 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.add_var_opt('L1-timeslide', L1_timeslide)
         self.__L1_timeslide = L1_timeslide
 
+    def set_V1_timeslide(self, V1_timeslide):
+        self.add_var_opt('V1-timeslide', V1_timeslide)
+        self.__V1_timeslide = V1_timeslide
+
     def set_BW_event(self, BW_event):
         self.add_var_opt('BW-event', BW_event)
         self.__BW_event = BW_event
@@ -1321,6 +1368,10 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
         self.__L1_timeslide = L1_timeslide
+
+    def set_V1_timeslide(self, V1_timeslide):
+        self.add_var_opt('V1-timeslide', V1_timeslide)
+        self.__V1_timeslide = V1_timeslide
 
     def set_BW_event(self, BW_event):
         self.add_var_opt('BW-event', BW_event)

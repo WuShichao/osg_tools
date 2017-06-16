@@ -81,15 +81,16 @@ def dump_job_info(job_dir, trigger):
     """
     Writes a text file with job info to outputDir:
 
-    GPS time, lag or GraceID, frequency, and cWB’s rho
+    GPS time, hl_lag or GraceID, frequency, and cWB’s rho
     """
     f=open(os.path.join(job_dir, 'job_info.txt'), 'w')
 
-    f.write('# rho gps lag freq veto1 veto2 graceID\n')
-    f.write('{rho} {gps_time} {time_lag} {trig_frequency} {veto1} \
-{veto2} {graceID}\n'.format(
+    f.write('# rho gps hl_lag freq veto1 veto2 graceID\n')
+    f.write('{rho} {gps_time} {hl_time_lag} {hv_time_lag} {trig_frequency} \
+            {veto1} {veto2} {graceID}\n'.format(
         gps_time=trigger.trigger_time,
-        time_lag=trigger.time_lag,
+        hl_time_lag=trigger.hl_time_lag,
+        hv_time_lag=trigger.hv_time_lag,
         trig_frequency=trigger.trigger_frequency,
         rho=trigger.rho,
         veto1=trigger.veto1,
@@ -304,7 +305,8 @@ if opts.submit_to_gracedb:
 # Extract trigger times for readability
 
 trigger_times = [trig.trigger_time for trig in trigger_list.triggers]
-lag_times = [trig.time_lag for trig in trigger_list.triggers]
+hl_lag_times = [trig.hl_time_lag for trig in trigger_list.triggers]
+hv_lag_times = [trig.hv_time_lag for trig in trigger_list.triggers]
 
 #
 # --- Determine min/max times for data coverage
@@ -316,14 +318,14 @@ seglens = [trigger.seglen for trigger in trigger_list.triggers]
 if cp.has_option('input','gps-start-time'):
     gps_start_time = cp.getint('input','gps-start-time')
 else:
-    trigtime = min(trigger_times) - (max(np.absolute(lag_times))+25.0)
+    trigtime = min(trigger_times) - (max(np.absolute(hl_lag_times))+25.0)
     seg, _ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_start_time = seg[0]
 
 if cp.has_option('input','gps-end-time'):
     gps_end_time = cp.getint('input','gps-end-time')
 else:
-    trigtime = max(trigger_times) + (max(np.absolute(lag_times))+25.0)
+    trigtime = max(trigger_times) + (max(np.absolute(hl_lag_times))+25.0)
     seg,_ = job_times(trigtime, max(seglens), psdlen, padding)
     gps_end_time = seg[1]
 
@@ -644,9 +646,10 @@ for t,trigger in enumerate(trigger_list.triggers):
 
     else:
 
-        print >> sys.stdout, "Adding node for GPS %d, L1-timeslide %f (%d of %d)"%(
-                trigger.trigger_time, trigger.time_lag, totaltrigs+1,
-                len(trigger_times))
+        print >> sys.stdout, """Adding node for GPS {0} ({1} of {2})
+    L1-timeslide {3}, V-timeslide {4} """.format(
+                trigger.trigger_time, totaltrigs+1, len(trigger_times),
+                    trigger.hl_time_lag, trigger.hv_time_lag)
 
 
         if not cp.getboolean('datafind','sim-data'):
@@ -660,12 +663,12 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # Make output directory for this trigger
         outputDir  = 'bayeswave_' + str('%.9f'%trigger.trigger_time) + '_' + \
-                str(float(trigger.time_lag)) + '_' + str(uuid.uuid4())
+                str(float(trigger.hl_time_lag)) #+ '_' + str(uuid.uuid4())
 
         os.makedirs(outputDir)
 
         # XXX Dump job info file
-        #GPS time, lag or GraceID, frequency, and cWB’s rho
+        #GPS time, hl_lag or GraceID, frequency, and cWB’s rho
         dump_job_info(outputDir, trigger) 
 
         # Create DAG nodes
@@ -738,8 +741,12 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_node.set_injevent(trigger.injevent)
             bayeswave_post_node.set_injevent(trigger.injevent)
 
-        bayeswave_node.set_L1_timeslide(trigger.time_lag)
-        bayeswave_post_node.set_L1_timeslide(trigger.time_lag)
+        if 'L1' in ifo_list:
+            bayeswave_node.set_L1_timeslide(trigger.hl_time_lag)
+            bayeswave_post_node.set_L1_timeslide(trigger.hl_time_lag)
+        if 'V1' in ifo_list:    
+            bayeswave_node.set_V1_timeslide(trigger.hv_time_lag)
+            bayeswave_post_node.set_V1_timeslide(trigger.hv_time_lag)
 
         if cp.has_option('bayeswave_options','BW-inject'):
             bayeswave_post_node.set_BW_event(trigger.BW_event)
