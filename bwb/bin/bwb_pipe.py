@@ -126,6 +126,7 @@ def parser():
     parser.add_option("--html-root", default=None)
     parser.add_option("--skip-megapy", default=False, action="store_true")
     parser.add_option("--skip-post", default=False, action="store_true")
+    parser.add_option("--separate-post-dag", default=False, action="store_true")
     parser.add_option("--tidy-up", default=False, action="store_true")
     parser.add_option("--osg-jobs", default=False, action="store_true")
     parser.add_option("--abs-paths", default=False, action="store_true")
@@ -564,9 +565,11 @@ if opts.abs_paths:
 
 # ---- Create a dag to which we can add jobs.
 dag = pipeline.CondorDAG(log=opts.workdir+'.log')
+postdag = pipeline.CondorDAG(log=opts.workdir+'_post.log')
 
 # ---- Set the name of the file that will contain the DAG.
 dag.set_dag_file( 'bayeswave_{0}'.format(os.path.basename(opts.workdir)) )
+postdag.set_dag_file( 'bayeswave_post_{0}'.format(os.path.basename(opts.workdir)) )
 
 # ---- Create DAG jobs
 #   bayeswave: main bayeswave analysis
@@ -590,8 +593,6 @@ if opts.tidy_up:
 #
 # Build Nodes
 #
-#if "LALSimAdLIGO" in cache_files.values():
-# XXX: post jobs currently require a data seed for the dummy LALSimAdLIGO data
 try:
     dataseed=cp.getint('input', 'dataseed')
 except ConfigParser.NoOptionError:
@@ -604,22 +605,17 @@ except ConfigParser.NoOptionError:
 
 unanalyzeable_jobs = []
 
-# XXX: Testing times (one of these has no data)
-#trigger_times = [1126252133, 1126259365]
-
 transferFrames={}
 totaltrigs=0
-#for trigger in trigger_list.triggers[:5]:
-#    print trigger.trigger_time
 
-#sys.exit()
 for t,trigger in enumerate(trigger_list.triggers):
 
     print >> sys.stdout, "---------------------------------------"
 
     # -------------------------------------------
     # Check job times fall within available data
-    job_segment, psd_start = job_times(trigger.trigger_time, trigger.seglen, psdlen, padding)
+    job_segment, psd_start = job_times(trigger.trigger_time, trigger.seglen,
+            psdlen, padding)
 
     for ifo in ifo_list:
 
@@ -761,7 +757,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         # --- Add parent/child relationships
         #
-        if not opts.skip_post:
+        if not opts.skip_post and not opts.separate_post_dag:
             bayeswave_post_node.add_parent(bayeswave_node)
         if not opts.skip_megapy:
             megasky_node.add_parent(bayeswave_post_node)
@@ -782,13 +778,23 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
-        if not opts.skip_post:
+        if not opts.skip_post and not opts.separate_post_dag:
             dag.add_node(bayeswave_post_node)
-        if not opts.skip_megapy:
+        elif not opts.skip_post and opts.separate_post_dag:
+            postdag.add_node(bayeswave_post_node)
+        else:
+            continue
+
+        if not opts.skip_megapy and not opts.separate_post_dag:
             dag.add_node(megasky_node)
             dag.add_node(megaplot_node)
+        elif not opts.skip_megapy and opts.separate_post_dag:
+            postdag.add_node(megasky_node)
+            postdag.add_node(megaplot_node)
+
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
+
         if opts.tidy_up:
             dag.add_node(archiver_node)
 

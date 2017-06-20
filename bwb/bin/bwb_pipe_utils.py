@@ -1148,7 +1148,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
-        bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_post')
+        if cp.has_option('bayeswave_post_options', 'lite'):
+            bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_post_lite')
+        else:
+            bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_post')
 
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave_post)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
