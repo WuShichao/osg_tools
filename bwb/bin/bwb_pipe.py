@@ -659,7 +659,8 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # Make output directory for this trigger
         outputDir  = 'bayeswave_' + str('%.9f'%trigger.trigger_time) + '_' + \
-                str(float(trigger.hl_time_lag)) #+ '_' + str(uuid.uuid4())
+                str(float(trigger.hl_time_lag)) + '_' +\
+                str(float(trigger.hv_time_lag)) #+ str(uuid.uuid4())
 
         os.makedirs(outputDir)
 
@@ -809,10 +810,15 @@ for t,trigger in enumerate(trigger_list.triggers):
 #
 # ---- Write out the submit files needed by condor.
 dag.write_sub_files()
+if opts.separate_post_dag:
+    postdag.write_sub_files()
 
 # ---- Write out the DAG itself.
 dag.write_dag()
 dag.write_script()
+if opts.separate_post_dag:
+    postdag.write_dag()
+    postdag.write_script()
 
 # move back
 os.chdir(topdir)
