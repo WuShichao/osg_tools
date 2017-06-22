@@ -1262,6 +1262,11 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_post_options', 'chirplets'):
             self.add_opt('chirplets', cp.get('bayeswave_post_options', 'chirplets'))
 
+        # inspiral suppression
+        if cp.has_option('bayeswave_post_options', 'suppress-inspiral'):
+            self.add_opt('suppress-inspiral', cp.get('bayeswave_post_options',
+                'suppress-inspiral'))
+
         #
         # Injection file
         #

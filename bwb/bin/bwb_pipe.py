@@ -85,7 +85,7 @@ def dump_job_info(job_dir, trigger):
     """
     f=open(os.path.join(job_dir, 'job_info.txt'), 'w')
 
-    f.write('# rho gps hl_lag freq veto1 veto2 graceID\n')
+    f.write('# rho gps hl_lag hv_lag freq veto1 veto2 graceID\n')
     f.write('{rho} {gps_time} {hl_time_lag} {hv_time_lag} {trig_frequency} \
             {veto1} {veto2} {graceID}\n'.format(
         gps_time=trigger.trigger_time,
