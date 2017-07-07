@@ -175,6 +175,19 @@ elif cp.has_option('condor','osg-jobs') and opts.osg_jobs:
     # Override the config file with the command line
     cp.set('condor', 'osg-jobs', str(opts.osg_jobs))
 
+# --- Decide whether analysing fpeak
+if cp.has_option('bayeswave_post_options', 'fpeak-analysis'):
+
+    # override command line
+    opts.fpeak_analysis=True
+
+fpeak_srate=16384
+if cp.has_option('input','fpeak-srate'):
+    fpeak_srate=cp.getfloat('input','fpeak-srate')
+fpeak_flow=512
+if cp.has_option('input','fpeak-flow'):
+    fpeak_flow=cp.getfloat('input','fpeak-flow')
+
 # --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))
 
@@ -591,9 +604,8 @@ bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files,
 if opts.fpeak_analysis:
     # The fpeak job is simply an instance of the standard post-proc job with a
     # different executable 
-    bayeswave_fpeak_job = pipe_utils.bayeswave_fpeakJob(bayeswave_post_job)
-
-sys.exit()
+    bayeswave_fpeak_job = pipe_utils.bayeswave_fpeakJob(cp, cache_files,
+            injfile=injfile, nrdata=nrdata)
 
 megasky_job = pipe_utils.megaskyJob(cp)
 megaplot_job = pipe_utils.megaplotJob(cp)
@@ -617,6 +629,7 @@ unanalyzeable_jobs = []
 
 transferFrames={}
 totaltrigs=0
+
 
 for t,trigger in enumerate(trigger_list.triggers):
 
@@ -674,20 +687,16 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         os.makedirs(outputDir)
 
-        # XXX Dump job info file
-        #GPS time, hl_lag or GraceID, frequency, and cWB’s rho
         dump_job_info(outputDir, trigger) 
 
-        # Create DAG nodes
-        #   bayeswave: main RJMCMC bayeswave analysis
-        #   bayeswave_post: standard post-processing for reconstructions & FOMs
-        #   bayeswave_fpeak: BNS-specific post-processing (requires different TF
-        #   configuration from standard post-proc)
-        #   megasky: skymap job
-        #   megaplot: distribution plots & webpage generation
-        #   submitToGraceDB: upload skymap & PE to graceDB (optional)
         bayeswave_node = pipe_utils.bayeswaveNode(bayeswave_job)
         bayeswave_post_node = pipe_utils.bayeswave_postNode(bayeswave_post_job)
+
+        if opts.fpeak_analysis:
+            bayeswave_fpeak_node = \
+                    pipe_utils.bayeswave_fpeakNode(bayeswave_post_job,
+                            bayeswave_fpeak_job)
+
         megasky_node = pipe_utils.megaskyNode(megasky_job, outputDir)
         megaplot_node = pipe_utils.megaplotNode(megaplot_job, outputDir)
 
@@ -719,9 +728,6 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         if cp.get('datafind','sim-data'):
             bayeswave_node.set_dataseed(dataseed)
-        bayeswave_post_node.set_dataseed(dataseed)
-        dataseed+=1
-
 
         if cp.has_option('bayeswave_options','BW-inject'):
             bayeswave_node.set_BW_event(trigger.BW_event)
@@ -729,6 +735,7 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         # --- Add options for bayeswave_post node
         #
+        bayeswave_post_node.set_dataseed(dataseed)
         bayeswave_post_node.set_trigtime(trigger.trigger_time)
         bayeswave_post_node.set_segment_start(trigger.trigger_time -
                 trigger.seglen/2.)
@@ -760,9 +767,38 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         # --- Add options for bayeswave_fpeak node
         #
+        # FIXME It would be nice if the fpeak job just inherited these values
+        # from the post node instance
         if opts.fpeak_analysis:
-            bayeswave_fpeak_node = \
-                    pipe_utils.bayeswave_fpeakNode(bayeswave_post_node)
+            bayeswave_fpeak_node.set_dataseed(dataseed)
+            bayeswave_fpeak_node.set_trigtime(trigger.trigger_time)
+            bayeswave_fpeak_node.set_segment_start(trigger.trigger_time -
+                    trigger.seglen/2.)
+            bayeswave_fpeak_node.set_srate(fpeak_srate)
+            bayeswave_fpeak_node.set_seglen(trigger.seglen)
+            bayeswave_fpeak_node.set_window(trigger.window)
+            bayeswave_fpeak_node.set_flow(ifo_list,fpeak_flow)
+            if cp.has_option('input','PSDstart'):
+                psd_start=cp.getfloat('input','PSDstart')
+            bayeswave_fpeak_node.set_PSDstart(psd_start)
+            if cp.has_option('input','rolloff'):
+                bayeswave_fpeak_node.set_rolloff(cp.getfloat('input','rolloff'))
+            bayeswave_fpeak_node.set_outputDir(ifo_list, outputDir)
+
+            if injfile is not None:
+                bayeswave_node.set_injevent(trigger.injevent)
+                bayeswave_fpeak_node.set_injevent(trigger.injevent)
+
+            if 'L1' in ifo_list:
+                bayeswave_node.set_L1_timeslide(trigger.hl_time_lag)
+                bayeswave_fpeak_node.set_L1_timeslide(trigger.hl_time_lag)
+            if 'V1' in ifo_list:    
+                bayeswave_node.set_V1_timeslide(trigger.hv_time_lag)
+                bayeswave_fpeak_node.set_V1_timeslide(trigger.hv_time_lag)
+
+            if cp.has_option('bayeswave_options','BW-inject'):
+                bayeswave_fpeak_node.set_BW_event(trigger.BW_event)
+                
 
         #
         # --- Add options for mega-scripts
@@ -776,6 +812,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         if not opts.skip_post and not opts.separate_post_dag:
             bayeswave_post_node.add_parent(bayeswave_node)
+            if opts.fpeak_analysis:
+                bayeswave_fpeak_node.add_parent(bayeswave_node)
         if not opts.skip_megapy:
             megasky_node.add_parent(bayeswave_post_node)
             megaplot_node.add_parent(bayeswave_post_node) 
@@ -787,8 +825,12 @@ for t,trigger in enumerate(trigger_list.triggers):
         dag.add_node(bayeswave_node)
         if not opts.skip_post and not opts.separate_post_dag:
             dag.add_node(bayeswave_post_node)
+            if opts.fpeak_analysis:
+                dag.add_node(bayeswave_fpeak_node)
         elif not opts.skip_post and opts.separate_post_dag:
             postdag.add_node(bayeswave_post_node)
+            if opts.fpeak_analysis:
+                fpeakdag.add_node(bayeswave_fpeak_node)
         else:
             continue
 
@@ -798,6 +840,9 @@ for t,trigger in enumerate(trigger_list.triggers):
         elif not opts.skip_megapy and opts.separate_post_dag:
             postdag.add_node(megasky_node)
             postdag.add_node(megaplot_node)
+            if opts.fpeak_analysis:
+                fpeakdag.add_node(megasky_node)
+                fpeakdag.add_node(megaplot_node)
 
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
@@ -805,6 +850,7 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         # --- Add
 
+        dataseed+=1
         totaltrigs+=1
 
 
@@ -815,6 +861,8 @@ for t,trigger in enumerate(trigger_list.triggers):
 dag.write_sub_files()
 if opts.separate_post_dag:
     postdag.write_sub_files()
+    if opts.fpeak_analysis:
+        fpeakdag.write_sub_files()
 
 # ---- Write out the DAG itself.
 dag.write_dag()
@@ -822,6 +870,9 @@ dag.write_script()
 if opts.separate_post_dag:
     postdag.write_dag()
     postdag.write_script()
+    if opts.fpeak_analysis:
+        fpeakdag.write_dag()
+        fpeakdag.write_script()
 
 # move back
 os.chdir(topdir)

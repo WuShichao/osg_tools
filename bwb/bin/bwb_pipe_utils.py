@@ -1072,79 +1072,75 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def set_trigtime(self, trigtime):
         self.add_var_opt('trigtime', '%.9f'%trigtime)
-        self.__trigtime = trigtime
+        self.trigtime = trigtime
 
     def set_segment_start(self, segment_start):
         self.add_var_opt('segment-start', '%.9f'%segment_start)
-        self.__segment_start = segment_start
+        self.segment_start = segment_start
 
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
-        self.__srate = srate
+        self.srate = srate
 
     def set_seglen(self, seglen):
         self.add_var_opt('seglen', seglen)
-        self.__seglen = seglen
+        self.seglen = seglen
 
     def set_flow(self, ifo_list, flow):
         for i,ifo in enumerate(ifo_list):
             self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow)
-        self.__flow = flow
+        self.flow = flow
 
     def set_window(self, window):
         self.add_var_opt('window', window)
-        self.__window = window
+        self.window = window
 
     def set_rolloff(self, rolloff):
         self.add_var_opt('padding', rolloff)
-        self.__rolloff = rolloff
+        self.rolloff = rolloff
 
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('psdstart', '%.9f'%PSDstart)
-        self.__PSDstart = PSDstart
+        self.PSDstart = PSDstart
 
     def set_outputDir(self, outputDir):
         self.add_var_opt('outputDir', outputDir)
-        self.__outputDir = outputDir
+        self.outputDir = outputDir
 
     def set_injevent(self, event):
         self.add_var_opt('event', event)
-        self.__event = event
+        self.event = event
 
     def set_dataseed(self, dataseed):
         self.add_var_opt('dataseed', dataseed)
-        self.__dataseed = dataseed
+        self.dataseed = dataseed
 
     def add_frame_transfer(self, framedict):
         """
         Add a list of frames to transfer
         """
-        self.__frames=[]
+        self.frames=[]
         for ifo in framedict.keys():
             for frame in framedict[ifo]:
-                self.__frames.append(frame)
-        self.__frames = ",".join(self.__frames)
-        self.add_macro('macroframes', self.__frames)
+                self.frames.append(frame)
+        self.frames = ",".join(self.frames)
+        self.add_macro('macroframes', self.frames)
   
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
-        self.__L1_timeslide = L1_timeslide
+        self.L1_timeslide = L1_timeslide
 
     def set_V1_timeslide(self, V1_timeslide):
         self.add_var_opt('V1-timeslide', V1_timeslide)
-        self.__V1_timeslide = V1_timeslide
+        self.V1_timeslide = V1_timeslide
 
     def set_BW_event(self, BW_event):
         self.add_var_opt('BW-event', BW_event)
-        self.__BW_event = BW_event
+        self.BW_event = BW_event
 
 #
 # Post-processing
 #
-class bayeswave_fpeakJob(bayeswave_postJob):
-    # Almost the same as postJob but different executable, log files and
-    # TF-content
-    bayeswave_fpeak=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_fpeak')
 
 
 class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
@@ -1307,7 +1303,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         self.set_sub_file('bayeswave_post.sub')
 
-
 class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def __init__(self, bayeswave_post_job):
@@ -1317,40 +1312,40 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def set_trigtime(self, trigtime):
         self.add_var_opt('trigtime', '%.9f'%trigtime)
-        self.__trigtime = trigtime
+        self.trigtime = trigtime
 
     def set_segment_start(self, segment_start):
         self.add_var_opt('segment-start', '%.9f'%segment_start)
-        self.__segment_start = segment_start
+        self.segment_start = segment_start
 
     def set_window(self, window):
         self.add_var_opt('window', window)
-        self.__window = window
+        self.window = window
 
     def set_rolloff(self, rolloff):
         self.add_var_opt('padding', rolloff)
-        self.__rolloff = rolloff
+        self.rolloff = rolloff
 
     def set_srate(self, srate):
         self.add_var_opt('srate', srate)
-        self.__srate = srate
+        self.srate = srate
 
     def set_seglen(self, seglen):
         self.add_var_opt('seglen', seglen)
-        self.__seglen = seglen
+        self.seglen = seglen
 
     def set_flow(self, ifo_list, flow):
         for i,ifo in enumerate(ifo_list):
             self.add_var_opt('{ifo}-flow'.format(ifo=ifo), flow)
-        self.__flow = flow
+        self.flow = flow
 
     def set_PSDstart(self, PSDstart):
         self.add_var_opt('psdstart', '%.9f'%PSDstart)
-        self.__PSDstart = PSDstart
+        self.PSDstart = PSDstart
 
     def set_outputDir(self, ifo_list, outputDir):
         self.add_var_opt('outputDir', outputDir)
-        self.__outputDir = outputDir
+        self.outputDir = outputDir
 
         # bayeswave_post now uses PSD estimates straight from bayeswave and
         # no channel name needed.  These estimates lie in the outputDir so add
@@ -1362,24 +1357,46 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 
     def set_injevent(self, event):
         self.add_var_opt('event', event)
-        self.__event = event
+        self.event = event
 
     def set_dataseed(self, dataseed):
         self.add_var_opt('dataseed', dataseed)
-        self.__dataseed = dataseed
+        self.dataseed = dataseed
 
     def set_L1_timeslide(self, L1_timeslide):
         self.add_var_opt('L1-timeslide', L1_timeslide)
-        self.__L1_timeslide = L1_timeslide
+        self.L1_timeslide = L1_timeslide
 
     def set_V1_timeslide(self, V1_timeslide):
         self.add_var_opt('V1-timeslide', V1_timeslide)
-        self.__V1_timeslide = V1_timeslide
+        self.V1_timeslide = V1_timeslide
 
     def set_BW_event(self, BW_event):
         self.add_var_opt('BW-event', BW_event)
-        self.__BW_event = BW_event
+        self.BW_event = BW_event
 
+class bayeswave_fpeakJob(bayeswave_postJob):
+                         
+    def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
+        bayeswave_postJob.__init__(self, cp, cacheFiles, injfile=None,
+                nrdata=None, dax=False)
+
+        bayeswave_fpeak=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'src',
+                'bayeswave_fpeak')
+        self.set_executable(bayeswave_fpeak)
+    
+        self.set_stdout_file('$(macrooutputDir)/bayeswave_fpeak_$(cluster)-$(process)-$(node).out')
+        self.set_stderr_file('$(macrooutputDir)/bayeswave_fpeak_$(cluster)-$(process)-$(node).err')
+        self.set_log_file('$(macrooutputDir)/bayeswave_fpeak_$(cluster)-$(process)-$(node).log')
+
+        self.set_sub_file('bayeswave_fpeak.sub')
+
+class bayeswave_fpeakNode(bayeswave_postNode):
+
+    def __init__(self, bayeswave_post_job, bayeswave_fpeak_job):
+        bayeswave_postNode.__init__(self, bayeswave_post_job)
+        pipeline.CondorDAGNode.__init__(self, bayeswave_fpeak_job)
+        pipeline.AnalysisNode.__init__(self)
 
 #
 # skymap job
@@ -1454,7 +1471,7 @@ class megaskyNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     # Set work dir
     def set_outputDir(self, outputDir):
         self.add_var_arg(outputDir)
-        self.__outputDir = outputDir
+        self.outputDir = outputDir
 
 #
 # megaplot job
@@ -1528,7 +1545,7 @@ class megaplotNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
     # Set work dir
     def set_outputDir(self, outputDir):
         self.add_var_arg(outputDir)
-        self.__outputDir = outputDir
+        self.outputDir = outputDir
 
 #
 # submitGraceDB
@@ -1570,11 +1587,11 @@ class submitToGraceDBNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         pipeline.AnalysisNode.__init__(self)
         # Set job initialdir, so python codes know where to expect input files
         self.add_var_condor_cmd('initialdir', rundir)   
-        self.__rundir = rundir
+        self.rundir = rundir
 
         # Set html directory
         self.add_var_opt('htmlDir', htmlDir)
-        self.__htmlDir = htmlDir
+        self.htmlDir = htmlDir
 
 
 
