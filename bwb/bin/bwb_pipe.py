@@ -24,6 +24,7 @@ import subprocess
 import uuid
 import fileinput
 import ast
+import copy
 
 from glue import pipeline
 
@@ -127,9 +128,9 @@ def parser():
     parser.add_option("--skip-megapy", default=False, action="store_true")
     parser.add_option("--skip-post", default=False, action="store_true")
     parser.add_option("--separate-post-dag", default=False, action="store_true")
-    parser.add_option("--tidy-up", default=False, action="store_true")
     parser.add_option("--osg-jobs", default=False, action="store_true")
     parser.add_option("--abs-paths", default=False, action="store_true")
+    parser.add_option("--fpeak-analysis", default=False, action="store_true")
 
 
     (opts,args) = parser.parse_args()
@@ -566,29 +567,38 @@ if opts.abs_paths:
 # ---- Create a dag to which we can add jobs.
 dag = pipeline.CondorDAG(log=opts.workdir+'.log')
 postdag = pipeline.CondorDAG(log=opts.workdir+'_post.log')
+fpeakdag = pipeline.CondorDAG(log=opts.workdir+'_fpeak.log')
 
 # ---- Set the name of the file that will contain the DAG.
 dag.set_dag_file( 'bayeswave_{0}'.format(os.path.basename(opts.workdir)) )
 postdag.set_dag_file( 'bayeswave_post_{0}'.format(os.path.basename(opts.workdir)) )
+fpeakdag.set_dag_file( 'bayeswave_fpeak_{0}'.format(os.path.basename(opts.workdir)) )
 
 # ---- Create DAG jobs
 #   bayeswave: main bayeswave analysis
-#   bayeswave_post: bayeswave_post
+#   bayeswave_post: normal post-processing
+#   bayeswave_fpeak: Spectral analysis post-processing (typically for BNS)
 #   megasky: skymap job
 #   megaplot: remaining plots & webpage generation
 #   submitToGraceDB: upload skymap & PE to graceDB (optional)
+
 bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
         nrdata=nrdata)
-bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files, injfile=injfile,
-        nrdata=nrdata)
+
+bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files,
+        injfile=injfile, nrdata=nrdata)
+
+if opts.fpeak_analysis:
+    # The fpeak job is simply an instance of the standard post-proc job with a
+    # different executable 
+    bayeswave_fpeak_job = pipe_utils.bayeswave_fpeakJob(bayeswave_post_job)
+
+sys.exit()
+
 megasky_job = pipe_utils.megaskyJob(cp)
 megaplot_job = pipe_utils.megaplotJob(cp)
 
-if opts.submit_to_gracedb:
-    submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
-
-if opts.tidy_up:
-    archiver_job = pipe_utils.archiverJob(cp)
+if opts.submit_to_gracedb: submitToGraceDB_job = pipe_utils.submitToGraceDB(cp)
 
 #
 # Build Nodes
@@ -669,8 +679,10 @@ for t,trigger in enumerate(trigger_list.triggers):
         dump_job_info(outputDir, trigger) 
 
         # Create DAG nodes
-        #   bayeswave: main bayeswave analysis
-        #   bayeswave_post: bayeswave_post
+        #   bayeswave: main RJMCMC bayeswave analysis
+        #   bayeswave_post: standard post-processing for reconstructions & FOMs
+        #   bayeswave_fpeak: BNS-specific post-processing (requires different TF
+        #   configuration from standard post-proc)
         #   megasky: skymap job
         #   megaplot: distribution plots & webpage generation
         #   submitToGraceDB: upload skymap & PE to graceDB (optional)
@@ -685,9 +697,6 @@ for t,trigger in enumerate(trigger_list.triggers):
                 os.makedirs(htmlDir)
             gracedb_node = pipe_utils.submitToGraceDBNode(submitToGraceDB_job,
                     outputDir, htmlDir)
-
-        if opts.tidy_up:
-            archiver_node = pipe_utils.archiverNode(archiver_job, outputDir)
 
         #
         # --- Add options for bayeswave node
@@ -749,6 +758,13 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_post_node.set_BW_event(trigger.BW_event)
 
         #
+        # --- Add options for bayeswave_fpeak node
+        #
+        if opts.fpeak_analysis:
+            bayeswave_fpeak_node = \
+                    pipe_utils.bayeswave_fpeakNode(bayeswave_post_node)
+
+        #
         # --- Add options for mega-scripts
         #
         megasky_node.set_outputDir(outputDir)
@@ -766,16 +782,6 @@ for t,trigger in enumerate(trigger_list.triggers):
         if opts.submit_to_gracedb:
             gracedb_node.add_parent(megaplot_node) 
             gracedb_node.add_parent(megasky_node) 
-        if opts.tidy_up:
-            if opts.skip_megapy:
-                archiver_node.add_parent(bayeswave_post_node) 
-                archiver_node.add_parent(bayeswave_post_node) 
-            else:
-                archiver_node.add_parent(megaplot_node)
-                archiver_node.add_parent(megasky_node) 
-
-            archiver_node.set_post_script(cp.get("bayeswave_paths","cleaner"))
-            archiver_node.add_post_script_arg(outputDir)
 
         # Add Nodes to DAG
         dag.add_node(bayeswave_node)
@@ -795,9 +801,6 @@ for t,trigger in enumerate(trigger_list.triggers):
 
         if opts.submit_to_gracedb:
             dag.add_node(gracedb_node)
-
-        if opts.tidy_up:
-            dag.add_node(archiver_node)
 
 
         # --- Add

@@ -1141,6 +1141,11 @@ class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 #
 # Post-processing
 #
+class bayeswave_fpeakJob(bayeswave_postJob):
+    # Almost the same as postJob but different executable, log files and
+    # TF-content
+    bayeswave_fpeak=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_fpeak')
+
 
 class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
@@ -1171,11 +1176,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_post_$(cluster)-$(process)-$(node).log')
 
-#        self.add_condor_cmd('stream_error','True')
-#        self.add_condor_cmd('stream_output','True')
-
-        # Request 4GB of RAM for pp jobs
-        #self.add_condor_cmd('request_memory', '4000')
 
         # --- Allow desired sites
         if cp.has_option('condor','desired-sites'):
@@ -1239,14 +1239,9 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             ifo_list_opt += ' --ifo {0}'.format(ifo)
         self.add_opt('ifo', ifo_list_opt)
 
-        #self.add_opt('srate', cp.get('input', 'srate'))
-        #self.add_opt('seglen', cp.get('input', 'seglen'))
         self.add_opt('psdlength', cp.get('input', 'PSDlength'))
  
         flow = ast.literal_eval(cp.get('input','flow'))
-
-#        for i,ifo in enumerate(ifo_list):
-#            self.add_opt('{ifo}-flow'.format(ifo=ifo), str(flow[ifo]))
 
 
         # --- Optional options
@@ -1290,7 +1285,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('MDC-cache', mdc_cache_list)
 
         if cp.has_option('injections', 'mdc-channels'):
-            #mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
             mdc_channel_list=ast.literal_eval(cp.get('injections','mdc-channels'))
             mdc_channel_str=str(mdc_channel_list.values()).replace("'",'')
             mdc_channel_str=mdc_channel_str.replace(' ','')
@@ -1583,59 +1577,5 @@ class submitToGraceDBNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
         self.__htmlDir = htmlDir
 
 
-#
-# Housekeeping
-#
-
-class archiverJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
-
-    def __init__(self, cp, dax=False):
-
-        universe='vanilla'
-
-        # Point this to the src dir
-        archiver = cp.get('bayeswave_paths','archiver')
-        pipeline.CondorDAGJob.__init__(self,universe, archiver)
-        pipeline.AnalysisJob.__init__(self,cp,dax=dax)
-
-        # --- Allow desired sites
-        if cp.has_option('condor','desired-sites'):
-            self.add_condor_cmd('+DESIRED_Sites',cp.get('condor','desired-sites'))
-
-        if cp.has_option('condor', 'accounting_group'):
-            self.add_condor_cmd('accounting_group', cp.get('condor', 'accounting_group'))   
-        #
-        # Identify osg vs ldg site
-        #
-        # FIXME: currently only associates PACE (GaTech) as an OSG site
-        hostname = socket.gethostname()
-        if 'pace.gatech.edu' in hostname:
-            print >> sys.stdout, "Looks like you're on PACE; configuring file transfers"
-
-            # --- Perform file transfers
-            self.add_condor_cmd('should_transfer_files', 'YES')
-            self.add_condor_cmd('when_to_transfer_output', 'ON_EXIT_OR_EVICT')
-            self.add_condor_cmd('transfer_input_files', '$(macroargument0)')
-            self.add_condor_cmd('transfer_output_files',
-                    '$(macroargument0).tar.bz2')
-
-        self.add_condor_cmd('getenv', 'True')
-
-        self.set_stdout_file('$(macroargument0)/archiver_$(cluster)-$(process)-$(node).out')
-        self.set_stderr_file('$(macroargument0)/archiver_$(cluster)-$(process)-$(node).err')
-        self.set_log_file('archiver_$(cluster)-$(process)-$(node).log')
-        self.set_sub_file('archiver.sub')
-
-
-class archiverNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
-
-    def __init__(self, archiver_job, rundir):
-
-        pipeline.CondorDAGNode.__init__(self, archiver_job)
-        pipeline.AnalysisNode.__init__(self)
-
-        # Set run directory
-        self.add_var_arg(rundir)
-        self.__rundir = rundir
 
 
