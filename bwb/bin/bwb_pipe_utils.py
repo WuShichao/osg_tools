@@ -1398,6 +1398,8 @@ class bayeswave_fpeakNode(bayeswave_postNode):
         pipeline.CondorDAGNode.__init__(self, bayeswave_fpeak_job)
         pipeline.AnalysisNode.__init__(self)
 
+        self.add_opt('suppress-inspiral', '')
+
 #
 # skymap job
 #
