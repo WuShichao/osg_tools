@@ -783,7 +783,6 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_fpeak_node.set_outputDir(ifo_list, outputDir)
 
             if injfile is not None:
-                print "setting injfile for fpeak"
                 bayeswave_fpeak_node.set_injevent(trigger.injevent)
 
             if 'L1' in ifo_list:
