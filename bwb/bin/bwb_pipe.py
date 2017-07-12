@@ -48,13 +48,13 @@ def confirm(prompt=None, resp=False):
     'resp' should be set to the default value assumed by the caller when
     user simply types ENTER.
 
-    >>> confirm(prompt='Create Directory?', resp=True)
+    >>> confirm(prompt='Proceed?', resp=True)
     Create Directory? [y]|n: 
     True
-    >>> confirm(prompt='Create Directory?', resp=False)
+    >>> confirm(prompt='Proceed?', resp=False)
     Create Directory? [n]|y: 
     False
-    >>> confirm(prompt='Create Directory?', resp=False)
+    >>> confirm(prompt='Proceed?', resp=False)
     Create Directory? [n]|y: y
     True
 
@@ -221,7 +221,7 @@ if os.path.exists(workdir):
     **Sanity is not guarenteed** if re-running parent bayeswave jobs\n""".format(
     workdir)
 
-    if not confirm(prompt='Create Directory?', resp=False):
+    if not confirm(prompt='Proceed?', resp=False):
         print >> sys.stderr, "You chose wisely, exiting"
         sys.exit()
 
