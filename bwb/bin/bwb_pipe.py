@@ -744,7 +744,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                 str(float(trigger.hl_time_lag)) + '_' +\
                 str(float(trigger.hv_time_lag)) #+ str(uuid.uuid4())
 
-        if not os.path.exists: os.makedirs(outputDir)
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         dump_job_info(outputDir, trigger) 
 
