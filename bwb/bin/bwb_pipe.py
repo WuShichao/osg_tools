@@ -767,9 +767,8 @@ for t,trigger in enumerate(trigger_list.triggers):
         #
         # --- Add options for bayeswave_fpeak node
         #
-        # FIXME It would be nice if the fpeak job just inherited these values
-        # from the post node instance
         if opts.fpeak_analysis:
+
             bayeswave_fpeak_node.set_dataseed(dataseed)
             bayeswave_fpeak_node.set_trigtime(trigger.trigger_time)
             bayeswave_fpeak_node.set_segment_start(trigger.trigger_time -
@@ -786,14 +785,12 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_fpeak_node.set_outputDir(ifo_list, outputDir)
 
             if injfile is not None:
-                bayeswave_node.set_injevent(trigger.injevent)
+                print "setting injfile for fpeak"
                 bayeswave_fpeak_node.set_injevent(trigger.injevent)
 
             if 'L1' in ifo_list:
-                bayeswave_node.set_L1_timeslide(trigger.hl_time_lag)
                 bayeswave_fpeak_node.set_L1_timeslide(trigger.hl_time_lag)
             if 'V1' in ifo_list:    
-                bayeswave_node.set_V1_timeslide(trigger.hv_time_lag)
                 bayeswave_fpeak_node.set_V1_timeslide(trigger.hv_time_lag)
 
             if cp.has_option('bayeswave_options','BW-inject'):
