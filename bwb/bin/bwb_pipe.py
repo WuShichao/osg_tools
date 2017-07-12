@@ -176,17 +176,15 @@ elif cp.has_option('condor','osg-jobs') and opts.osg_jobs:
     cp.set('condor', 'osg-jobs', str(opts.osg_jobs))
 
 # --- Decide whether analysing fpeak
-if cp.has_option('bayeswave_post_options', 'fpeak-analysis'):
+if cp.has_option('bayeswave_fpeak_options', 'fpeak-analysis'):
 
     # override command line
     opts.fpeak_analysis=True
 
-fpeak_srate=16384
-if cp.has_option('input','fpeak-srate'):
-    fpeak_srate=cp.getfloat('input','fpeak-srate')
-fpeak_flow=512
-if cp.has_option('input','fpeak-flow'):
-    fpeak_flow=cp.getfloat('input','fpeak-flow')
+    if cp.has_option('bayeswave_fpeak_options','fpeak-srate'):
+        fpeak_srate=cp.getfloat('bayeswave_fpeak_options','fpeak-srate')
+    if cp.has_option('bayeswave_fpeak_options','fpeak-flow'):
+        fpeak_flow=cp.getfloat('bayeswave_fpeak_options','fpeak-flow')
 
 # --- Make local copies of necessary input files
 shutil.copy(args[0], os.path.join(workdir, 'config.ini'))

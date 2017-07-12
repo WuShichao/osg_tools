@@ -1389,6 +1389,11 @@ class bayeswave_fpeakJob(bayeswave_postJob):
         self.set_stderr_file('$(macrooutputDir)/bayeswave_fpeak_$(cluster)-$(process)-$(node).err')
         self.set_log_file('$(macrooutputDir)/bayeswave_fpeak_$(cluster)-$(process)-$(node).log')
 
+        # inspiral suppression
+        if cp.has_option('bayeswave_fpeak_options', 'suppress-inspiral'):
+            self.add_opt('suppress-inspiral', cp.get('bayeswave_fpeak_options',
+                'suppress-inspiral'))
+
         self.set_sub_file('bayeswave_fpeak.sub')
 
 class bayeswave_fpeakNode(bayeswave_postNode):
@@ -1398,7 +1403,6 @@ class bayeswave_fpeakNode(bayeswave_postNode):
         pipeline.CondorDAGNode.__init__(self, bayeswave_fpeak_job)
         pipeline.AnalysisNode.__init__(self)
 
-        self.add_opt('suppress-inspiral', '')
 
 #
 # skymap job
