@@ -39,6 +39,46 @@ import bwb_pipe_utils as pipe_utils
 #############################################
 #
 # Local function defs
+def confirm(prompt=None, resp=False):
+    """Lifted from:
+    http://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
+    Prompts for yes or no response from the user. Returns True for yes and
+    False for no.
+
+    'resp' should be set to the default value assumed by the caller when
+    user simply types ENTER.
+
+    >>> confirm(prompt='Proceed?', resp=True)
+    Create Directory? [y]|n: 
+    True
+    >>> confirm(prompt='Proceed?', resp=False)
+    Create Directory? [n]|y: 
+    False
+    >>> confirm(prompt='Proceed?', resp=False)
+    Create Directory? [n]|y: y
+    True
+
+    """
+    
+    if prompt is None:
+        prompt = 'Confirm'
+
+    if resp:
+        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+    else:
+        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+        
+    while True:
+        ans = raw_input(prompt)
+        if not ans:
+            return resp
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print 'please enter y or n.'
+            continue
+        if ans == 'y' or ans == 'Y':
+            return True
+        if ans == 'n' or ans == 'N':
+            return False
 
 def localize_xml(xmlfile, old_path, new_path):
     """
@@ -165,8 +205,29 @@ opts, args, cp = parser()
 cp.set('condor','copy-frames',str(opts.copy_frames))
 
 workdir = opts.workdir 
-print >> sys.stdout, "making work-directory: %s"%workdir
-os.makedirs(workdir)
+
+if os.path.exists(workdir):
+    # Prompt for confirmation to continue as this will overwrite existing
+    # workflow files (but not resuilts)
+    print >> sys.stderr, """
+    \nXXX DANGER XXX: path {} already exists.
+
+    Continuing workflow generation will OVERWRITE current workflow files
+    (configuration file, injection data, DAGMAN and Bash scripts).  This may
+    complicate book-keeping and is not recommended for production analyses.
+
+    Proceeding is only recommended to re-run POSTPROCESSING.
+
+    **Sanity is not guarenteed** if re-running parent bayeswave jobs\n""".format(
+    workdir)
+
+    if not confirm(prompt='Proceed?', resp=False):
+        print >> sys.stderr, "You chose wisely, exiting"
+        sys.exit()
+
+else:
+    print >> sys.stdout, "making work-directory: %s"%workdir
+    os.makedirs(workdir)
 
 # Decide whether OSG-submitting
 if not cp.has_option('condor','osg-jobs'):
@@ -361,14 +422,14 @@ topdir=os.getcwd()
 os.chdir(workdir)
 
 datafind_dir = 'datafind'
-os.makedirs(datafind_dir)
+if not os.path.exists(datafind_dir): os.makedirs(datafind_dir)
 if cp.has_option('injections', 'mdc-cache'):
     shutil.copy(cp.get('injections', 'mdc-cache'),
             os.path.join('datafind','MDC.cache'))
 
 
 segment_dir = 'segments'
-os.makedirs(segment_dir)
+if not os.path.exists(segment_dir): os.makedirs(segment_dir)
 
 
 
@@ -684,7 +745,7 @@ for t,trigger in enumerate(trigger_list.triggers):
                 str(float(trigger.hl_time_lag)) + '_' +\
                 str(float(trigger.hv_time_lag)) #+ str(uuid.uuid4())
 
-        os.makedirs(outputDir)
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         dump_job_info(outputDir, trigger) 
 
@@ -784,7 +845,6 @@ for t,trigger in enumerate(trigger_list.triggers):
             bayeswave_fpeak_node.set_outputDir(ifo_list, outputDir)
 
             if injfile is not None:
-                print "setting injfile for fpeak"
                 bayeswave_fpeak_node.set_injevent(trigger.injevent)
 
             if 'L1' in ifo_list:

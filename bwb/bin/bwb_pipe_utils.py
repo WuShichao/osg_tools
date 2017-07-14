@@ -1378,8 +1378,8 @@ class bayeswave_postNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
 class bayeswave_fpeakJob(bayeswave_postJob):
                          
     def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
-        bayeswave_postJob.__init__(self, cp, cacheFiles, injfile=None,
-                nrdata=None, dax=False)
+        bayeswave_postJob.__init__(self, cp, cacheFiles, injfile=injfile,
+                nrdata=nrdata, dax=dax)
 
         bayeswave_fpeak=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'src',
                 'bayeswave_fpeak')
