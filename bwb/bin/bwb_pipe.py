@@ -205,11 +205,12 @@ if injfile is not None:
 
 
 # NR HDF5 data
-try:
-    nrdata=cp.get('injections', 'nrhdf5')
-    nr_full_path=cp.get('injections', 'nrhdf5')
-except:
-    nrdata=None
+if injfile is not None and cp.has_option('injections','nrhdf5'):
+    try:
+        nrdata=cp.get('injections', 'nrhdf5')
+        nr_full_path=cp.get('injections', 'nrhdf5')
+    except:
+        nrdata=None
 if nrdata is not None:
     shutil.copy(nrdata, workdir)
     nrdata=os.path.basename(nrdata)
