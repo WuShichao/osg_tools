@@ -266,21 +266,24 @@ if injfile is not None:
 
 
 # NR HDF5 data
+nrdata=None
 if injfile is not None and cp.has_option('injections','nrhdf5'):
     try:
         nrdata=cp.get('injections', 'nrhdf5')
         nr_full_path=cp.get('injections', 'nrhdf5')
     except:
         nrdata=None
-if nrdata is not None:
-    shutil.copy(nrdata, workdir)
-    nrdata=os.path.basename(nrdata)
+    if not os.path.exists(nr_full_path): nrdata=None
 
-    # Make sure normal permissions on hdf5
-    os.chmod(os.path.join(workdir, nrdata), 0644)
+    if nrdata is not None:
+        shutil.copy(nrdata, workdir)
+        nrdata=os.path.basename(nrdata)
 
-    # Modify xml IN WORKDIR to point to local hdf5
-    localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
+        # Make sure normal permissions on hdf5
+        os.chmod(os.path.join(workdir, nrdata), 0644)
+
+        # Modify xml IN WORKDIR to point to local hdf5
+        localize_xml(os.path.join(workdir, injfile), nr_full_path, nrdata)
 
 
 # Skip segment queries?
