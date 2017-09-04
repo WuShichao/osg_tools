@@ -730,6 +730,15 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
                 self.add_opt('{ifo}-channel'.format(ifo=ifo), channel_list[ifo])
 
 
+            # ----------------------------------------------------------------------------------
+            # --- Specialised time-freq configurations -----------------------------------------
+            # ----------------------------------------------------------------------------------
+            if cp.has_option('input','fhigh'):
+                self.add_opt('{ifo}-fhigh'.format(ifo=ifo), cp.get('input', 'fhigh'))
+
+
+
+
         # dataseed
         if cp.has_option('bayeswave_options', 'dataseed'):
             self.add_opt('dataseed', cp.get('bayeswave_options', 'dataseed'))
@@ -850,6 +859,10 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # bayesLine
         if cp.has_option('bayeswave_options', 'bayesLine'):
             self.add_opt('bayesLine', cp.get('bayeswave_options', 'bayesLine'))
+
+        # NbayesLine
+        if cp.has_option('bayeswave_options','NbayesLine'):
+            self.add_opt('NbayesLine', cp.get('bayeswave_options', 'NbayesLine'))
 
         # stochastic
         if cp.has_option('bayeswave_options', 'stochastic'):
@@ -1061,6 +1074,7 @@ class bayeswaveJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
             self.add_opt('NCmax', cp.get('bayeswave_options', 'NCmax'))
 
 
+
         self.set_sub_file('bayeswave.sub')
 
 class bayeswaveNode(pipeline.CondorDAGNode, pipeline.AnalysisNode):
@@ -1244,6 +1258,10 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         # bayesLine
         if cp.has_option('bayeswave_post_options', 'bayesLine'):
             self.add_opt('bayesLine', cp.get('bayeswave_post_options', 'bayesLine'))
+
+        # NbayesLine
+        if cp.has_option('bayeswave_post_options','NbayesLine'):
+            self.add_opt('NbayesLine', cp.get('bayeswave_post_options', 'NbayesLine'))
 
         # 0noise
         if cp.has_option('bayeswave_post_options', '0noise'):
