@@ -664,6 +664,11 @@ bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
 bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files,
         injfile=injfile, nrdata=nrdata)
 
+if cp.has_option('bayeswave_post_options', 'lite-dump'):
+    bayeswave_post_job.add_opt('lite-dump', cp.get('bayeswave_post_options',
+        'lite-dump'))
+
+
 if opts.fpeak_analysis:
     # The fpeak job is simply an instance of the standard post-proc job with a
     # different executable 

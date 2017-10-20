@@ -1163,6 +1163,8 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
 
         universe=cp.get('condor','universe')
 
+        bayeswave_post=os.path.join(os.environ['BAYESWAVE_PREFIX'],'src','bayeswave_post')
+
         pipeline.CondorDAGJob.__init__(self,universe,bayeswave_post)
         pipeline.AnalysisJob.__init__(self,cp,dax=dax)
 
@@ -1270,10 +1272,6 @@ class bayeswave_postJob(pipeline.CondorDAGJob,pipeline.AnalysisJob):
         if cp.has_option('bayeswave_post_options', 'suppress-inspiral'):
             self.add_opt('suppress-inspiral', cp.get('bayeswave_post_options',
                 'suppress-inspiral'))
-
-        if cp.has_option('bayeswave_post_options', 'lite-dump'):
-            self.add_opt('lite-dump', cp.get('bayeswave_post_options',
-                'lite-dump'))
 
         #
         # Injection file
@@ -1396,7 +1394,7 @@ class bayeswave_fpeakJob(bayeswave_postJob):
                          
     def __init__(self, cp, cacheFiles, injfile=None, nrdata=None, dax=False):
         bayeswave_postJob.__init__(self, cp, cacheFiles, injfile=injfile,
-                nrdata=nrdata, fpeak_min=1500, fpeak_max=4096, dax=dax)
+                nrdata=nrdata, dax=dax)
 
         bayeswave_fpeak=os.path.join(os.environ['BAYESWAVE_PREFIX'], 'src',
                 'bayeswave_fpeak')
@@ -1411,13 +1409,15 @@ class bayeswave_fpeakJob(bayeswave_postJob):
             self.add_opt('suppress-inspiral', cp.get('bayeswave_fpeak_options',
                 'suppress-inspiral'))
 
+        fpeak_min=1500.
         if cp.has_option('bayeswave_fpeak_options','fpeak-min'):
             fpeak_min=cp.getfloat('bayeswave_fpeak_options','fpeak-min')
-        self.add_var_opt('fpeak-min', 'fpeak_min')
-
+        self.add_opt('fpeak-min', str(fpeak_min))
+ 
+        fpeak_max=4000.
         if cp.has_option('bayeswave_fpeak_options','fpeak-max'):
             fpeak_max=cp.getfloat('bayeswave_fpeak_options','fpeak-max')
-        self.add_var_opt('fpeak-max', 'fpeak_max')
+        self.add_opt('fpeak-max', str(fpeak_max))
 
         self.set_sub_file('bayeswave_fpeak.sub')
 
