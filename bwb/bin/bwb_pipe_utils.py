@@ -1412,12 +1412,17 @@ class bayeswave_fpeakJob(bayeswave_postJob):
         fpeak_min=1500.
         if cp.has_option('bayeswave_fpeak_options','fpeak-min'):
             fpeak_min=cp.getfloat('bayeswave_fpeak_options','fpeak-min')
-        self.add_opt('fpeak-min', str(fpeak_min))
+        self.add_opt('fpeakmin', str(fpeak_min))
  
         fpeak_max=4000.
         if cp.has_option('bayeswave_fpeak_options','fpeak-max'):
             fpeak_max=cp.getfloat('bayeswave_fpeak_options','fpeak-max')
-        self.add_opt('fpeak-max', str(fpeak_max))
+        self.add_opt('fpeakmax', str(fpeak_max))
+
+        # threshold on peak detection
+        if cp.has_option('bayeswave_fpeak_options', 'suppress-inspiral'):
+            self.add_opt('threshold', cp.get('bayeswave_fpeak_options',
+                'threshold'))
 
         self.set_sub_file('bayeswave_fpeak.sub')
 
