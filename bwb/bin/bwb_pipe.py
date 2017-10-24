@@ -664,9 +664,20 @@ bayeswave_job = pipe_utils.bayeswaveJob(cp, cache_files, injfile=injfile,
 bayeswave_post_job = pipe_utils.bayeswave_postJob(cp, cache_files,
         injfile=injfile, nrdata=nrdata)
 
+#
+# Setup any extra post-proc options
+#
 if cp.has_option('bayeswave_post_options', 'lite-dump'):
     bayeswave_post_job.add_opt('lite-dump', cp.get('bayeswave_post_options',
         'lite-dump'))
+
+if cp.has_option('bayeswave_post_options', 'distance-samples'):
+    bayeswave_post_job.add_opt('distance-samples', cp.get('bayeswave_post_options',
+        'distance-samples'))
+
+if cp.has_option('bayeswave_post_options', 'cosiota-samples'):
+    bayeswave_post_job.add_opt('cosiota-samples', cp.get('bayeswave_post_options',
+        'cosiota-samples'))
 
 
 if opts.fpeak_analysis:
