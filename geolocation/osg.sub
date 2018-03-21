@@ -1,0 +1,17 @@
+universe = vanilla
+executable = whereami.sh
+arguments = "input.in geolocation-osg-result_$(cluster)-$(process).out"
+should_transfer_files = YES
+transfer_output_files = geolocation-osg-result_$(cluster)-$(process).out
+transfer_input_files = input.in
+accounting_group = ligo.dev.o2.burst.paramest.bayeswave
+when_to_transfer_output = ON_EXIT_OR_EVICT
+log = geolocation-osg-test.log
++OpenScienceGrid = True
+#+DESIRED_Sites="Nebraska"
+requirements = IS_GLIDEIN=?=True
+error = geolocation_osg-$(cluster)-$(process).err
+output = geolocation_osg-$(cluster)-$(process).out
+notification = always
+notify_user = james.clark@ligo.org
+queue 10

@@ -1,0 +1,10 @@
+universe = vanilla
+executable = whereami.sh
+arguments = "input.in geolocation-local-result_$(cluster)-$(process).out"
+accounting_group = ligo.dev.o2.burst.paramest.bayeswave
+log = geolocation-local-test.log
+error = geolocation_local-$(cluster)-$(process).err
+output = geolocation_local-$(cluster)-$(process).out
+notification = always
+notify_user = james.clark@ligo.org
+queue 10
